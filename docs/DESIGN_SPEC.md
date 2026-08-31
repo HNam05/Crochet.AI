@@ -82,7 +82,9 @@ Semantic validation checks the sequence, hash, endpoint classification, unit/ran
 
 ### Domain-specific V0 profile
 
-The normative profiles and adversarial cases are in [`MESH_PREFLIGHT.md`](MESH_PREFLIGHT.md). A mesh target declares `preflight_profile_id`, `preflight_numerical_profile_id`, and a closed topology expectation containing exact component/boundary counts plus orientability, manifold, self-intersection, and inter-component-contact policies.
+The normative domain profiles and adversarial cases are in [`MESH_PREFLIGHT.md`](MESH_PREFLIGHT.md). Canonical mesh identity, source-adapter conversion, right-handed millimetre units, and zero-based indexing are in [`GEOMETRY_MODEL.md`](GEOMETRY_MODEL.md). A mesh target declares `preflight_profile_id`, `preflight_numerical_profile_id`, and a closed topology expectation containing exact component/boundary counts plus orientability, manifold, self-intersection, and inter-component-contact policies.
+
+DesignSpec schema version `1.0.0` accepts exactly `preflight_numerical_profile_id = v0_num_mesh_binary64_v1`. The ID resolves through [`NUMERICAL_GEOMETRY.md`](NUMERICAL_GEOMETRY.md) to immutable version `1.0.0` and its machine-readable record. The implementation must validate and hash that record before V0; missing, unknown, malformed, hash-mismatched, or unsupported resolution is `INDETERMINATE/E_INPUT`, never an implicit default.
 
 - Amigurumi selects `V0_AMIGURUMI_CLOSED_SURFACE_V1` or `V0_AMIGURUMI_DECLARED_BOUNDARY_SURFACE_V1` consistently with `surface_mode`.
 - Garments select `V0_GARMENT_DECLARED_BOUNDARY_SURFACE_V1`.
@@ -160,13 +162,16 @@ V1 semantic validation must additionally prove:
 9. every required tolerance is finite, non-negative, and has the unit declared by its field;
 10. required gate dependencies and collision/robustness/export implications are consistent;
 11. a mesh preflight profile is compatible with the project type and surface mode, with exact component/boundary policies and no undeclared contact/repair;
-12. no unresolved interpretation ambiguity or undeclared default exists.
+12. every mesh numerical-profile ID resolves to the exact immutable registry record required by this DesignSpec schema version;
+13. no unresolved interpretation ambiguity or undeclared default exists.
 
 Failure is structured and fail-closed; a validator must not insert defaults or repair ambiguity.
 
 ## Canonical form
 
 **ENGINEERING DECISION:** `DESIGN_SPEC_CANONICAL_JSON_V1` first applies the following complete array registry, then the shared I-JSON/binary64/JCS/domain-separated SHA-256 contract in [`CANONICALIZATION.md`](CANONICALIZATION.md). Duplicate keys, non-finite or overflowing numbers, unsafe integers, invalid Unicode, and values outside schema/semantic bounds are rejected before hashing. “Set” means sort by the stated key; “ordered” means preserve supplied order exactly.
+
+Before applying the DesignSpec-owned registry, an `INLINE` `material_profile.profile` is schema- and semantically validated and replaced in the working value by `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1(profile)` from [`MATERIAL_MODEL.md`](MATERIAL_MODEL.md). This is recursive projection composition, not a second material normalizer: DesignSpec code must call the authoritative MaterialProfile projection and must not reproduce its collection rules. A `REFERENCE` binding is left as its declared ID/revision/hash object.
 
 | Field | Canonical treatment | Key or order contract |
 | --- | --- | --- |
@@ -196,6 +201,6 @@ Failure is structured and fail-closed; a validator must not insert defaults or r
 | `interpretation_provenance.unresolved_ambiguities` | Ordered and empty | Must contain no values |
 | every `vector3` (`origin_mm`, axes, landmark positions) | Ordered | Coordinate tuple `[x, y, z]`; preserve component order |
 
-No other V1 field is an array. This registry is normative for both the complete DesignSpec hash and the nested surface-of-revolution profile hash; a consumer must reject a nonconforming radial sample sequence rather than sorting it.
+No other DesignSpec-owned V1 field is an array. Arrays inside an inline MaterialProfile are owned exclusively by `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1`; this registry is normative for the remaining complete DesignSpec value and the nested surface-of-revolution profile hash. A consumer must reject a nonconforming radial sample sequence rather than sorting it.
 
-The canonical hash covers the complete DesignSpec, including recorded assumptions and provenance. A changed interpretation therefore produces a changed content identity. Locale, whitespace, object insertion order, and harmless spellings such as `1`, `1.0`, or `1e0` do not change it; different binary64 values do.
+The canonical hash covers the complete DesignSpec, including the normalized inline MaterialProfile, recorded assumptions, and provenance. Material canonical bytes are embedded as a JSON value, not as the standalone MaterialProfile hash or as a JSON string. The enclosing hash therefore uses the DesignSpec domain separator while the same material projection may independently use the MaterialProfile domain separator. Locale, whitespace, object insertion order, harmless spellings such as `1`, `1.0`, or `1e0`, and reordering of material collections declared semantically unordered do not change the DesignSpec hash; different binary64 values or meaningful array order do.

@@ -54,7 +54,15 @@ Each response has a stable `response_id` and the semantic key:
 
 For V1 selection, a forward run supplies the requested tension profile and fabric state. For every simulated stitch, it obtains `canonical_stitch_type` from the stitch node and `course_mode` from its referenced course, then requires exactly one matching response. Thus a `SINGLE_CROCHET` cyclic course followed by a `DOUBLE_CROCHET` linear course may use two responses from the same physical yarn without an invented `COLOR_CHANGE`, `CUT_YARN`, `ATTACH`, or other IR transition. Missing or ambiguous response keys are a fail-closed material-resolution error.
 
-`MATERIAL_PROFILE_CANONICAL_JSON_V1` uses the shared I-JSON/binary64/JCS/domain-separated SHA-256 contract in [`CANONICALIZATION.md`](CANONICALIZATION.md). The `calibration_responses` array is sorted ascending by the full semantic key above and then `response_id`; `observations` and `source_record_ids` are sorted ascending by their IDs. No consumer may infer meaning from insertion order. The semantic validator rejects duplicate semantic keys, duplicate IDs, non-canonical array order, non-finite/overflowing numbers, unsafe integers, or a profile whose recomputed canonical bytes/hash differ from its binding. JSON Schema intentionally cannot express those global conditions.
+`CANONICAL_MATERIAL_PROFILE_PROJECTION_V1` is the single authoritative pre-JCS normalization procedure for a complete MaterialProfile JSON value. It deep-copies the validated value and applies exactly these rules:
+
+1. sort `calibration_responses` by `(canonical_stitch_type, course_mode, tension_profile_id, fabric_state, response_id)` using Unicode code-point comparison of the canonical string values;
+2. reject duplicate response IDs and duplicate four-field semantic keys;
+3. within each response, sort `observations` lexicographically by the RFC 8785 UTF-8 bytes of the complete observation object, rejecting only an exact duplicate observation; this permits multiple distinct readings from one `specimen_id`;
+4. sort `provenance.source_record_ids` by Unicode code point, rejecting duplicates;
+5. preserve every other value and every array not named above exactly; V1 currently defines no other MaterialProfile arrays.
+
+`MATERIAL_PROFILE_CANONICAL_JSON_V1` applies the shared I-JSON/binary64/JCS/domain-separated SHA-256 contract in [`CANONICALIZATION.md`](CANONICALIZATION.md) to that projection. A DesignSpec with an inline profile calls the same projection and embeds the resulting JSON value before its parent canonicalization; it must not copy these rules or substitute the standalone material hash. The semantic validator rejects non-finite/overflowing numbers, unsafe integers, invalid Unicode, or a profile whose recomputed canonical bytes/hash differ from a reference binding. JSON Schema intentionally cannot express those global conditions.
 
 ## Identifiability
 

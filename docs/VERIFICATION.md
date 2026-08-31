@@ -47,7 +47,7 @@ Wall-clock duration, machine name, and timestamp may be recorded as telemetry bu
 
 | Gate | Input and responsibility | Required success condition | Representative critical failure |
 | --- | --- | --- | --- |
-| V0 Input/geometry preflight | Raw geometry and external assets | The exact domain/geometry profile in [`MESH_PREFLIGHT.md`](MESH_PREFLIGHT.md) passes; normalization is lossless, deterministic, separately hashed, and fully recorded | `E_INPUT`, `E_UNSUPPORTED_FEATURE` |
+| V0 Input/geometry preflight | Raw geometry and external assets | The canonical representation in [`GEOMETRY_MODEL.md`](GEOMETRY_MODEL.md), exact domain profile in [`MESH_PREFLIGHT.md`](MESH_PREFLIGHT.md), and resolved numerical policy in [`NUMERICAL_GEOMETRY.md`](NUMERICAL_GEOMETRY.md) pass; normalization is lossless, deterministic, separately hashed, and fully recorded | `E_INPUT`, `E_UNSUPPORTED_FEATURE` |
 | V1 DesignSpec | DesignSpec plus referenced asset hashes | Schema and semantic constraints pass; dimensions, coordinate frame, requested topology, construction limits, material reference, and verification profile are explicit | `E_SCHEMA`, `E_REFERENCE` |
 | V2 CrochetIR structure | Candidate CrochetIR only | Schema version supported; IDs unique; references typed; canonicalization deterministic; all operations and stitch semantics supported | `E_SCHEMA`, `E_REFERENCE`, `E_DETERMINISM` |
 | V3 Stitch/reference accounting | CrochetIR plus canonical stitch library | Independently recomputed base/top arity, course membership, attachment multiplicity, yarn continuity, colors, and counts exactly match | `E_REFERENCE`, `E_COUNT` |
@@ -60,6 +60,8 @@ Wall-clock duration, machine name, and timestamp may be recorded as telemetry bu
 | V10 Provenance/physical status | Complete V0-V9 evidence and physical records if claimed | Required hashes and versions form a closed chain; physical status is supported by linked records and the profile's evidence requirement | `E_PROVENANCE`, `E_PHYSICAL_VALIDATION` |
 
 Gates run in order. After a mandatory failure, later gates default to `NOT_RUN`. They may run in a diagnostic-only mode, but their results cannot change the overall rejected state.
+
+V0 additionally records the immutable source hash, `IndexedTriangleMeshV1` representation version, parser adapter/version, source-to-canonical index maps, domain-profile ID, numerical-profile ID/version/record hash, characteristic scale, threshold/operator set, robust-predicate backend/version, and every normalization event. An uncertified required predicate, unresolved profile, or threshold interval straddling a decision boundary yields `INDETERMINATE`; it never becomes a guessed `PASS` or repair.
 
 ## Exact semantic checks
 
@@ -76,6 +78,7 @@ V2-V4 MUST use exact logic rather than tolerances wherever the representation is
 ### Stitch, course, and yarn accounting
 
 - Each stitch's declared `base_arity`, `top_arity`, and derived shaping classification equal `CROCHET_CORE_1.0.0`; V1 accepts plain six-family stitches and only binary SC shaping.
+- Every stitch has exactly one yarn-independent frontier edit paired with its `ADVANCE`: positive-base stitches use a valid consecutive `REPLACE_SPAN`; zero-base `CHAIN` uses a legal explicit `INSERT_AT_GAP`; target frontiers, neighbors, retired bases, and created tops agree exactly.
 - Resulting top attachment locations are neither missing nor duplicated.
 - Each stitch belongs to exactly one ordered course or round; course order and cyclic/linear mode agree with traversal.
 - Yarn-path events form continuous ordered paths. Changes of active yarn require explicit cut, attach, reattach, or color-change semantics as appropriate.
@@ -125,7 +128,7 @@ Shared libraries between solver and simulator require a documented common-mode r
 
 ### Sampling and alignment
 
-The comparison profile defines a positive characteristic target length `L` in millimetres, normally the target bounding-box diagonal. Surface samples are deterministic, area-weighted, and recorded by algorithm version, density, and seed. Degenerate targets fail V0.
+The V7 comparison profile defines its own positive characteristic target length `L` in millimetres, normally the target bounding-box diagonal. This is not the V0 numerical-profile scale, which is the certified mesh vertex diameter. Surface samples are deterministic, area-weighted, and recorded by algorithm version, density, and seed. Degenerate targets fail V0.
 
 The DesignSpec coordinate frame is authoritative. A profile may permit a deterministic rigid registration to remove placement only; scale fitting or non-rigid registration is forbidden for absolute-size claims. The applied transform is evidence.
 

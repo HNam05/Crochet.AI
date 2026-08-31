@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crochet.ai/schemas/numerical-geometry-profile.schema.json",
+  "title": "V0 Numerical Geometry Profile 1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "profile_version", "coordinate_type", "canonical_length_unit", "characteristic_scale", "normalization", "robust_predicate_policy", "thresholds"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "profile_id": { "const": "v0_num_mesh_binary64_v1" },
+    "profile_version": { "const": "1.0.0" },
+    "coordinate_type": { "const": "IEEE_754_BINARY64" },
+    "canonical_length_unit": { "const": "MILLIMETER" },
+    "characteristic_scale": { "const": "MESH_VERTEX_DIAMETER_V1" },
+    "normalization": { "const": "TRANSLATION_INVARIANT_DIFFERENCES_DIVIDED_BY_DIAMETER_V1" },
+    "robust_predicate_policy": { "const": "FILTERED_ADAPTIVE_CERTIFIED_SIGN_V1" },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["triangle_area2_normalized_max", "coordinate_distance_normalized_max", "near_contact_distance_normalized_max", "volume6_normalized_min_exclusive", "landmark_numeric_slack_normalized_max"],
+      "properties": {
+        "triangle_area2_normalized_max": { "$ref": "#/$defs/lessThanOrEqualThreshold" },
+        "coordinate_distance_normalized_max": { "$ref": "#/$defs/lessThanOrEqualThreshold" },
+        "near_contact_distance_normalized_max": { "$ref": "#/$defs/lessThanOrEqualThreshold" },
+        "volume6_normalized_min_exclusive": { "$ref": "#/$defs/greaterThanThreshold" },
+        "landmark_numeric_slack_normalized_max": { "$ref": "#/$defs/additiveThreshold" }
+      }
+    }
+  },
+  "$defs": {
+    "baseThreshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit", "operator", "boundary_outcome", "rationale", "owner", "calibration_path"],
+      "properties": {
+        "value": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "const": "DIMENSIONLESS" },
+        "operator": { "type": "string" },
+        "boundary_outcome": { "type": "string", "minLength": 1 },
+        "rationale": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 },
+        "calibration_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "lessThanOrEqualThreshold": {
+      "allOf": [
+        { "$ref": "#/$defs/baseThreshold" },
+        { "properties": { "operator": { "const": "LESS_THAN_OR_EQUAL" } } }
+      ]
+    },
+    "greaterThanThreshold": {
+      "allOf": [
+        { "$ref": "#/$defs/baseThreshold" },
+        { "properties": { "operator": { "const": "GREATER_THAN" } } }
+      ]
+    },
+    "additiveThreshold": {
+      "allOf": [
+        { "$ref": "#/$defs/baseThreshold" },
+        { "properties": { "operator": { "const": "ADD_TO_DECLARED_TOLERANCE" } } }
+      ]
+    }
+  }
+}

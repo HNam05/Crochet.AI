@@ -96,6 +96,13 @@ The exact ordered attachment lists are authoritative; the integer arities are re
 
 **ENGINEERING DECISION:** `INCREASE` and `DECREASE` are derived shaping classifications on one typed stitch-application node. They are not canonical stitch families, construction operations, or ambiguous textual macros. V1 recomputes `shaping` from the family and exact arity tuple; a mismatch is `E_COUNT`, not an alternative interpretation. A compiler may lower a compound node for physical simulation or localized export, but semantic round trips must recover the same compound node, ordered bases, and ordered tops.
 
+Every stitch application also declares one yarn-independent frontier edit:
+
+- `REPLACE_SPAN` when `base_arity > 0`; the stitch's ordered base list is the exact rewritten span and its ordered top list is the replacement;
+- `INSERT_AT_GAP` when `base_arity == 0`; the edit names the target frontier and the left/right attachment locations bounding the exact insertion gap, while the stitch's ordered top list is inserted there.
+
+`CHAIN` uses `INSERT_AT_GAP`. Numeric gap indexes, yarn order, work direction, array-difference inference, and implicit cursors are not canonical references. Linear end gaps use one null neighbor; the sole gap in an empty linear frontier uses two null neighbors. Cyclic gaps require two explicit adjacent neighbors in canonical orientation. These edit forms remain usable by future typed chain spaces, picots, lace, branches, and garment openings without declaring those techniques executable in V1.
+
 Two plain stitches that share a base are not V1-equivalent to one increase node. This strict grouping prevents a parser from guessing whether prose described one shaping application or multiple independent events. [ADR-0007](adr/0007-v1-executable-stitch-and-operation-semantics.md) records the alternatives and migration boundary.
 
 ## Construction operations
@@ -127,7 +134,7 @@ A frontier has two orthogonal attributes:
 
 It also has an ordered list of available attachment-location IDs, a component and branch, and an active yarn or explicit `null`. A cyclic frontier records an anchor location so that its serialization has a deterministic origin.
 
-Frontiers are immutable snapshots over ordered attachment-location IDs. Direct stitch IDs are insufficient because one stitch may produce multiple usable locations. Numeric ranges and a separate persistent-segment entity are not canonical V1 references. Ordered transitions create, advance, split, reserve, reattach, join, close, or declare an opening. Stitch order within a course provides the fine-grained advance; snapshots are required at course and topology/lifecycle boundaries.
+Frontiers are immutable snapshots over ordered attachment-location IDs. Direct stitch IDs are insufficient because one stitch may produce multiple usable locations. Numeric ranges and a separate persistent-segment entity are not canonical V1 references. Ordered transitions create, advance, split, reserve, reattach, join, close, or declare an opening. V1 materializes an input/output snapshot for every stitch edit and every topology/lifecycle transition so ledger ownership is exact after each event; future lossless compression must reconstruct those same snapshots before validation.
 
 Replay maintains one ownership ledger. Every produced attachment location is exactly one of active-live, reserved-live, retired, or retained on one declared-open boundary. It cannot be live in two frontiers. A branch-local reserved frontier is the persistent segment; solvers may compress it privately but must compile explicit IDs.
 
@@ -142,6 +149,8 @@ See [CROCHET_IR.md](CROCHET_IR.md) for the complete transition contract.
 **ESTABLISHED:** Horizontal stitch gauge and vertical course gauge describe different physical directions and are not interchangeable.
 
 **ENGINEERING DECISION:** `MaterialProfile` stores effective stitch pitch and course pitch separately. Hook diameter and yarn metadata provide priors only. A design binds either an inline profile or a content-addressed profile reference.
+
+An inline profile is normalized through the single `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1` procedure before it is embedded into the working DesignSpec value for parent canonicalization. DesignSpec owns no duplicate material collection rules. The standalone MaterialProfile hash and the enclosing DesignSpec hash use different domain-separated profiles over the same normalized material data model.
 
 **HYPOTHESIS:** First-order pitch measurements and bounded uncertainty are sufficient for the initial analytic solver and F0 forward model. Physical calibration must confirm or reject this.
 

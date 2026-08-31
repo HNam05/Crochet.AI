@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crochet.ai/schemas/indexed-triangle-mesh.schema.json",
+  "title": "IndexedTriangleMeshV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["representation_version", "coordinate_system", "vertices", "faces"],
+  "properties": {
+    "representation_version": { "const": "INDEXED_TRIANGLE_MESH_V1" },
+    "coordinate_system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["length_unit", "handedness", "coordinate_frame_id"],
+      "properties": {
+        "length_unit": { "const": "MILLIMETER" },
+        "handedness": { "const": "RIGHT_HANDED" },
+        "coordinate_frame_id": {
+          "type": "string",
+          "pattern": "^frame_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$"
+        }
+      }
+    },
+    "vertices": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/vertexRecord" }
+    },
+    "faces": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/faceRecord" }
+    }
+  },
+  "$defs": {
+    "vertexRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position_mm"],
+      "properties": {
+        "position_mm": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number" },
+            { "type": "number" },
+            { "type": "number" }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "faceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vertex_indices"],
+      "properties": {
+        "vertex_indices": {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/index" },
+            { "$ref": "#/$defs/index" },
+            { "$ref": "#/$defs/index" }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "index": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0.0",
+  "profile_id": "v0_num_mesh_binary64_v1",
+  "profile_version": "1.0.0",
+  "coordinate_type": "IEEE_754_BINARY64",
+  "canonical_length_unit": "MILLIMETER",
+  "characteristic_scale": "MESH_VERTEX_DIAMETER_V1",
+  "normalization": "TRANSLATION_INVARIANT_DIFFERENCES_DIVIDED_BY_DIAMETER_V1",
+  "robust_predicate_policy": "FILTERED_ADAPTIVE_CERTIFIED_SIGN_V1",
+  "thresholds": {
+    "triangle_area2_normalized_max": {
+      "value": 9.094947017729282e-13,
+      "unit": "DIMENSIONLESS",
+      "operator": "LESS_THAN_OR_EQUAL",
+      "boundary_outcome": "FAIL_E_INPUT",
+      "rationale": "Exactly representable 2^-40 bootstrap rejection band for near-zero normalized doubled area.",
+      "owner": "geometry-preflight",
+      "calibration_path": "Adversarial scale and threshold-boundary suite; supersede with a new profile ID."
+    },
+    "coordinate_distance_normalized_max": {
+      "value": 9.094947017729282e-13,
+      "unit": "DIMENSIONLESS",
+      "operator": "LESS_THAN_OR_EQUAL",
+      "boundary_outcome": "FAIL_E_INPUT",
+      "rationale": "Exactly representable 2^-40 bootstrap rejection band for numerically coincident distinct vertices.",
+      "owner": "geometry-preflight",
+      "calibration_path": "Coincidence and feature-scale fixture sweep; supersede with a new profile ID."
+    },
+    "near_contact_distance_normalized_max": {
+      "value": 9.094947017729282e-13,
+      "unit": "DIMENSIONLESS",
+      "operator": "LESS_THAN_OR_EQUAL",
+      "boundary_outcome": "FAIL_BY_COMPONENT_RELATION",
+      "rationale": "Exactly representable 2^-40 bootstrap exclusion band for unsupported near contact.",
+      "owner": "geometry-preflight",
+      "calibration_path": "Non-adjacent primitive clearance suite; supersede with a new profile ID."
+    },
+    "volume6_normalized_min_exclusive": {
+      "value": 1.4551915228366852e-11,
+      "unit": "DIMENSIONLESS",
+      "operator": "GREATER_THAN",
+      "boundary_outcome": "INDETERMINATE_E_INPUT",
+      "rationale": "Exactly representable 2^-36 minimum margin for reliable normalized signed six-volume orientation.",
+      "owner": "geometry-preflight",
+      "calibration_path": "Closed-component cancellation and scale suite; supersede with a new profile ID."
+    },
+    "landmark_numeric_slack_normalized_max": {
+      "value": 9.094947017729282e-13,
+      "unit": "DIMENSIONLESS",
+      "operator": "ADD_TO_DECLARED_TOLERANCE",
+      "boundary_outcome": "ELIGIBLE_WHEN_CERTIFIED_UPPER_BOUND_IS_AT_OR_BELOW_SUM",
+      "rationale": "Exactly representable 2^-40 numerical slack kept separate from the user-declared landmark tolerance.",
+      "owner": "geometry-preflight",
+      "calibration_path": "Landmark-loop assignment ambiguity suite; supersede with a new profile ID."
+    }
+  }
+}

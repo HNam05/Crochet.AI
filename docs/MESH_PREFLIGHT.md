@@ -4,6 +4,8 @@
 
 V0 turns an external target asset into a deterministic, validated target representation or rejects it. It does not generate CrochetIR, choose a Construction Graph, repair topology, or evaluate crochet feasibility.
 
+All mesh profiles consume [`IndexedTriangleMeshV1`](GEOMETRY_MODEL.md#indexedtrianglemeshv1). Source parsing, canonical identity, zero-based indexing, right-handed millimetre units, and the permitted non-destructive normalization set are defined only by [`GEOMETRY_MODEL.md`](GEOMETRY_MODEL.md).
+
 - **ENGINEERING DECISION:** preflight selection depends on both `project_type` and `target_geometry.geometry_type`; one universal mesh policy is forbidden.
 - **PROVEN / FORMAL:** preflight acceptance cannot establish crochet reachability, physical plausibility, or geometric fidelity.
 - **ENGINEERING DECISION:** source bytes remain immutable and retain their raw-byte hash. Normalized output is a separate derived artifact with its own hash and a complete normalization record.
@@ -26,12 +28,12 @@ V1 rejects `MESH_3D` for flat and lace projects. A future 3D blocking/drape targ
 
 Every V1 mesh profile requires:
 
-1. a parseable, content-addressed indexed triangle mesh;
+1. a parseable, content-addressed `IndexedTriangleMeshV1` with immutable source bytes and a versioned adapter record;
 2. finite binary64 coordinates in an explicit right-handed millimetre frame;
 3. the exact expected connected-component count;
 4. every edge incident to one face at a declared boundary or exactly two faces in the interior;
 5. orientable components with consistent local winding;
-6. no zero-area, repeated-index, duplicate-face, isolated-face, or non-manifold edge/vertex under the versioned numerical profile;
+6. no zero-area, repeated-index, duplicate-face, isolated-face, or non-manifold edge/vertex under the exact and versioned numerical rules;
 7. no self-intersection within a component;
 8. no intersection or zero-clearance contact between components;
 9. the exact expected boundary-loop count and unambiguous loop-to-opening mapping when boundaries are permitted;
@@ -64,6 +66,8 @@ Allowed normalization is deliberately narrow:
 
 Every normalization is recorded in order with before/after hashes. The following are repairs and are forbidden in V0: vertex welding, hole filling, remeshing, decimation, subdivision, smoothing, face deletion, component merging/splitting, local winding guessing, intersection removal, and unit guessing. A proposed repaired asset is a new input requiring a new DesignSpec and V0 run.
 
+The exhaustive normalization and prohibited-repair lists in [`GEOMETRY_MODEL.md`](GEOMETRY_MODEL.md#deterministic-non-destructive-normalization) are normative if this summary is incomplete.
+
 ## Boundary matching
 
 Detected mesh boundary loops are canonical ordered vertex cycles. A loop matches a DesignSpec opening only when all declared boundary landmarks resolve to that loop and exactly one opening requirement is compatible with its purpose and closure expectation. Count equality alone is insufficient. A second valid matching is ambiguity and fails closed.
@@ -72,12 +76,16 @@ Mesh boundary identity never becomes a CrochetIR frontier ID. Solvers may derive
 
 ## Numerical profile
 
-Exact index-topology predicates use no tolerance. Geometric predicates such as near-zero triangle area, coincident vertices, intersection classification, signed-volume stability, and landmark-to-boundary matching require a versioned `preflight_numerical_profile_id`. Each value records units, comparison operator, rationale, owner, and convergence/adversarial validation path. Bootstrap chooses no hidden numerical values.
+Exact index-topology predicates use no tolerance. Geometric predicates such as near-zero triangle area, coincident vertices, intersection/contact classification, signed-volume stability, and landmark-to-boundary matching use the immutable registry in [`NUMERICAL_GEOMETRY.md`](NUMERICAL_GEOMETRY.md). DesignSpec V1 accepts exactly `preflight_numerical_profile_id = v0_num_mesh_binary64_v1`, resolving to profile version `1.0.0` and [`../profiles/v0-mesh-numeric-profile-1.json`](../profiles/v0-mesh-numeric-profile-1.json). Every value records units, operator, boundary result, rationale, owner, and calibration path. An unknown, unsupported, malformed, or uncertifiable profile/predicate prevents pass; no default epsilon exists.
+
+Certified exact-sign orientation/coplanarity predicates determine combinatorial geometric relations. Scale-normalized thresholds classify near-zero area, numerical coordinate coincidence, near contact, reliable signed-volume orientation, and landmark slack. The complete intersection/contact outcome table and landmark tie rules in [`NUMERICAL_GEOMETRY.md`](NUMERICAL_GEOMETRY.md#contact-and-intersection) are normative.
 
 ## Adversarial acceptance table
 
 | Case | Required outcome |
 | --- | --- |
+| Valid tetrahedron or consistently triangulated cube | Pass closed-amigurumi profile when exact expectations match |
+| Same valid cube scaled by `1e-6` or `1e6` with equivalent unit conversion | Same classification and normalized margins |
 | Closed consistently wound sphere | Pass closed-amigurumi profile |
 | Same sphere with every face reversed | Pass only through one recorded whole-component reversal |
 | Sphere with one face reversed | Fail ambiguous/inconsistent orientation |
@@ -85,6 +93,16 @@ Exact index-topology predicates use no tolerance. Geometric predicates such as n
 | Two disjoint closed spheres, expected count two | Pass closed-amigurumi preflight; solver still decides construction relationship |
 | Two spheres touching at one vertex | Fail V1 intentional-contact support |
 | Self-intersecting hourglass | Fail `E_INPUT` |
+| Repeated-index or exact/near-zero-area triangle | Fail `E_INPUT`; no face deletion |
+| Extremely skinny triangle just below/at/above the profile boundary | Fail/fail/pass respectively when the comparison is certified |
+| Duplicate or reversed-duplicate face | Fail exact duplicate-face predicate |
+| Two triangles with only their intended manifold edge or vertex in common | Not a self-intersection; manifold/link rules still apply |
+| Non-adjacent crossing or coplanar-overlapping triangles | Fail `E_INPUT` |
+| Non-manifold edge or bow-tie vertex | Fail exact incidence/link predicate |
+| Distinct identities at equal or profile-coincident coordinates | Fail `E_INPUT`; never weld |
+| Closed component with volume at or below the reliability boundary | `INDETERMINATE/E_INPUT`; never guess outward orientation |
+| Landmark equidistant/ambiguous between two boundary loops | Fail ambiguity; never use iteration order |
+| NaN, infinity, or invalid canonical face index | Fail `E_INPUT` before geometric predicates |
 | Open garment sheet with four declared loops | Pass only when all four map uniquely to garment openings |
 | Garment panel overlap | Fail; no implicit cloth-contact interpretation |
 | Flat rectangle supplied as `MESH_3D` | Fail domain/profile compatibility; use `PLANAR_REGION` |
@@ -92,4 +110,4 @@ Exact index-topology predicates use no tolerance. Geometric predicates such as n
 
 ## Output evidence
 
-V0 evidence records source hash, selected profile, numerical-profile ID, parser/version, exact and numerical predicates, normalization events, derived normalized-artifact hash, component/boundary summaries, and diagnostics. Any required predicate that is unsupported, ambiguous, indeterminate, or fails prevents V1 from running.
+V0 evidence records source hash, selected domain profile, numerical-profile ID/version/record hash, parser/version, exact and numerical predicates, robust-predicate backend/version, normalization events, derived normalized-artifact hash, component/boundary summaries, and diagnostics. Any required predicate that is unsupported, ambiguous, indeterminate, or fails prevents V1 from running.

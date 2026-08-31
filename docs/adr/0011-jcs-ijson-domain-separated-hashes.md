@@ -13,13 +13,17 @@ Structured artifacts use their exhaustive collection registry followed by RFC 87
 
 SHA-256 hashes the domain-separated preimage `"Crochet.AI" || NUL || profile_id || NUL || jcs_utf8`. External asset hashes continue to cover exact raw bytes.
 
+Canonical child projections compose before parent JCS serialization. `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1` is the only procedure that normalizes a complete MaterialProfile data model. A DesignSpec `INLINE` binding invokes that projection, embeds the normalized JSON value, then applies only DesignSpec-owned normalization and hashes the complete parent under `DESIGN_SPEC_CANONICAL_JSON_V1`. The standalone material hash applies `MATERIAL_PROFILE_CANONICAL_JSON_V1` to the same projection; it is not substituted for embedded content.
+
 ## Alternatives
 
 - Raw JSON hashing was rejected because whitespace, key order, and number spelling differ.
 - Arbitrary-precision decimal semantics were rejected for V1 because they add cross-language arithmetic and solver-conversion complexity.
 - Decimal strings for every measurement were rejected as disproportionate; future values requiring more than binary64 receive an explicit typed profile.
 - Undifferentiated SHA-256 of JCS bytes was rejected to prevent the same bytes being interpreted under different artifact profiles.
+- Duplicating MaterialProfile sort rules in the DesignSpec canonicalizer was rejected because two normalization owners could drift.
+- Embedding the standalone material hash or canonical JSON as a string was rejected because the complete inline value must remain part of the parent content identity.
 
 ## Consequences
 
-Semantically identical accepted numeric spellings hash identically across locales and runtimes. Existing profile identifiers become part of the cryptographic contract. Implementations must pass RFC and project vectors in independent runtimes before use.
+Semantically identical accepted numeric spellings and explicitly unordered inline-material collection permutations hash identically across locales and runtimes. Meaningful arrays remain untouched. Existing profile identifiers become part of the cryptographic contract. Implementations must pass RFC and project vectors in independent runtimes before use.

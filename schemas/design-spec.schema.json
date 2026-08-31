@@ -241,8 +241,8 @@
           ]
         },
         "preflight_numerical_profile_id": {
-          "type": "string",
-          "pattern": "^v0_num_[A-Za-z0-9][A-Za-z0-9._-]{0,112}$"
+          "const": "v0_num_mesh_binary64_v1",
+          "description": "Immutable registry key resolved by docs/NUMERICAL_GEOMETRY.md."
         },
         "topology_expectation": { "$ref": "#/$defs/topologyExpectation" }
       },
@@ -541,7 +541,10 @@
           "required": ["binding_type", "profile"],
           "properties": {
             "binding_type": { "const": "INLINE" },
-            "profile": { "$ref": "material-profile.schema.json" }
+            "profile": {
+              "$ref": "material-profile.schema.json",
+              "description": "Embedded through CANONICAL_MATERIAL_PROFILE_PROJECTION_V1 before parent DesignSpec canonicalization."
+            }
           }
         }
       ]

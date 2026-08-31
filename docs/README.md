@@ -9,6 +9,7 @@ These documents are contracts. Labels distinguish **PROVEN / FORMAL**, **ESTABLI
 - [`DESIGN_SPEC.md`](DESIGN_SPEC.md)
 - [`CROCHET_IR.md`](CROCHET_IR.md)
 - [`CANONICALIZATION.md`](CANONICALIZATION.md)
+- [`GEOMETRY_MODEL.md`](GEOMETRY_MODEL.md)
 
 ## Solving and topology
 
@@ -18,6 +19,7 @@ These documents are contracts. Labels distinguish **PROVEN / FORMAL**, **ESTABLI
 - [`FRONTIER_SOLVER.md`](FRONTIER_SOLVER.md)
 - [`TOPOLOGY_SEAMLESS.md`](TOPOLOGY_SEAMLESS.md)
 - [`MESH_PREFLIGHT.md`](MESH_PREFLIGHT.md)
+- [`NUMERICAL_GEOMETRY.md`](NUMERICAL_GEOMETRY.md)
 
 ## Physics and materials
 

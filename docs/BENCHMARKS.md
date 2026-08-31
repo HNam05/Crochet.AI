@@ -48,6 +48,12 @@ Generated fixtures are preferred when a compact exact recipe exists. Their gener
 
 `TOP-TORUS-01` and `TOP-TWO-LOBE-01` have milestone-dependent approved outcomes. Changing an expected `E_UNSUPPORTED_FEATURE` to a verified construction is a feature transition and requires a new fixture version plus human-approved golden, not an in-place rewrite.
 
+### V0 geometry-contract fixture families
+
+Every mesh fixture records representation `INDEXED_TRIANGLE_MESH_V1`, its source-adapter version, domain-profile ID, numerical-profile ID/version/record hash, characteristic scale, exact expected incidence classification, and expected contact/intersection relation. The V0 contract suite includes valid closed/open manifold meshes plus isolated face, repeated/out-of-range index, duplicate/reversed-duplicate face, coordinate-coincident identities, non-manifold edge, bow-tie vertex, boundary chain/branch, non-orientable surface, local winding defect, proper intersection, vertex-face and edge-edge touch, coplanar overlap, coincident triangle, same/inter-component near contact, signed-volume instability, and landmark ambiguity.
+
+Metamorphic variants permute source vertex/face order, apply rigid transforms, and uniformly scale by `1e-6` and `1e6` with equivalent unit/tolerance changes. Numerical boundary variants use the representable values immediately below, at, and above every `v0_num_mesh_binary64_v1` operator boundary. These remain proposed fixtures until human golden approval; this specification pass does not create or update approved outputs.
+
 ## Exact fixture construction requirements
 
 ### Analytic shapes

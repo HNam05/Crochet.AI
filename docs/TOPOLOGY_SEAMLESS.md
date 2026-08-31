@@ -49,12 +49,14 @@ V1 uses ordered attachment/loop IDs inside explicit immutable frontier objects w
 
 The reference validator maintains a location ledger with exactly four states: active-live, reserved-live, retired, and declared-open-boundary. `CLOSED` is a frontier state whose former locations are retired. No location may be live in two frontiers. Solvers may use ranges or compressed contours privately, but compilation expands them to explicit ordered IDs.
 
+Each stitch carries a yarn-independent frontier edit. `REPLACE_SPAN` names its target frontier and reuses the stitch's exact non-empty base/top lists. `INSERT_AT_GAP` names the target frontier plus nullable left/right neighboring location IDs and reuses the stitch's top list; it is the only edit legal when base arity is zero. No gap index or implicit working cursor enters CrochetIR.
+
 The canonical lifecycle operations are:
 
 | Operation | Preconditions | Result and obligations |
 | --- | --- | --- |
 | `CREATE` | Valid anchor or produced locations; no reused frontier ID | 0 inputs, 1 `ACTIVE` output, at least one created location |
-| `ADVANCE` | One `ACTIVE` frontier; exact supported stitch arities | 1 input/1 `ACTIVE` output; referenced bases retire and new tops are explicit |
+| `ADVANCE` | One `ACTIVE` frontier; exact supported stitch arities and legal explicit span/gap edit | 1 input/1 `ACTIVE` output; referenced bases retire and new tops are explicit |
 | `SPLIT` | One `ACTIVE` frontier and an explicit ordered partition/branch rule | 1 input, at least 2 `ACTIVE` child obligations; no location silently duplicated or lost |
 | `RESERVE` | `ACTIVE` frontier not required by the current yarn path | 1 input, at least 2 outputs: exactly one continuing `ACTIVE`, at least one `RESERVED`; reserved locations explicit |
 | `REATTACH` | `RESERVED` frontier plus permitted explicit `ATTACH` and yarn transition | 1 `RESERVED` input/1 `ACTIVE` output, no attachment delta; reattachment is counted |
@@ -71,6 +73,7 @@ The canonical lifecycle operations are:
 - Every frontier ID has exactly one creation transition.
 - Every nonterminal transition consumes the current state exactly once and produces explicitly named successor state(s).
 - Frontier order and orientation are explicit; cyclic order is fixed by `anchor_attachment_location_id`, never by an implicit modulo rotation.
+- A `REPLACE_SPAN` target is one exact consecutive ordered span of its active input frontier. An `INSERT_AT_GAP` target is one exact adjacent-neighbor pair, or a legal linear end/empty gap. Its target frontier is the transition input; yarn state and work direction cannot select the location.
 - A reserved frontier cannot advance. It may be reactivated only by the specified yarn/attach preconditions, or may be consumed directly by a final `JOIN` whose explicit mapping discharges that obligation without new yarn work.
 - A closed or declared-open frontier has no outgoing transition.
 - Split outputs are disjoint ordered partitions of the input boundary; silent loss, duplication, and shared live junction locations are forbidden in V1.
@@ -176,6 +179,8 @@ Filtering a feature changes the declared planning domain and must be recorded. I
 - A cyclic boundary array rotated while retaining the old anchor is invalid; silently accepting it makes shaping positions and join orientation parser-dependent.
 - A join that consumes a site but also carries it into the output leaves one location both retired and live and is invalid.
 - Reattaching a reserved armhole by numeric index after earlier insertions can select different locations across implementations; explicit IDs avoid the ambiguity.
+- A chain whose output happens to appear between two locations but whose edit omits those neighbors is invalid; output-array differencing cannot reconstruct the missing intent.
+- A cyclic insertion that names two existing but non-adjacent neighbors is invalid even if inserting there would produce the declared output array after reordering.
 
 ## Unsupported bootstrap claims
 

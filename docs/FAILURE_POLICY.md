@@ -90,6 +90,8 @@ reproducibility:
 
 Numerical diagnostics additionally MUST record observed value, threshold, comparison operator, units, tolerance rationale reference, and calibration owner or path. Search failures MUST record explored states, wall-independent work budget, deterministic tie-breaking policy, and seed if applicable. Sensitive local paths and personal data MUST NOT be required for reproducibility.
 
+V0 geometry diagnostics use stable message keys under these families: `geometry.invalid_index`, `geometry.non_finite_coordinate`, `geometry.degenerate_face`, `geometry.coincident_vertex`, `geometry.non_manifold`, `geometry.inconsistent_winding`, `geometry.intersection`, `geometry.contact_unsupported`, `geometry.orientation_indeterminate`, `geometry.landmark_boundary_ambiguous`, and `geometry.numeric_profile_unresolved`. Proven defects produce `FAIL` with `E_INPUT` or, for otherwise valid but unsupported intentional inter-component contact, `E_UNSUPPORTED_FEATURE`. An unresolved profile, uncertified robust predicate, or certified interval that straddles a required numerical boundary produces `INDETERMINATE` with the corresponding diagnostic and does not satisfy V0. The diagnostic may retain `E_INPUT` as its input-contract category, but the gate outcome remains `INDETERMINATE`, not `FAIL`, unless a hard defect was established.
+
 Diagnostics are ordered deterministically by gate, code, artifact location, and entity ID. Human prose MUST NOT be the only machine-readable distinction between failures.
 
 ## Critical failures
@@ -125,4 +127,3 @@ A retry is a new attempt with explicit changed parameters, budget, seed, or arti
 - A golden change requires explicit human approval as specified in [`TEST_STRATEGY.md`](TEST_STRATEGY.md).
 - A verifier crash or missing dependency is `E_INTERNAL` or `INDETERMINATE`, never success.
 - A warning waiver may allow research inspection, but the resulting state remains `EXPERIMENTAL` or `NOT_VERIFIED` as defined by the profile.
-

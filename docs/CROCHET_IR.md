@@ -53,7 +53,7 @@ The canonical stitch enum is exactly:
 
 US/UK/German names and abbreviations never occur as stitch semantics. They are exporter profiles.
 
-Each stitch declares `stitch_type`, `shaping`, `base_arity`, `top_arity`, ordered base and top attachment-location IDs, yarn, color, course, and derivation.
+Each stitch declares `stitch_type`, `shaping`, `base_arity`, `top_arity`, ordered base and top attachment-location IDs, one explicit `frontier_edit`, yarn, color, course, and derivation. Frontier edits are independent of yarn-path order and traversal terminology.
 
 **PROVEN / FORMAL:**
 
@@ -73,6 +73,30 @@ Core arity rules are:
 | `SINGLE_CROCHET` + `DECREASE` | 2 | 1 |
 
 Earlier stitches remain immutable graph nodes. Frontier transitions retire attachment availability, not stitches. `shaping` is a redundant, independently checked classification of the V1 family/arity tuple. Two plain SC nodes sharing a base are not the same canonical construction as one SC increase node.
+
+### Explicit frontier edits
+
+The containing stitch's existing ordered base/top arrays are reused rather than duplicated inside the edit object:
+
+| Edit | Required fields | Meaning |
+| --- | --- | --- |
+| `REPLACE_SPAN` | `edit_type`, `frontier_id` | `base_attachment_location_ids` is the exact non-empty ordered span and `top_attachment_location_ids` is its ordered replacement |
+| `INSERT_AT_GAP` | `edit_type`, `frontier_id`, nullable `left_location_id`, nullable `right_location_id` | the base list is empty and the ordered top list is inserted between the named neighbors |
+
+Every V1 stitch event has exactly one `ADVANCE` transition. Its sole input frontier equals `frontier_edit.frontier_id`, its retired delta equals the stitch bases, and its created delta equals the stitch tops. Non-chain V1 stitches use `REPLACE_SPAN`; `CHAIN` uses `INSERT_AT_GAP`.
+
+For a linear frontier with ordered locations `F`:
+
+- `(null, F[0])` is the beginning gap;
+- `(F[-1], null)` is the ending gap;
+- `(F[i], F[i+1])` is an internal gap;
+- `(null, null)` is legal if and only if `F` is empty.
+
+For a cyclic frontier, both neighbors are non-null members and `right_location_id` is the immediate successor of `left_location_id` in the anchored canonical orientation, including the last-to-first gap. On a singleton cyclic frontier the one location is its own successor, so the two IDs are equal. No other equal-neighbor case is legal.
+
+`INSERT_AT_GAP` retires no existing location, inserts every top exactly once in declared order, and preserves the relative order and ownership of all prior locations. `REPLACE_SPAN` requires the bases to be one consecutive ordered span, with cyclic wrap permitted, retires exactly that span, inserts every top exactly once, and preserves all unretired relative order. For cyclic edits, the output array is the unique rotation of the edited cycle beginning at its declared output anchor. The edit does not create, split, reserve, join, or close a frontier implicitly.
+
+**PROVEN / FORMAL:** The target gap or span is resolved only against the declared input frontier snapshot. Yarn order, course work direction, output-array differencing, numeric positions, and implicit cursors cannot supply or repair an edit anchor. An absent, non-adjacent, duplicated, reversed, or lifecycle-ineligible anchor fails V3/V4.
 
 Attachment location types are `TOP_LOOP`, `MAGIC_RING_ANCHOR`, `CHAIN_SPACE`, `FABRIC_ATTACHMENT_POINT`, and `MOTIF_ATTACHMENT_POINT`. The latter typed locations are extensibility points; capability support remains mandatory.
 
@@ -148,7 +172,7 @@ Transitions are totally ordered and occur after a declared construction event. E
 | Transition | Input/output snapshots | Required deltas and lifecycle result |
 | --- | --- | --- |
 | `CREATE` | 0 / 1 | at least one `created` location; no retired/reserved locations; output `ACTIVE` |
-| `ADVANCE` | 1 / 1 | retired bases and created tops are explicit; no reserved locations; output `ACTIVE` |
+| `ADVANCE` | 1 / 1 | one explicit `REPLACE_SPAN` or `INSERT_AT_GAP`; retired bases and created tops are exact; no reserved locations; output `ACTIVE` |
 | `SPLIT` | 1 / at least 2 | no created/reserved locations; output frontiers are `ACTIVE` and partition input availability |
 | `RESERVE` | 1 / at least 2 | at least one reserved location; no created locations; exactly one continuing `ACTIVE` and at least one `RESERVED` output |
 | `REATTACH` | 1 / 1 | all three deltas empty; `RESERVED` input becomes `ACTIVE` output and is paired with `ATTACH` |
@@ -162,7 +186,7 @@ The schema enforces these cardinalities and neutral deltas where local informati
 
 1. A frontier snapshot is produced by exactly one transition and used only after that transition.
 2. `RESERVED` frontiers cannot advance until an explicit `REATTACH` transition paired with `ATTACH`.
-3. `ADVANCE` is an ordered rewrite: it preserves unused relative order, retires exactly the event's ordered bases, and inserts exactly that event's ordered tops at the rewrite position.
+3. `ADVANCE` applies exactly the stitch's declared frontier edit: `REPLACE_SPAN` rewrites its exact ordered bases, while `INSERT_AT_GAP` uses legal explicit neighbors; both preserve every unaffected relative order and create exactly the ordered tops.
 4. `SPLIT` partitions the declared available locations into disjoint ordered subsequences without loss, duplication, or a shared live junction.
 5. `RESERVE` partitions one active sequence into exactly one active output and one or more reserved ordered outputs; its reserved delta equals their union.
 6. `REATTACH` changes one reserved sequence to active without an attachment delta.
@@ -171,7 +195,7 @@ The schema enforces these cardinalities and neutral deltas where local informati
 9. `DECLARED_OPEN` is linked exactly once to an `opening` and `DECLARE_OPENING` operation, and that operation plus the opening both carry the same non-null `DesignSpec.intentional_openings[].opening_requirement_id`.
 10. Every initial, split, and reserved frontier obligation eventually reaches `CLOSED`, `DECLARED_OPEN`, or a validated join.
 
-Stitch order within a course supplies fine-grained advancement. Immutable snapshots are required at course and topology/lifecycle boundaries, avoiding a quadratic full-frontier copy after every stitch while retaining deterministic replay.
+Each V1 stitch edit is paired with an immutable input/output frontier snapshot so the ownership ledger is exact after every event. This deliberately favors a simple auditable representation over compactness. A future serialization profile may add lossless delta compression, but decompression must recover the same edit objects, ordered locations, snapshots, and canonical semantics before shared validation.
 
 An opening records its boundary locations, purpose, closure expectation, component, derivation, declaring operation, and the required `DesignSpec.intentional_openings[].opening_requirement_id`. The semantic validator resolves that ID against the content-addressed `design_spec_ref`, then requires purpose and closure expectation to agree. A terminal `ACTIVE` or `RESERVED` frontier is an unintended boundary and fails V4.
 
@@ -211,7 +235,7 @@ Duplicate IDs, duplicate parameter names, non-finite numbers, unresolved referen
 | --- | --- | --- |
 | Top-level entity tables: `colors`, `yarns`, `attachment_locations`, `stitches`, `construction_operations`, `courses`, `frontiers`, `branches`, `components`, `openings`, `yarn_paths`, `derivations` | sort by the table's typed ID | table position is non-semantic |
 | `construction_sequence`, `frontier_transitions` | sort by contiguous `sequence_index` / `transition_index` | index is the sole executable order |
-| `course_order`, `course.member_event_ids`, `stitch.base_attachment_location_ids`, `stitch.top_attachment_location_ids`, `frontier.attachment_location_ids`, `construction_operation.attachment_location_ids`, `construction_operation.join_input_mappings`, `join_input_mapping.consumed_attachment_location_ids`, `sequence_event.frontier_transition_ids`, `yarn_path.segments`, `yarn_segment.event_ids`, and primitive-array `solver_parameter.value` | preserve declared order | construction, traversal, attachment, event, yarn chronology, or parameter value order is semantic |
+| `course_order`, `course.member_event_ids`, `stitch.base_attachment_location_ids`, `stitch.top_attachment_location_ids`, `frontier.attachment_location_ids`, `construction_operation.attachment_location_ids`, `construction_operation.join_input_mappings`, `join_input_mapping.consumed_attachment_location_ids`, `sequence_event.frontier_transition_ids`, `yarn_path.segments`, `yarn_segment.event_ids`, and primitive-array `solver_parameter.value` | preserve declared order | construction, traversal, attachment, event, yarn chronology, or parameter value order is semantic; `frontier_edit` carries IDs but no array |
 | Input/output frontier and yarn ID arrays on operations, courses, and transitions; branch/component entry and terminal frontier arrays | preserve declared order | orientation and obligation order are semantic; validators check it matches the explicit mapping/replay |
 | `frontier_transition.*_attachment_location_ids`, `opening.boundary_attachment_location_ids` | preserve declared order | they identify a boundary traversal order; set membership alone is insufficient |
 | `branch.parent_branch_ids`, `branch.course_ids`, `component.branch_ids`, `required_capabilities`, `derivation.subject_refs`, `provenance.input_artifacts` | sort by typed ID or stable tuple (`entity_type`, referenced ID; artifacts by `artifact_id`) | membership is semantic but incidental input order is not |
@@ -223,7 +247,7 @@ No schema array is implicitly a set merely because it uses `uniqueItems`. The re
 
 Text equality and CrochetIR content-hash equality are not the V9 oracle. `CROCHET_SEMANTIC_EQUIVALENCE_V1` compares two schema- and semantically-valid IRs under the same executable semantic profile:
 
-1. Project only construction-relevant fields. Preserve required capabilities; stitch family, shaping, arity, ordered incidence; construction operations and join method/orientation; total event/course/yarn order; active yarn/color changes; material-profile content hashes; frontier topology, lifecycle, ordered rewrites; branch/component topology; and opening purpose/closure/boundary semantics.
+1. Project only construction-relevant fields. Preserve required capabilities; stitch family, shaping, arity, ordered incidence, frontier-edit class, target frontier, and gap neighbors; construction operations and join method/orientation; total event/course/yarn order; active yarn/color changes; material-profile content hashes; frontier topology, lifecycle, ordered rewrites; branch/component topology; and opening purpose/closure/boundary semantics.
 2. Remove `crochet_ir_id`, all original entity IDs after their references are captured, display labels, derivations, solver/search provenance, artifact URIs, software commit, source/target hashes, and `design_spec_ref`. V10 retains those facts and records the round-trip lineage separately.
 3. Assign canonical labels without graph search:
    - events by contiguous `sequence_index`, and stitch/operation subjects by their event;

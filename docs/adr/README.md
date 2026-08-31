@@ -13,5 +13,7 @@ Accepted foundational decisions:
 9. [`0009-execution-normalized-semantic-equivalence.md`](0009-execution-normalized-semantic-equivalence.md): deterministic semantic round-trip equivalence without raw-ID equality
 10. [`0010-domain-specific-v0-preflight-profiles.md`](0010-domain-specific-v0-preflight-profiles.md): domain-specific geometry preflight and no implicit repair
 11. [`0011-jcs-ijson-domain-separated-hashes.md`](0011-jcs-ijson-domain-separated-hashes.md): language-independent canonical numbers, bytes, and hashes
+12. [`0012-canonical-indexed-triangle-mesh.md`](0012-canonical-indexed-triangle-mesh.md): canonical triangle-surface identity, units, indexing, and no-repair boundary
+13. [`0013-versioned-v0-numerical-geometry.md`](0013-versioned-v0-numerical-geometry.md): scale-normalized certified numerical predicates and immutable V0 policy
 
 New decisions that alter public schemas, verification gates, trust boundaries, reproducibility, or physical claims require a new ADR. Accepted ADRs are superseded rather than rewritten to conceal history.

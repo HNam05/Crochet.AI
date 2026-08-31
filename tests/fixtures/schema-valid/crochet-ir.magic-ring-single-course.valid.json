@@ -67,6 +67,10 @@
       "top_attachment_location_ids": [
         "loc_fixture_stitch_top"
       ],
+      "frontier_edit": {
+        "edit_type": "REPLACE_SPAN",
+        "frontier_id": "frontier_fixture_initial"
+      },
       "yarn_id": "yarn_fixture_main",
       "color_id": "color_fixture_natural",
       "course_id": "course_fixture_round_001",

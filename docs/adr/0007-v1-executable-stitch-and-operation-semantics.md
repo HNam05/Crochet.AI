@@ -19,6 +19,8 @@ The schema exposed six ordinary stitch families, shaping labels, and constructio
 
 `INCREASE` and `DECREASE` are derived shaping classifications on one canonical stitch-application node. They are neither stitch families, construction operations, nor free-form text macros. V1 rejects non-SC shaping and n-ary shaping with `E_UNSUPPORTED_FEATURE`.
 
+Every positive-base stitch uses the explicit `REPLACE_SPAN` frontier edit. Zero-base `CHAIN` uses `INSERT_AT_GAP` with the attachment-location neighbor rules fixed by ADR-0008. Yarn traversal never supplies the insertion position.
+
 ## Alternatives
 
 - Standalone increase/decrease primitives were rejected because they duplicate the underlying stitch family and complicate material response.
@@ -27,6 +29,6 @@ The schema exposed six ordinary stitch families, shaping labels, and constructio
 
 ## Consequences
 
-CrochetIR's family plus ordered base/top lists remain stable. A later semantic profile may enable taller-stitch or n-ary shaping without replacing the graph model. The first analytic solver can remain SC-only while garments and flat work may already validate plain taller stitches. Lace clusters and chain spaces still require their own capabilities.
+CrochetIR's family plus ordered base/top lists and explicit edit class remain stable. A later semantic profile may enable taller-stitch or n-ary shaping without replacing the graph model. The first analytic solver can remain SC-only while garments and flat work may already validate plain taller stitches. Lace clusters and chain spaces still require their own capabilities, but may reuse explicit gap anchoring once their typed semantics are defined.
 
 Two plain SC nodes sharing one base are not semantically equivalent to one SC increase node in V1. A parser must reconstruct the explicit shaping node or fail V9.

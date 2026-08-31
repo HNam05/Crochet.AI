@@ -237,10 +237,37 @@
     "stitchType": {
       "enum": ["CHAIN", "SLIP_STITCH", "SINGLE_CROCHET", "HALF_DOUBLE_CROCHET", "DOUBLE_CROCHET", "TREBLE_CROCHET"]
     },
+    "nullableAttachmentLocationId": {
+      "oneOf": [{ "$ref": "#/$defs/attachmentLocationId" }, { "type": "null" }]
+    },
+    "frontierEdit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["edit_type", "frontier_id"],
+          "properties": {
+            "edit_type": { "const": "REPLACE_SPAN" },
+            "frontier_id": { "$ref": "#/$defs/frontierId" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["edit_type", "frontier_id", "left_location_id", "right_location_id"],
+          "properties": {
+            "edit_type": { "const": "INSERT_AT_GAP" },
+            "frontier_id": { "$ref": "#/$defs/frontierId" },
+            "left_location_id": { "$ref": "#/$defs/nullableAttachmentLocationId" },
+            "right_location_id": { "$ref": "#/$defs/nullableAttachmentLocationId" }
+          }
+        }
+      ]
+    },
     "stitch": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stitch_id", "stitch_type", "shaping", "base_arity", "top_arity", "base_attachment_location_ids", "top_attachment_location_ids", "yarn_id", "color_id", "course_id", "derivation_id"],
+      "required": ["stitch_id", "stitch_type", "shaping", "base_arity", "top_arity", "base_attachment_location_ids", "top_attachment_location_ids", "frontier_edit", "yarn_id", "color_id", "course_id", "derivation_id"],
       "properties": {
         "stitch_id": { "$ref": "#/$defs/stitchId" },
         "stitch_type": { "$ref": "#/$defs/stitchType" },
@@ -258,6 +285,7 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/attachmentLocationId" }
         },
+        "frontier_edit": { "$ref": "#/$defs/frontierEdit" },
         "yarn_id": { "$ref": "#/$defs/yarnId" },
         "color_id": { "$ref": "#/$defs/colorId" },
         "course_id": { "$ref": "#/$defs/courseId" },
@@ -273,7 +301,11 @@
               "base_arity": { "const": 0 },
               "top_arity": { "const": 1 },
               "base_attachment_location_ids": { "type": "array", "maxItems": 0 },
-              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 }
+              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "frontier_edit": {
+                "type": "object",
+                "properties": { "edit_type": { "const": "INSERT_AT_GAP" } }
+              }
             }
           }
         },
@@ -291,7 +323,11 @@
               "base_arity": { "const": 1 },
               "top_arity": { "const": 1 },
               "base_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
-              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 }
+              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "frontier_edit": {
+                "type": "object",
+                "properties": { "edit_type": { "const": "REPLACE_SPAN" } }
+              }
             }
           }
         },
@@ -304,7 +340,11 @@
               "base_arity": { "const": 1 },
               "top_arity": { "const": 2 },
               "base_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
-              "top_attachment_location_ids": { "type": "array", "minItems": 2, "maxItems": 2 }
+              "top_attachment_location_ids": { "type": "array", "minItems": 2, "maxItems": 2 },
+              "frontier_edit": {
+                "type": "object",
+                "properties": { "edit_type": { "const": "REPLACE_SPAN" } }
+              }
             }
           }
         },
@@ -317,7 +357,11 @@
               "base_arity": { "const": 2 },
               "top_arity": { "const": 1 },
               "base_attachment_location_ids": { "type": "array", "minItems": 2, "maxItems": 2 },
-              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 }
+              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "frontier_edit": {
+                "type": "object",
+                "properties": { "edit_type": { "const": "REPLACE_SPAN" } }
+              }
             }
           }
         }

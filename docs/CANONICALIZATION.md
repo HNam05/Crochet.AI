@@ -19,7 +19,7 @@ For a structured artifact and declared canonicalization profile:
 2. Validate the schema and the profile's semantic preconditions before hashing.
 3. Require every JSON number to round to a finite IEEE 754 binary64 value using round-to-nearest, ties-to-even. `NaN`, infinities, overflow, and implementation-defined rounding are errors.
 4. Require every field declared as an integer to be mathematically integral after parsing and within `[-9007199254740991, 9007199254740991]`. Non-negative identifiers, indexes, counts, seeds, and budgets use `[0, 9007199254740991]` or a narrower schema bound.
-5. Apply the artifact's exhaustive ordered-vs-set registry. Sorting keys are compared exactly as specified by that registry, never through locale collation.
+5. Compose any profile-declared child projections, then apply the artifact owner's exhaustive ordered-vs-set registry without re-normalizing child-owned collections. Sorting keys are compared exactly as specified by the owning registry, never through locale collation.
 6. Serialize the resulting data model with RFC 8785 JCS. Object names use the RFC's UTF-16-code-unit order; arrays are not reordered by JCS; strings are preserved without Unicode normalization; negative zero serializes as `0`.
 7. Encode the JCS text as UTF-8 without a byte-order mark.
 8. Form the preimage:
@@ -31,6 +31,18 @@ For a structured artifact and declared canonicalization profile:
 9. Hash that preimage with SHA-256 and encode the digest as 64 lowercase hexadecimal characters.
 
 Content-addressed external assets such as meshes, images, and source files are different: their `artifact.sha256` is SHA-256 of the exact retrieved bytes. A URI is not part of that raw-byte hash. A normalized mesh or parsed graph is a new derived artifact with its own profile, bytes, hash, and provenance; it never replaces the source hash.
+
+### Recursive profile composition
+
+Canonical projections compose as JSON data models before JCS serialization. If a DesignSpec contains `material_profile.binding_type = INLINE`, its canonicalizer must:
+
+1. validate the embedded complete MaterialProfile;
+2. call the authoritative `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1` procedure defined in [`MATERIAL_MODEL.md`](MATERIAL_MODEL.md);
+3. replace `material_profile.profile` in the DesignSpec working copy with that normalized JSON value;
+4. normalize only the remaining DesignSpec-owned collections;
+5. serialize and hash the complete result under `DESIGN_SPEC_CANONICAL_JSON_V1`.
+
+The child projection is not serialized to a string and its standalone domain-separated hash is not embedded as a replacement for its content. Standalone MaterialProfile identity serializes the same projection under `MATERIAL_PROFILE_CANONICAL_JSON_V1`; parent and child hashes intentionally differ because their profile IDs and enclosing values differ. Failure to validate or project the child means the parent has no canonical bytes or hash.
 
 ## Number semantics
 
@@ -44,12 +56,14 @@ Higher-precision future data must use a separately typed canonical string or rat
 
 | Profile | Structured value covered | Pre-JCS normalization owner |
 | --- | --- | --- |
-| `DESIGN_SPEC_CANONICAL_JSON_V1` | Complete DesignSpec | [`DESIGN_SPEC.md`](DESIGN_SPEC.md) collection registry |
+| `DESIGN_SPEC_CANONICAL_JSON_V1` | Complete DesignSpec, recursively including an inline canonical material projection | [`DESIGN_SPEC.md`](DESIGN_SPEC.md) collection registry plus `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1` |
 | `SURFACE_OF_REVOLUTION_PROFILE_CANONICAL_JSON_V1` | Radial-profile payload excluding its own hash | [`DESIGN_SPEC.md`](DESIGN_SPEC.md) ordered sample contract |
 | `CROCHET_IR_CANONICAL_JSON_V1` | Complete canonical CrochetIR | [`CROCHET_IR.md`](CROCHET_IR.md) collection registry |
-| `MATERIAL_PROFILE_CANONICAL_JSON_V1` | Complete MaterialProfile | [`MATERIAL_MODEL.md`](MATERIAL_MODEL.md) response registry |
+| `MATERIAL_PROFILE_CANONICAL_JSON_V1` | Complete MaterialProfile | [`MATERIAL_MODEL.md`](MATERIAL_MODEL.md) authoritative material projection |
 | `FORWARD_PHYSICAL_SEMANTICS_V1` | Target-free physical-semantic projection | [`FORWARD_MODEL.md`](FORWARD_MODEL.md) projection registry |
 | `CROCHET_SEMANTIC_EQUIVALENCE_V1` | Execution-normalized construction-semantic projection | [`CROCHET_IR.md`](CROCHET_IR.md) equivalence algorithm |
+| `INDEXED_TRIANGLE_MESH_CANONICAL_JSON_V1` | Geometry-valid normalized `IndexedTriangleMeshV1`, excluding parser provenance | [`GEOMETRY_MODEL.md`](GEOMETRY_MODEL.md) ordering registry |
+| `V0_NUMERICAL_GEOMETRY_PROFILE_JSON_V1` | Complete immutable V0 numerical-profile record | [`NUMERICAL_GEOMETRY.md`](NUMERICAL_GEOMETRY.md); all objects closed and no arrays |
 
 The profile ID is part of the hash preimage even when it is already present in the JSON. Identical JCS bytes under two profiles intentionally produce different digests.
 

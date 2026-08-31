@@ -42,6 +42,7 @@ At minimum, unit tests cover:
 
 - `CROCHET_CORE_1.0.0` lookup: plain six-family stitches, binary SC shaping, and explicit rejection of non-SC/n-ary shaping;
 - base/top arity and attachment-location accounting;
+- `REPLACE_SPAN` and `INSERT_AT_GAP` legality for linear beginning/end/internal/empty gaps, cyclic adjacent/wrap/singleton gaps, and every non-adjacent/null/implicit-anchor rejection;
 - unique IDs and typed reference resolution;
 - finite-number and unit validation;
 - canonical serialization, I-JSON/binary64 acceptance, safe-integer rejection, negative-zero normalization, collection ordering, profile-domain separation, idempotence, RFC 8785 vectors, and stable project hashes from [`CANONICALIZATION.md`](CANONICALIZATION.md);
@@ -72,6 +73,7 @@ Generated invalid cases assert both rejection and the expected failure category.
 
 - Schema-valid canonical artifacts survive parse, canonicalize, serialize, and reparse without semantic change.
 - Canonicalization is idempotent and independent of object-key insertion order and unordered collection order.
+- Inline MaterialProfile permutation is normalized by the independent material projection before DesignSpec hashing, including distinct repeated readings from one specimen; meaningful arrays remain order-sensitive.
 - Alpha-renaming explicit IDs preserves semantic equivalence after canonical ID normalization.
 - Independently recomputed counts and arities equal declarations for every generated valid IR.
 - Replacing one reference with a dangling or wrong-kind ID always fails V2/V3 with `E_REFERENCE`.
@@ -91,6 +93,7 @@ Rules cover:
 
 - create linear or cyclic frontier;
 - advance by a valid supported stitch operation;
+- insert a zero-base chain only at a generated legal explicit gap and attempt missing, non-adjacent, reversed, and wrong-frontier anchors;
 - split and create accounted branch states;
 - reserve a contiguous ordered segment;
 - cut, attach, and reattach yarn explicitly;
@@ -123,6 +126,14 @@ Metamorphic tests compare invariants and independently reconstructed outcomes, n
 Numerical metamorphic comparisons use versioned, unit-bearing tolerances. A transformation test MUST record whether the expected relation is exact, invariant within tolerance, or covariant.
 
 Domain-preflight negatives additionally cover a missing sphere face, locally reversed face, non-manifold edge, repeated-index triangle, self-intersection, touching components, unmatched garment boundary, garment-panel overlap, flat work supplied as `MESH_3D`, and lace holes incorrectly sent through a closed-surface profile. Repairs are never applied inside a passing test.
+
+## V0 geometry-contract tests
+
+The V0 suite independently constructs `IndexedTriangleMeshV1` fixtures and must not use the production parser or adjacency builder as its oracle. Exact cases cover zero/negative/out-of-range/fractional indices after adapter resolution, repeated indices, duplicate and reversed-duplicate faces, coordinate-equal distinct vertices, isolated faces, non-manifold edges, bow-tie vertices, boundary chains/branches, non-orientable components, locally inconsistent winding, and source-renumber/order invariance.
+
+Numerical cases resolve `v0_num_mesh_binary64_v1` from its machine-readable record and cover proper intersection, intended shared-edge/shared-vertex adjacency, extra overlap across an intended entity, vertex-face touch, edge-edge touch, coplanar overlap, coincident triangles, same-component near contact, inter-component touch/near contact, unreliable signed volume, and ambiguous landmark assignment. Every threshold is tested at the representable value immediately below, exactly at, and immediately above its boundary. Tests scale and translate every suitable case by at least `1e-6` and `1e6`, with corresponding unit/tolerance conversion, and require the same classification and canonical diagnostic relation.
+
+Property generators search for invalid incidence ledgers, disconnected vertex links, boundary degree other than two, permutation-sensitive results, hidden fixed-unit epsilons, and predicate results that change with traversal order. If a robust backend cannot certify a required sign or interval side, the asserted result is `INDETERMINATE`; a fallback approximate sign is never accepted. Golden files remain read-only.
 
 ## Semantic-equivalence adversarial matrix
 
