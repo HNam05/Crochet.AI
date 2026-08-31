@@ -1,0 +1,855 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crochet.ai/schemas/design-spec.schema.json",
+  "title": "DesignSpec 1.0.0",
+  "description": "Validated design intent. Final stitch quantities are deliberately outside this contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "design_spec_id",
+    "project_type",
+    "dimensions",
+    "target_geometry",
+    "symmetries",
+    "landmarks",
+    "material_profile",
+    "construction_constraints",
+    "colors",
+    "difficulty_constraints",
+    "solver_options",
+    "verification_requirements",
+    "domain_constraints",
+    "interpretation_provenance"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "design_spec_id": { "$ref": "#/$defs/designSpecId" },
+    "project_type": {
+      "enum": ["AMIGURUMI_3D", "GARMENT", "FLAT", "LACE_MOTIF"]
+    },
+    "dimensions": { "$ref": "#/$defs/dimensions" },
+    "target_geometry": { "$ref": "#/$defs/targetGeometry" },
+    "symmetries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/symmetry" }
+    },
+    "landmarks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/landmark" }
+    },
+    "material_profile": { "$ref": "#/$defs/materialProfileBinding" },
+    "construction_constraints": { "$ref": "#/$defs/constructionConstraints" },
+    "colors": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/colorIntent" }
+    },
+    "difficulty_constraints": { "$ref": "#/$defs/difficultyConstraints" },
+    "solver_options": { "$ref": "#/$defs/solverOptions" },
+    "verification_requirements": { "$ref": "#/$defs/verificationRequirements" },
+    "domain_constraints": { "$ref": "#/$defs/domainConstraints" },
+    "interpretation_provenance": { "$ref": "#/$defs/interpretationProvenance" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "project_type": { "const": "AMIGURUMI_3D" } }, "required": ["project_type"] },
+      "then": {
+        "properties": {
+          "domain_constraints": { "$ref": "#/$defs/amigurumiConstraints" },
+          "target_geometry": {
+            "oneOf": [
+              {
+                "allOf": [
+                  { "$ref": "#/$defs/meshGeometry" },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "preflight_profile_id": {
+                        "enum": [
+                          "V0_AMIGURUMI_CLOSED_SURFACE_V1",
+                          "V0_AMIGURUMI_DECLARED_BOUNDARY_SURFACE_V1"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              { "$ref": "#/$defs/analyticGeometry" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "project_type": { "const": "GARMENT" } }, "required": ["project_type"] },
+      "then": {
+        "properties": {
+          "domain_constraints": { "$ref": "#/$defs/garmentConstraints" },
+          "target_geometry": {
+            "oneOf": [
+              { "$ref": "#/$defs/garmentGeometry" },
+              {
+                "allOf": [
+                  { "$ref": "#/$defs/meshGeometry" },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "preflight_profile_id": { "const": "V0_GARMENT_DECLARED_BOUNDARY_SURFACE_V1" }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "project_type": { "const": "FLAT" } }, "required": ["project_type"] },
+      "then": {
+        "properties": {
+          "domain_constraints": { "$ref": "#/$defs/flatConstraints" },
+          "target_geometry": { "$ref": "#/$defs/planarGeometry" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "project_type": { "const": "LACE_MOTIF" } }, "required": ["project_type"] },
+      "then": {
+        "properties": {
+          "domain_constraints": { "$ref": "#/$defs/laceConstraints" },
+          "target_geometry": {
+            "oneOf": [
+              { "$ref": "#/$defs/motifGeometry" },
+              { "$ref": "#/$defs/planarGeometry" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "designSpecId": {
+      "type": "string",
+      "pattern": "^ds_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "type": "number" }
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "uri", "sha256", "media_type"],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^asset_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$"
+        },
+        "uri": { "type": "string", "format": "uri-reference", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "media_type": {
+          "type": "string",
+          "pattern": "^[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+$"
+        }
+      }
+    },
+    "coordinateFrame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["coordinate_frame_id", "handedness", "length_unit", "up_axis", "front_axis"],
+      "properties": {
+        "coordinate_frame_id": {
+          "type": "string",
+          "pattern": "^frame_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$"
+        },
+        "handedness": { "const": "RIGHT_HANDED" },
+        "length_unit": { "const": "MILLIMETER" },
+        "up_axis": { "$ref": "#/$defs/signedAxis" },
+        "front_axis": { "$ref": "#/$defs/signedAxis" }
+      }
+    },
+    "signedAxis": {
+      "enum": ["POSITIVE_X", "NEGATIVE_X", "POSITIVE_Y", "NEGATIVE_Y", "POSITIVE_Z", "NEGATIVE_Z"]
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["length_unit", "measurements"],
+      "properties": {
+        "length_unit": { "const": "MILLIMETER" },
+        "measurements": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/measurement" }
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["measurement_id", "semantic", "label", "value_mm", "tolerance_mm"],
+      "properties": {
+        "measurement_id": {
+          "type": "string",
+          "pattern": "^dim_[A-Za-z0-9][A-Za-z0-9._-]{0,117}$"
+        },
+        "semantic": {
+          "enum": [
+            "OVERALL_WIDTH",
+            "OVERALL_HEIGHT",
+            "OVERALL_DEPTH",
+            "RADIUS",
+            "DIAMETER",
+            "CIRCUMFERENCE",
+            "LENGTH",
+            "BODY_CHEST_CIRCUMFERENCE",
+            "BODY_WAIST_CIRCUMFERENCE",
+            "BODY_HIP_CIRCUMFERENCE",
+            "BODY_NECK_CIRCUMFERENCE",
+            "BODY_BACK_LENGTH",
+            "BODY_ARM_LENGTH",
+            "EASE",
+            "CUSTOM"
+          ]
+        },
+        "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "value_mm": { "type": "number", "exclusiveMinimum": 0 },
+        "tolerance_mm": { "type": "number", "minimum": 0 }
+      }
+    },
+    "meshGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["geometry_type", "artifact", "coordinate_frame", "preflight_profile_id", "preflight_numerical_profile_id", "topology_expectation"],
+      "properties": {
+        "geometry_type": { "const": "MESH_3D" },
+        "artifact": { "$ref": "#/$defs/artifactRef" },
+        "coordinate_frame": { "$ref": "#/$defs/coordinateFrame" },
+        "preflight_profile_id": {
+          "enum": [
+            "V0_AMIGURUMI_CLOSED_SURFACE_V1",
+            "V0_AMIGURUMI_DECLARED_BOUNDARY_SURFACE_V1",
+            "V0_GARMENT_DECLARED_BOUNDARY_SURFACE_V1"
+          ]
+        },
+        "preflight_numerical_profile_id": {
+          "type": "string",
+          "pattern": "^v0_num_[A-Za-z0-9][A-Za-z0-9._-]{0,112}$"
+        },
+        "topology_expectation": { "$ref": "#/$defs/topologyExpectation" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "preflight_profile_id": { "const": "V0_AMIGURUMI_CLOSED_SURFACE_V1" } },
+            "required": ["preflight_profile_id"]
+          },
+          "then": {
+            "properties": {
+              "topology_expectation": {
+                "type": "object",
+                "properties": {
+                  "boundary_policy": { "const": "FORBIDDEN" },
+                  "expected_boundary_components": { "const": 0 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "preflight_profile_id": {
+                "enum": [
+                  "V0_AMIGURUMI_DECLARED_BOUNDARY_SURFACE_V1",
+                  "V0_GARMENT_DECLARED_BOUNDARY_SURFACE_V1"
+                ]
+              }
+            },
+            "required": ["preflight_profile_id"]
+          },
+          "then": {
+            "properties": {
+              "topology_expectation": {
+                "type": "object",
+                "properties": {
+                  "boundary_policy": { "const": "DECLARED_ONLY" },
+                  "expected_boundary_components": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "analyticGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["geometry_type", "primitive", "parameters", "origin_mm", "coordinate_frame"],
+      "properties": {
+        "geometry_type": { "const": "ANALYTIC_SHAPE" },
+        "primitive": { "enum": ["SPHERE", "CYLINDER", "CONE", "ELLIPSOID", "SURFACE_OF_REVOLUTION"] },
+        "parameters": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/analyticParameter" }
+        },
+        "origin_mm": { "$ref": "#/$defs/vector3" },
+        "axis_direction": { "$ref": "#/$defs/vector3" },
+        "radial_profile": { "$ref": "#/$defs/surfaceOfRevolutionProfile" },
+        "coordinate_frame": { "$ref": "#/$defs/coordinateFrame" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "primitive": { "const": "SPHERE" } }, "required": ["primitive"] },
+          "then": {
+            "type": "object",
+            "properties": { "parameters": { "type": "array", "minItems": 1, "maxItems": 1, "contains": { "type": "object", "properties": { "parameter": { "const": "RADIUS" } }, "required": ["parameter"] } } },
+            "not": { "anyOf": [{ "type": "object", "required": ["axis_direction"] }, { "type": "object", "required": ["radial_profile"] }] }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "primitive": { "const": "CYLINDER" } }, "required": ["primitive"] },
+          "then": {
+            "type": "object",
+            "properties": { "parameters": { "type": "array", "minItems": 2, "maxItems": 2, "allOf": [{ "type": "array", "contains": { "type": "object", "properties": { "parameter": { "const": "RADIUS" } }, "required": ["parameter"] } }, { "type": "array", "contains": { "type": "object", "properties": { "parameter": { "const": "AXIAL_LENGTH" } }, "required": ["parameter"] } }] } },
+            "not": { "anyOf": [{ "type": "object", "required": ["axis_direction"] }, { "type": "object", "required": ["radial_profile"] }] }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "primitive": { "const": "CONE" } }, "required": ["primitive"] },
+          "then": {
+            "type": "object",
+            "properties": { "parameters": { "type": "array", "minItems": 2, "maxItems": 2, "allOf": [{ "type": "array", "contains": { "type": "object", "properties": { "parameter": { "const": "BASE_RADIUS" } }, "required": ["parameter"] } }, { "type": "array", "contains": { "type": "object", "properties": { "parameter": { "const": "AXIAL_LENGTH" } }, "required": ["parameter"] } }] } },
+            "not": { "anyOf": [{ "type": "object", "required": ["axis_direction"] }, { "type": "object", "required": ["radial_profile"] }] }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "primitive": { "const": "ELLIPSOID" } }, "required": ["primitive"] },
+          "then": {
+            "type": "object",
+            "properties": { "parameters": { "type": "array", "minItems": 2, "maxItems": 2, "allOf": [{ "type": "array", "contains": { "type": "object", "properties": { "parameter": { "const": "EQUATORIAL_RADIUS" } }, "required": ["parameter"] } }, { "type": "array", "contains": { "type": "object", "properties": { "parameter": { "const": "POLAR_RADIUS" } }, "required": ["parameter"] } }] } },
+            "not": { "anyOf": [{ "type": "object", "required": ["axis_direction"] }, { "type": "object", "required": ["radial_profile"] }] }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "primitive": { "const": "SURFACE_OF_REVOLUTION" } }, "required": ["primitive"] },
+          "then": {
+            "type": "object",
+            "required": ["axis_direction", "radial_profile"],
+            "properties": { "parameters": { "type": "array", "minItems": 1, "maxItems": 1, "contains": { "type": "object", "properties": { "parameter": { "const": "MERIDIONAL_LENGTH" } }, "required": ["parameter"] } } }
+          }
+        }
+      ]
+    },
+    "analyticParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parameter", "measurement_id"],
+      "properties": {
+        "parameter": { "enum": ["RADIUS", "BASE_RADIUS", "AXIAL_LENGTH", "EQUATORIAL_RADIUS", "POLAR_RADIUS", "MERIDIONAL_LENGTH"] },
+        "measurement_id": { "$ref": "#/$defs/measurementId" }
+      }
+    },
+    "surfaceOfRevolutionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization_profile", "sha256", "samples", "start_boundary", "end_boundary"],
+      "properties": {
+        "canonicalization_profile": { "const": "SURFACE_OF_REVOLUTION_PROFILE_CANONICAL_JSON_V1" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "samples": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/radialProfileSample" }
+        },
+        "start_boundary": { "$ref": "#/$defs/profileBoundary" },
+        "end_boundary": { "$ref": "#/$defs/profileBoundary" }
+      }
+    },
+    "radialProfileSample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sample_index", "s_mm", "radius_mm"],
+      "properties": {
+        "sample_index": { "type": "integer", "minimum": 0 },
+        "s_mm": { "type": "number", "minimum": 0 },
+        "radius_mm": { "type": "number", "minimum": 0 }
+      }
+    },
+    "profileBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["boundary_type"],
+      "properties": {
+        "boundary_type": { "enum": ["CLOSED_POLE", "INTENTIONAL_OPENING", "CONSTRUCTION_INTERFACE"] },
+        "opening_requirement_id": { "type": "string", "pattern": "^opening_req_[A-Za-z0-9][A-Za-z0-9._-]{0,105}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "boundary_type": { "const": "INTENTIONAL_OPENING" } }, "required": ["boundary_type"] },
+          "then": { "required": ["opening_requirement_id"] },
+          "else": { "not": { "required": ["opening_requirement_id"] } }
+        }
+      ]
+    },
+    "planarGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["geometry_type", "artifact", "coordinate_frame"],
+      "properties": {
+        "geometry_type": { "const": "PLANAR_REGION" },
+        "artifact": { "$ref": "#/$defs/artifactRef" },
+        "coordinate_frame": { "$ref": "#/$defs/coordinateFrame" }
+      }
+    },
+    "garmentGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["geometry_type", "body_measurement_ids"],
+      "properties": {
+        "geometry_type": { "const": "GARMENT_MEASUREMENTS" },
+        "body_measurement_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/measurementId" }
+        }
+      }
+    },
+    "motifGeometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["geometry_type", "artifact", "coordinate_frame"],
+      "properties": {
+        "geometry_type": { "const": "MOTIF_GRAPH" },
+        "artifact": { "$ref": "#/$defs/artifactRef" },
+        "coordinate_frame": { "$ref": "#/$defs/coordinateFrame" }
+      }
+    },
+    "targetGeometry": {
+      "oneOf": [
+        { "$ref": "#/$defs/meshGeometry" },
+        { "$ref": "#/$defs/analyticGeometry" },
+        { "$ref": "#/$defs/planarGeometry" },
+        { "$ref": "#/$defs/garmentGeometry" },
+        { "$ref": "#/$defs/motifGeometry" }
+      ]
+    },
+    "topologyExpectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_connected_components",
+        "boundary_policy",
+        "expected_boundary_components",
+        "orientability",
+        "manifold_policy",
+        "self_intersection_policy",
+        "inter_component_contact_policy"
+      ],
+      "properties": {
+        "expected_connected_components": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "boundary_policy": { "enum": ["FORBIDDEN", "DECLARED_ONLY"] },
+        "expected_boundary_components": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "orientability": { "const": "ORIENTABLE" },
+        "manifold_policy": { "const": "TWO_MANIFOLD" },
+        "self_intersection_policy": { "const": "FORBID" },
+        "inter_component_contact_policy": { "const": "FORBID" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "boundary_policy": { "const": "FORBIDDEN" } },
+            "required": ["boundary_policy"]
+          },
+          "then": {
+            "properties": { "expected_boundary_components": { "const": 0 } }
+          }
+        },
+        {
+          "if": {
+            "properties": { "boundary_policy": { "const": "DECLARED_ONLY" } },
+            "required": ["boundary_policy"]
+          },
+          "then": {
+            "properties": { "expected_boundary_components": { "type": "integer", "minimum": 1 } }
+          }
+        }
+      ]
+    },
+    "measurementId": {
+      "type": "string",
+      "pattern": "^dim_[A-Za-z0-9][A-Za-z0-9._-]{0,117}$"
+    },
+    "symmetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symmetry_id", "symmetry_type", "coordinate_frame_id", "origin_mm", "axis_or_normal", "order", "tolerance_mm"],
+      "properties": {
+        "symmetry_id": { "type": "string", "pattern": "^sym_[A-Za-z0-9][A-Za-z0-9._-]{0,117}$" },
+        "symmetry_type": { "enum": ["REFLECTION", "ROTATION", "TRANSLATION"] },
+        "coordinate_frame_id": { "type": "string", "pattern": "^frame_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+        "origin_mm": { "$ref": "#/$defs/vector3" },
+        "axis_or_normal": { "$ref": "#/$defs/vector3" },
+        "order": { "oneOf": [{ "type": "integer", "minimum": 2 }, { "type": "null" }] },
+        "tolerance_mm": { "type": "number", "minimum": 0 }
+      }
+    },
+    "landmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["landmark_id", "label", "coordinate_frame_id", "position_mm", "tolerance_mm", "importance"],
+      "properties": {
+        "landmark_id": { "$ref": "#/$defs/landmarkId" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "coordinate_frame_id": { "type": "string", "pattern": "^frame_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+        "position_mm": { "$ref": "#/$defs/vector3" },
+        "tolerance_mm": { "type": "number", "minimum": 0 },
+        "importance": { "enum": ["CRITICAL", "HIGH", "NORMAL"] }
+      }
+    },
+    "landmarkId": {
+      "type": "string",
+      "pattern": "^landmark_[A-Za-z0-9][A-Za-z0-9._-]{0,112}$"
+    },
+    "materialProfileBinding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding_type", "profile_id", "revision", "sha256"],
+          "properties": {
+            "binding_type": { "const": "REFERENCE" },
+            "profile_id": { "$ref": "#/$defs/materialProfileId" },
+            "revision": { "type": "integer", "minimum": 1 },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding_type", "profile"],
+          "properties": {
+            "binding_type": { "const": "INLINE" },
+            "profile": { "$ref": "material-profile.schema.json" }
+          }
+        }
+      ]
+    },
+    "materialProfileId": {
+      "type": "string",
+      "pattern": "^mp_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"
+    },
+    "constructionConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "priority_policy",
+        "hard_geometry_gate_required",
+        "maximum_sewn_seams",
+        "maximum_yarn_cuts",
+        "maximum_reattachments",
+        "allowed_join_methods",
+        "intentional_openings"
+      ],
+      "properties": {
+        "priority_policy": { "const": "GEOMETRY_GATED_SEAMLESS_LEXICOGRAPHIC_V1" },
+        "hard_geometry_gate_required": { "const": true },
+        "maximum_sewn_seams": { "type": "integer", "minimum": 0 },
+        "maximum_yarn_cuts": { "type": "integer", "minimum": 0 },
+        "maximum_reattachments": { "type": "integer", "minimum": 0 },
+        "allowed_join_methods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["CROCHETED", "SEWN"] }
+        },
+        "intentional_openings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/openingRequirement" }
+        }
+      }
+    },
+    "openingRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opening_requirement_id", "purpose", "boundary_landmark_ids", "closure_expectation"],
+      "properties": {
+        "opening_requirement_id": { "type": "string", "pattern": "^opening_req_[A-Za-z0-9][A-Za-z0-9._-]{0,105}$" },
+        "purpose": { "enum": ["ARMHOLE", "NECKLINE", "SLEEVE_OPENING", "CUFF", "HEM", "FRONT_OPENING", "STUFFING_OPENING", "LACE_VOID", "HANDLE", "OTHER"] },
+        "boundary_landmark_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/landmarkId" }
+        },
+        "closure_expectation": { "enum": ["REMAIN_OPEN", "CLOSE_DURING_CONSTRUCTION"] }
+      }
+    },
+    "colorIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["color_id", "label", "srgb_hex", "roles"],
+      "properties": {
+        "color_id": { "$ref": "#/$defs/colorId" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "srgb_hex": { "type": "string", "pattern": "^#[0-9A-F]{6}$" },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        }
+      }
+    },
+    "colorId": {
+      "type": "string",
+      "pattern": "^color_[A-Za-z0-9][A-Za-z0-9._-]{0,114}$"
+    },
+    "stitchType": {
+      "enum": ["CHAIN", "SLIP_STITCH", "SINGLE_CROCHET", "HALF_DOUBLE_CROCHET", "DOUBLE_CROCHET", "TREBLE_CROCHET"]
+    },
+    "operationType": {
+      "enum": ["MAGIC_RING", "JOIN", "SPLIT", "RESERVE", "ATTACH", "COLOR_CHANGE", "CUT_YARN", "CLOSE", "DECLARE_OPENING"]
+    },
+    "difficultyConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximum_skill_level", "allowed_stitch_types", "allowed_shaping", "allowed_construction_operations", "maximum_simultaneously_active_frontiers", "allow_unsupported_techniques"],
+      "properties": {
+        "maximum_skill_level": { "enum": ["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"] },
+        "allowed_stitch_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/stitchType" }
+        },
+        "allowed_shaping": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["INCREASE", "DECREASE"] }
+        },
+        "allowed_construction_operations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/operationType" }
+        },
+        "maximum_simultaneously_active_frontiers": { "type": "integer", "minimum": 1 },
+        "allow_unsupported_techniques": { "const": false }
+      }
+    },
+    "solverOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_solver_families", "solver_family_preference", "random_seed", "max_candidate_evaluations", "max_backtracks", "max_beam_width", "parameter_profile_id"],
+      "properties": {
+        "allowed_solver_families": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/solverFamily" }
+        },
+        "solver_family_preference": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/solverFamily" }
+        },
+        "random_seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "max_candidate_evaluations": { "type": "integer", "minimum": 1 },
+        "max_backtracks": { "type": "integer", "minimum": 0 },
+        "max_beam_width": { "type": "integer", "minimum": 1 },
+        "parameter_profile_id": { "type": "string", "pattern": "^solver_params_[A-Za-z0-9][A-Za-z0-9._-]{0,106}$" }
+      }
+    },
+    "solverFamily": {
+      "enum": ["ANALYTIC", "GEODESIC", "FRONTIER", "GARMENT", "FLAT", "LACE"]
+    },
+    "verificationRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["threshold_profile_id", "required_gates", "required_geometry_metrics", "require_export_round_trip", "require_material_robustness", "require_collision_check", "minimum_physical_validation"],
+      "properties": {
+        "threshold_profile_id": { "type": "string", "pattern": "^thresholds_[A-Za-z0-9][A-Za-z0-9._-]{0,109}$" },
+        "required_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["V0", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10"] }
+        },
+        "required_geometry_metrics": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["SYMMETRIC_CHAMFER", "PERCENTILE_HAUSDORFF", "SILHOUETTE_IOU", "CROSS_SECTION_ERROR", "VOLUME_ERROR", "LANDMARK_DEVIATION", "NORMAL_DEVIATION", "CURVATURE_DIAGNOSTIC", "TOPOLOGY"] }
+        },
+        "require_export_round_trip": { "type": "boolean" },
+        "require_material_robustness": { "type": "boolean" },
+        "require_collision_check": { "type": "boolean" },
+        "minimum_physical_validation": { "enum": ["UNTESTED", "CALIBRATED", "PHYSICALLY_VERIFIED"] }
+      },
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "required_gates": {
+              "type": "array",
+              "allOf": [
+                { "type": "array", "contains": { "const": "V0" } },
+                { "type": "array", "contains": { "const": "V1" } },
+                { "type": "array", "contains": { "const": "V2" } },
+                { "type": "array", "contains": { "const": "V3" } },
+                { "type": "array", "contains": { "const": "V4" } },
+                { "type": "array", "contains": { "const": "V5" } },
+                { "type": "array", "contains": { "const": "V6" } },
+                { "type": "array", "contains": { "const": "V7" } },
+                { "type": "array", "contains": { "const": "V10" } }
+              ]
+            },
+            "required_geometry_metrics": {
+              "type": "array",
+              "allOf": [
+                { "type": "array", "contains": { "const": "TOPOLOGY" } },
+                { "type": "array", "contains": { "enum": ["SYMMETRIC_CHAMFER", "PERCENTILE_HAUSDORFF", "SILHOUETTE_IOU", "CROSS_SECTION_ERROR", "VOLUME_ERROR", "LANDMARK_DEVIATION", "NORMAL_DEVIATION", "CURVATURE_DIAGNOSTIC"] } }
+              ]
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "require_material_robustness": { "const": true } }, "required": ["require_material_robustness"] },
+          "then": { "type": "object", "properties": { "required_gates": { "type": "array", "contains": { "const": "V8" } } } },
+          "else": { "type": "object", "properties": { "required_gates": { "type": "array", "not": { "type": "array", "contains": { "const": "V8" } } } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "require_export_round_trip": { "const": true } }, "required": ["require_export_round_trip"] },
+          "then": { "type": "object", "properties": { "required_gates": { "type": "array", "contains": { "const": "V9" } } } },
+          "else": { "type": "object", "properties": { "required_gates": { "type": "array", "not": { "type": "array", "contains": { "const": "V9" } } } } }
+        }
+      ]
+    },
+    "amigurumiConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "stuffing_level", "surface_mode"],
+      "properties": {
+        "domain": { "const": "AMIGURUMI_3D" },
+        "stuffing_level": { "enum": ["NONE", "LIGHT", "MEDIUM", "FIRM"] },
+        "surface_mode": { "enum": ["CLOSED", "DECLARED_OPENINGS"] }
+      }
+    },
+    "garmentConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "body_measurement_ids", "ease_allowances", "allowed_constructions"],
+      "properties": {
+        "domain": { "const": "GARMENT" },
+        "body_measurement_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/measurementId" }
+        },
+        "ease_allowances": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/easeAllowance" }
+        },
+        "allowed_constructions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["PANELS", "RAGLAN", "YOKE", "TOP_DOWN", "BOTTOM_UP", "MOTIF_ASSEMBLY"] }
+        }
+      }
+    },
+    "easeAllowance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["measurement_id", "ease_mm"],
+      "properties": {
+        "measurement_id": { "$ref": "#/$defs/measurementId" },
+        "ease_mm": { "type": "number" }
+      }
+    },
+    "flatConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "work_structure", "repeat_policy"],
+      "properties": {
+        "domain": { "const": "FLAT" },
+        "work_structure": { "enum": ["ROWS", "ROUNDS", "GRID", "C2C", "MOTIFS"] },
+        "repeat_policy": { "enum": ["NONE", "EXACT", "FIT_WITHIN_DIMENSION_TOLERANCE"] }
+      }
+    },
+    "laceConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "required_primitive_families"],
+      "properties": {
+        "domain": { "const": "LACE_MOTIF" },
+        "required_primitive_families": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["BASIC_STITCHES", "CHAIN_SPACES", "PICOTS", "POST_STITCHES", "CLUSTERS", "PUFFS", "BOBBLES", "FANS_SHELLS", "MOTIF_ATTACHMENTS"] }
+        }
+      }
+    },
+    "domainConstraints": {
+      "oneOf": [
+        { "$ref": "#/$defs/amigurumiConstraints" },
+        { "$ref": "#/$defs/garmentConstraints" },
+        { "$ref": "#/$defs/flatConstraints" },
+        { "$ref": "#/$defs/laceConstraints" }
+      ]
+    },
+    "interpretationProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authoring_mode", "producer", "source_artifacts", "assumptions", "unresolved_ambiguities"],
+      "properties": {
+        "authoring_mode": { "enum": ["MANUAL", "STRUCTURED_IMPORT", "NATURAL_LANGUAGE_PROPOSAL", "IMAGE_PROPOSAL"] },
+        "producer": { "$ref": "#/$defs/producer" },
+        "source_artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactRef" }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assumption" }
+        },
+        "unresolved_ambiguities": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 80 }
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assumption_id", "statement", "disposition"],
+      "properties": {
+        "assumption_id": { "type": "string", "pattern": "^assumption_[A-Za-z0-9][A-Za-z0-9._-]{0,108}$" },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "disposition": { "enum": ["USER_CONFIRMED", "EXPLICIT_PROFILE_DEFAULT"] }
+      }
+    }
+  }
+}

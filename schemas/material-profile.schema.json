@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crochet.ai/schemas/material-profile.schema.json",
+  "title": "MaterialProfile 1.0.0",
+  "description": "Minimal, measured, target-independent material profile for deterministic crochet generation and forward simulation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "revision",
+    "yarn",
+    "hook_diameter_mm",
+    "calibration_responses",
+    "canonicalization",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "profile_id": {
+      "$ref": "#/$defs/materialProfileId"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "yarn": {
+      "$ref": "#/$defs/yarn"
+    },
+    "hook_diameter_mm": {
+      "$ref": "#/$defs/positiveMillimetres"
+    },
+    "calibration_responses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/calibrationResponse"
+      }
+    },
+    "canonicalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "hash_algorithm"],
+      "properties": {
+        "profile": { "const": "MATERIAL_PROFILE_CANONICAL_JSON_V1" },
+        "hash_algorithm": { "const": "SHA-256" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created_at",
+        "measurement_protocol_id",
+        "source_record_ids",
+        "software_commit",
+        "working_tree_dirty"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "measurement_protocol_id": {
+          "$ref": "#/$defs/id"
+        },
+        "source_record_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "software_commit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "working_tree_dirty": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "materialProfileId": {
+      "type": "string",
+      "pattern": "^mp_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"
+    },
+    "positiveMillimetres": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "nonNegativeMillimetres": {
+      "type": "number",
+      "minimum": 0
+    },
+    "yarn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "manufacturer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "product_line": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "lot_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "colorway": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "fiber_content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "weight_category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "nominal_linear_density_tex": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "calibrationResponseConditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_stitch_type",
+        "course_mode",
+        "tension_profile_id",
+        "fabric_state"
+      ],
+      "properties": {
+        "canonical_stitch_type": {
+          "enum": [
+            "CHAIN",
+            "SLIP_STITCH",
+            "SINGLE_CROCHET",
+            "HALF_DOUBLE_CROCHET",
+            "DOUBLE_CROCHET",
+            "TREBLE_CROCHET"
+          ]
+        },
+        "course_mode": {
+          "enum": [
+            "LINEAR",
+            "CYCLIC"
+          ]
+        },
+        "tension_profile_id": {
+          "$ref": "#/$defs/id"
+        },
+        "fabric_state": {
+          "enum": [
+            "RELAXED_UNSTUFFED",
+            "BLOCKED_UNSTUFFED",
+            "STUFFED"
+          ]
+        }
+      }
+    },
+    "spanObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "specimen_id",
+        "stitch_span_count",
+        "stitch_span_length_mm",
+        "course_span_count",
+        "course_span_length_mm"
+      ],
+      "properties": {
+        "specimen_id": {
+          "$ref": "#/$defs/id"
+        },
+        "stitch_span_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stitch_span_length_mm": {
+          "$ref": "#/$defs/positiveMillimetres"
+        },
+        "course_span_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "course_span_length_mm": {
+          "$ref": "#/$defs/positiveMillimetres"
+        }
+      }
+    },
+    "gauge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effective_stitch_pitch_mm", "effective_course_pitch_mm"],
+      "properties": {
+        "effective_stitch_pitch_mm": { "$ref": "#/$defs/positiveMillimetres" },
+        "effective_course_pitch_mm": { "$ref": "#/$defs/positiveMillimetres" }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stitch_pitch_standard_uncertainty_mm",
+        "course_pitch_standard_uncertainty_mm",
+        "basis"
+      ],
+      "properties": {
+        "stitch_pitch_standard_uncertainty_mm": { "$ref": "#/$defs/nonNegativeMillimetres" },
+        "course_pitch_standard_uncertainty_mm": { "$ref": "#/$defs/nonNegativeMillimetres" },
+        "basis": {
+          "enum": ["REPLICATE_COMBINED_STANDARD_UNCERTAINTY", "DOCUMENTED_ENGINEERING_BOUND"]
+        },
+        "assumptions": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "basis": { "const": "DOCUMENTED_ENGINEERING_BOUND" } },
+            "required": ["basis"]
+          },
+          "then": { "required": ["assumptions"] }
+        }
+      ]
+    },
+    "calibrationResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["response_id", "measurement_conditions", "observations", "effective_gauge", "uncertainty"],
+      "properties": {
+        "response_id": {
+          "type": "string",
+          "pattern": "^mr_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"
+        },
+        "measurement_conditions": { "$ref": "#/$defs/calibrationResponseConditions" },
+        "observations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/spanObservation" }
+        },
+        "effective_gauge": { "$ref": "#/$defs/gauge" },
+        "uncertainty": { "$ref": "#/$defs/uncertainty" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "uncertainty": {
+                "type": "object",
+                "properties": { "basis": { "const": "REPLICATE_COMBINED_STANDARD_UNCERTAINTY" } },
+                "required": ["basis"]
+              }
+            },
+            "required": ["uncertainty"]
+          },
+          "then": { "properties": { "observations": { "type": "array", "minItems": 2 } } }
+        }
+      ]
+    }
+  }
+}

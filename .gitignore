@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Generated candidates and simulations are not authoritative fixtures.
+artifacts/
+outputs/
+
+# IDE and operating-system metadata.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

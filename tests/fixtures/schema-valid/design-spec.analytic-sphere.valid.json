@@ -1,0 +1,126 @@
+{
+  "schema_version": "1.0.0",
+  "design_spec_id": "ds_fixture_analytic_sphere",
+  "project_type": "AMIGURUMI_3D",
+  "dimensions": {
+    "length_unit": "MILLIMETER",
+    "measurements": [
+      {
+        "measurement_id": "dim_fixture_radius",
+        "semantic": "RADIUS",
+        "label": "Sphere radius",
+        "value_mm": 20,
+        "tolerance_mm": 1
+      }
+    ]
+  },
+  "target_geometry": {
+    "geometry_type": "ANALYTIC_SHAPE",
+    "primitive": "SPHERE",
+    "parameters": [
+      {
+        "parameter": "RADIUS",
+        "measurement_id": "dim_fixture_radius"
+      }
+    ],
+    "origin_mm": [0, 0, 0],
+    "coordinate_frame": {
+      "coordinate_frame_id": "frame_fixture_target",
+      "handedness": "RIGHT_HANDED",
+      "length_unit": "MILLIMETER",
+      "up_axis": "POSITIVE_Y",
+      "front_axis": "POSITIVE_Z"
+    }
+  },
+  "symmetries": [],
+  "landmarks": [],
+  "material_profile": {
+    "binding_type": "REFERENCE",
+    "profile_id": "mp_fixture_minimal",
+    "revision": 1,
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "construction_constraints": {
+    "priority_policy": "GEOMETRY_GATED_SEAMLESS_LEXICOGRAPHIC_V1",
+    "hard_geometry_gate_required": true,
+    "maximum_sewn_seams": 0,
+    "maximum_yarn_cuts": 0,
+    "maximum_reattachments": 0,
+    "allowed_join_methods": [
+      "CROCHETED"
+    ],
+    "intentional_openings": []
+  },
+  "colors": [
+    {
+      "color_id": "color_fixture_natural",
+      "label": "Natural",
+      "srgb_hex": "#C8B08A",
+      "roles": [
+        "main"
+      ]
+    }
+  ],
+  "difficulty_constraints": {
+    "maximum_skill_level": "BEGINNER",
+    "allowed_stitch_types": [
+      "SINGLE_CROCHET"
+    ],
+    "allowed_shaping": [],
+    "allowed_construction_operations": [
+      "MAGIC_RING"
+    ],
+    "maximum_simultaneously_active_frontiers": 1,
+    "allow_unsupported_techniques": false
+  },
+  "solver_options": {
+    "allowed_solver_families": [
+      "ANALYTIC"
+    ],
+    "solver_family_preference": [
+      "ANALYTIC"
+    ],
+    "random_seed": 0,
+    "max_candidate_evaluations": 1,
+    "max_backtracks": 0,
+    "max_beam_width": 1,
+    "parameter_profile_id": "solver_params_fixture_minimal"
+  },
+  "verification_requirements": {
+    "threshold_profile_id": "thresholds_fixture_minimal",
+    "required_gates": [
+      "V0",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6",
+      "V7",
+      "V10"
+    ],
+    "required_geometry_metrics": [
+      "SYMMETRIC_CHAMFER",
+      "TOPOLOGY"
+    ],
+    "require_export_round_trip": false,
+    "require_material_robustness": false,
+    "require_collision_check": true,
+    "minimum_physical_validation": "UNTESTED"
+  },
+  "domain_constraints": {
+    "domain": "AMIGURUMI_3D",
+    "stuffing_level": "NONE",
+    "surface_mode": "CLOSED"
+  },
+  "interpretation_provenance": {
+    "authoring_mode": "MANUAL",
+    "producer": {
+      "name": "schema-fixture",
+      "version": "1.0.0"
+    },
+    "source_artifacts": [],
+    "assumptions": [],
+    "unresolved_ambiguities": []
+  }
+}

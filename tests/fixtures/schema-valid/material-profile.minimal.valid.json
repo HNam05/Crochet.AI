@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "profile_id": "mp_fixture_minimal",
+  "revision": 1,
+  "yarn": {
+    "description": "Fixture yarn for schema-shape validation"
+  },
+  "hook_diameter_mm": 3,
+  "calibration_responses": [
+    {
+      "response_id": "mr_fixture_relaxed_sc",
+      "measurement_conditions": {
+        "canonical_stitch_type": "SINGLE_CROCHET",
+        "course_mode": "CYCLIC",
+        "tension_profile_id": "tension_fixture_default",
+        "fabric_state": "RELAXED_UNSTUFFED"
+      },
+      "observations": [
+        {
+          "specimen_id": "specimen_fixture_001",
+          "stitch_span_count": 4,
+          "stitch_span_length_mm": 16,
+          "course_span_count": 4,
+          "course_span_length_mm": 14
+        }
+      ],
+      "effective_gauge": {
+        "effective_stitch_pitch_mm": 4,
+        "effective_course_pitch_mm": 3.5
+      },
+      "uncertainty": {
+        "stitch_pitch_standard_uncertainty_mm": 0.5,
+        "course_pitch_standard_uncertainty_mm": 0.5,
+        "basis": "DOCUMENTED_ENGINEERING_BOUND",
+        "assumptions": "Single-observation fixture bound; not a calibrated material claim."
+      }
+    }
+  ],
+  "canonicalization": {
+    "profile": "MATERIAL_PROFILE_CANONICAL_JSON_V1",
+    "hash_algorithm": "SHA-256"
+  },
+  "provenance": {
+    "created_at": "2026-08-31T00:00:00Z",
+    "measurement_protocol_id": "protocol_fixture_schema_shape",
+    "source_record_ids": [
+      "record_fixture_001"
+    ],
+    "software_commit": "fixture-only",
+    "working_tree_dirty": false
+  }
+}

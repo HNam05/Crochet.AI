@@ -1,0 +1,837 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crochet.ai/schemas/crochet-ir.schema.json",
+  "title": "CrochetIR 1.0.0",
+  "description": "Canonical, explicit, deterministic crochet construction graph.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "semantics_profile",
+    "crochet_ir_id",
+    "design_spec_ref",
+    "units",
+    "required_capabilities",
+    "colors",
+    "yarns",
+    "attachment_locations",
+    "stitches",
+    "construction_operations",
+    "construction_sequence",
+    "courses",
+    "course_order",
+    "frontiers",
+    "frontier_transitions",
+    "branches",
+    "components",
+    "openings",
+    "yarn_paths",
+    "derivations",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "semantics_profile": { "const": "CROCHET_CORE_1.0.0" },
+    "crochet_ir_id": { "$ref": "#/$defs/crochetIrId" },
+    "design_spec_ref": { "$ref": "#/$defs/designSpecRef" },
+    "units": { "$ref": "#/$defs/units" },
+    "required_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "colors": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/color" }
+    },
+    "yarns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/yarn" }
+    },
+    "attachment_locations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/attachmentLocation" }
+    },
+    "stitches": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/stitch" }
+    },
+    "construction_operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/constructionOperation" }
+    },
+    "construction_sequence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/sequenceEvent" }
+    },
+    "courses": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/course" }
+    },
+    "course_order": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/courseId" }
+    },
+    "frontiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/frontier" }
+    },
+    "frontier_transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/frontierTransition" }
+    },
+    "branches": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/branch" }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/component" }
+    },
+    "openings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/opening" }
+    },
+    "yarn_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/yarnPath" }
+    },
+    "derivations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/derivation" }
+    },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "crochetIrId": { "type": "string", "pattern": "^cir_[A-Za-z0-9][A-Za-z0-9._-]{0,118}$" },
+    "designSpecId": { "type": "string", "pattern": "^ds_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$" },
+    "materialProfileId": { "type": "string", "pattern": "^mp_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$" },
+    "colorId": { "type": "string", "pattern": "^color_[A-Za-z0-9][A-Za-z0-9._-]{0,114}$" },
+    "yarnId": { "type": "string", "pattern": "^yarn_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+    "attachmentLocationId": { "type": "string", "pattern": "^loc_[A-Za-z0-9][A-Za-z0-9._-]{0,116}$" },
+    "stitchId": { "type": "string", "pattern": "^st_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$" },
+    "operationId": { "type": "string", "pattern": "^op_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$" },
+    "eventId": { "type": "string", "pattern": "^ev_[A-Za-z0-9][A-Za-z0-9._-]{0,119}$" },
+    "courseId": { "type": "string", "pattern": "^course_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+    "frontierId": { "type": "string", "pattern": "^frontier_[A-Za-z0-9][A-Za-z0-9._-]{0,113}$" },
+    "frontierTransitionId": { "type": "string", "pattern": "^ftrans_[A-Za-z0-9][A-Za-z0-9._-]{0,114}$" },
+    "branchId": { "type": "string", "pattern": "^branch_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+    "componentId": { "type": "string", "pattern": "^component_[A-Za-z0-9][A-Za-z0-9._-]{0,112}$" },
+    "openingId": { "type": "string", "pattern": "^opening_[A-Za-z0-9][A-Za-z0-9._-]{0,114}$" },
+    "openingRequirementId": { "type": "string", "pattern": "^opening_req_[A-Za-z0-9][A-Za-z0-9._-]{0,105}$" },
+    "yarnPathId": { "type": "string", "pattern": "^ypath_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+    "yarnSegmentId": { "type": "string", "pattern": "^yseg_[A-Za-z0-9][A-Za-z0-9._-]{0,116}$" },
+    "derivationId": { "type": "string", "pattern": "^deriv_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+    "designSpecRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["design_spec_id", "sha256"],
+      "properties": {
+        "design_spec_id": { "$ref": "#/$defs/designSpecId" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "materialProfileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "revision", "sha256"],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/materialProfileId" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "units": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["length", "mass", "angle"],
+      "properties": {
+        "length": { "const": "MILLIMETER" },
+        "mass": { "const": "GRAM" },
+        "angle": { "const": "RADIAN" }
+      }
+    },
+    "capability": {
+      "enum": [
+        "CORE_STITCHES_V1",
+        "SHAPING_V1",
+        "MAGIC_RING_V1",
+        "FRONTIER_BRANCHING_V1",
+        "COLOR_CHANGES_V1",
+        "SEWN_JOINS_V1",
+        "CHAIN_SPACES_V1",
+        "MOTIF_ATTACHMENTS_V1"
+      ]
+    },
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["color_id", "label", "srgb_hex"],
+      "properties": {
+        "color_id": { "$ref": "#/$defs/colorId" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "srgb_hex": { "type": "string", "pattern": "^#[0-9A-F]{6}$" }
+      }
+    },
+    "yarn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["yarn_id", "material_profile_ref", "color_id", "label"],
+      "properties": {
+        "yarn_id": { "$ref": "#/$defs/yarnId" },
+        "material_profile_ref": { "$ref": "#/$defs/materialProfileRef" },
+        "color_id": { "$ref": "#/$defs/colorId" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "producerRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entity_type", "stitch_id"],
+          "properties": {
+            "entity_type": { "const": "STITCH" },
+            "stitch_id": { "$ref": "#/$defs/stitchId" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entity_type", "operation_id"],
+          "properties": {
+            "entity_type": { "const": "CONSTRUCTION_OPERATION" },
+            "operation_id": { "$ref": "#/$defs/operationId" }
+          }
+        }
+      ]
+    },
+    "attachmentLocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attachment_location_id", "location_type", "producer_ref", "ordinal_within_producer"],
+      "properties": {
+        "attachment_location_id": { "$ref": "#/$defs/attachmentLocationId" },
+        "location_type": { "enum": ["TOP_LOOP", "MAGIC_RING_ANCHOR", "CHAIN_SPACE", "FABRIC_ATTACHMENT_POINT", "MOTIF_ATTACHMENT_POINT"] },
+        "producer_ref": { "$ref": "#/$defs/producerRef" },
+        "ordinal_within_producer": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "stitchType": {
+      "enum": ["CHAIN", "SLIP_STITCH", "SINGLE_CROCHET", "HALF_DOUBLE_CROCHET", "DOUBLE_CROCHET", "TREBLE_CROCHET"]
+    },
+    "stitch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stitch_id", "stitch_type", "shaping", "base_arity", "top_arity", "base_attachment_location_ids", "top_attachment_location_ids", "yarn_id", "color_id", "course_id", "derivation_id"],
+      "properties": {
+        "stitch_id": { "$ref": "#/$defs/stitchId" },
+        "stitch_type": { "$ref": "#/$defs/stitchType" },
+        "shaping": { "enum": ["PLAIN", "INCREASE", "DECREASE"] },
+        "base_arity": { "type": "integer", "minimum": 0 },
+        "top_arity": { "type": "integer", "minimum": 1 },
+        "base_attachment_location_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/attachmentLocationId" }
+        },
+        "top_attachment_location_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/attachmentLocationId" }
+        },
+        "yarn_id": { "$ref": "#/$defs/yarnId" },
+        "color_id": { "$ref": "#/$defs/colorId" },
+        "course_id": { "$ref": "#/$defs/courseId" },
+        "derivation_id": { "$ref": "#/$defs/derivationId" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "stitch_type": { "const": "CHAIN" } }, "required": ["stitch_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "shaping": { "const": "PLAIN" },
+              "base_arity": { "const": 0 },
+              "top_arity": { "const": 1 },
+              "base_attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "allOf": [
+              { "type": "object", "properties": { "shaping": { "const": "PLAIN" } }, "required": ["shaping"] },
+              { "not": { "type": "object", "properties": { "stitch_type": { "const": "CHAIN" } }, "required": ["stitch_type"] } }
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "base_arity": { "const": 1 },
+              "top_arity": { "const": 1 },
+              "base_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "shaping": { "const": "INCREASE" } }, "required": ["shaping"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "stitch_type": { "const": "SINGLE_CROCHET" },
+              "base_arity": { "const": 1 },
+              "top_arity": { "const": 2 },
+              "base_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "top_attachment_location_ids": { "type": "array", "minItems": 2, "maxItems": 2 }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "shaping": { "const": "DECREASE" } }, "required": ["shaping"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "stitch_type": { "const": "SINGLE_CROCHET" },
+              "base_arity": { "const": 2 },
+              "top_arity": { "const": 1 },
+              "base_attachment_location_ids": { "type": "array", "minItems": 2, "maxItems": 2 },
+              "top_attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "operationType": {
+      "enum": ["MAGIC_RING", "JOIN", "SPLIT", "RESERVE", "ATTACH", "COLOR_CHANGE", "CUT_YARN", "CLOSE", "DECLARE_OPENING"]
+    },
+    "nullableOpeningId": {
+      "oneOf": [{ "$ref": "#/$defs/openingId" }, { "type": "null" }]
+    },
+    "nullableOpeningRequirementId": {
+      "oneOf": [{ "$ref": "#/$defs/openingRequirementId" }, { "type": "null" }]
+    },
+    "constructionOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation_id", "operation_type", "input_frontier_ids", "output_frontier_ids", "attachment_location_ids", "join_input_mappings", "input_yarn_ids", "output_yarn_ids", "opening_id", "design_requirement_id", "join_method", "derivation_id"],
+      "properties": {
+        "operation_id": { "$ref": "#/$defs/operationId" },
+        "operation_type": { "$ref": "#/$defs/operationType" },
+        "input_frontier_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "output_frontier_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "attachment_location_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } },
+        "join_input_mappings": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/joinInputMapping" } },
+        "input_yarn_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/yarnId" } },
+        "output_yarn_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/yarnId" } },
+        "opening_id": { "$ref": "#/$defs/nullableOpeningId" },
+        "design_requirement_id": { "$ref": "#/$defs/nullableOpeningRequirementId" },
+        "join_method": { "enum": ["NONE", "CROCHETED", "SEWN"] },
+        "derivation_id": { "$ref": "#/$defs/derivationId" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "MAGIC_RING" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": { "type": "array", "maxItems": 0 },
+              "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "JOIN" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": { "type": "array", "minItems": 2 },
+              "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "attachment_location_ids": { "type": "array", "minItems": 1 },
+              "join_input_mappings": { "type": "array", "minItems": 2 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "maxItems": 0 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "enum": ["CROCHETED", "SEWN"] }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "SPLIT" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "output_frontier_ids": { "type": "array", "minItems": 2 },
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "maxItems": 0 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "RESERVE" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "output_frontier_ids": { "type": "array", "minItems": 2 },
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "maxItems": 0 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "ATTACH" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": { "type": "array", "maxItems": 1 },
+              "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "attachment_location_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "COLOR_CHANGE" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_yarn_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "output_yarn_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "input_frontier_ids": { "type": "array", "maxItems": 0 },
+              "output_frontier_ids": { "type": "array", "maxItems": 0 },
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "CUT_YARN" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_yarn_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "output_yarn_ids": { "type": "array", "maxItems": 0 },
+              "input_frontier_ids": { "type": "array", "maxItems": 0 },
+              "output_frontier_ids": { "type": "array", "maxItems": 0 },
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "DECLARE_OPENING" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "opening_id": { "$ref": "#/$defs/openingId" },
+              "design_requirement_id": { "$ref": "#/$defs/openingRequirementId" },
+              "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "maxItems": 0 },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "operation_type": { "const": "CLOSE" } }, "required": ["operation_type"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 },
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "join_input_mappings": { "type": "array", "maxItems": 0 },
+              "input_yarn_ids": { "type": "array", "maxItems": 0 },
+              "output_yarn_ids": { "type": "array", "maxItems": 0 },
+              "opening_id": { "type": "null" },
+              "design_requirement_id": { "type": "null" },
+              "join_method": { "const": "NONE" }
+            }
+          }
+        }
+      ]
+    },
+    "joinInputMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_frontier_id", "orientation", "consumed_attachment_location_ids"],
+      "properties": {
+        "input_frontier_id": { "$ref": "#/$defs/frontierId" },
+        "orientation": { "enum": ["FORWARD", "REVERSED"] },
+        "consumed_attachment_location_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } }
+      }
+    },
+    "subjectRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entity_type", "stitch_id"],
+          "properties": { "entity_type": { "const": "STITCH" }, "stitch_id": { "$ref": "#/$defs/stitchId" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entity_type", "operation_id"],
+          "properties": { "entity_type": { "const": "CONSTRUCTION_OPERATION" }, "operation_id": { "$ref": "#/$defs/operationId" } }
+        }
+      ]
+    },
+    "nullableYarnId": { "oneOf": [{ "$ref": "#/$defs/yarnId" }, { "type": "null" }] },
+    "nullableColorId": { "oneOf": [{ "$ref": "#/$defs/colorId" }, { "type": "null" }] },
+    "sequenceEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "sequence_index", "subject_ref", "active_yarn_id_before", "active_yarn_id_after", "active_color_id_before", "active_color_id_after", "frontier_transition_ids"],
+      "properties": {
+        "event_id": { "$ref": "#/$defs/eventId" },
+        "sequence_index": { "type": "integer", "minimum": 0 },
+        "subject_ref": { "$ref": "#/$defs/subjectRef" },
+        "active_yarn_id_before": { "$ref": "#/$defs/nullableYarnId" },
+        "active_yarn_id_after": { "$ref": "#/$defs/nullableYarnId" },
+        "active_color_id_before": { "$ref": "#/$defs/nullableColorId" },
+        "active_color_id_after": { "$ref": "#/$defs/nullableColorId" },
+        "frontier_transition_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/frontierTransitionId" } }
+      }
+    },
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["course_id", "ordinal", "component_id", "branch_id", "course_form", "turn_mode", "work_direction", "member_event_ids", "input_frontier_ids", "output_frontier_ids", "derivation_id"],
+      "properties": {
+        "course_id": { "$ref": "#/$defs/courseId" },
+        "ordinal": { "type": "integer", "minimum": 0 },
+        "component_id": { "$ref": "#/$defs/componentId" },
+        "branch_id": { "$ref": "#/$defs/branchId" },
+        "course_form": { "enum": ["LINEAR", "CYCLIC"] },
+        "turn_mode": { "enum": ["TURN", "CONTINUOUS_SPIRAL", "JOINED_ROUND", "MOTIF_PASS", "NONE"] },
+        "work_direction": { "enum": ["FORWARD", "REVERSE", "CLOCKWISE", "COUNTERCLOCKWISE"] },
+        "member_event_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/eventId" } },
+        "input_frontier_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "output_frontier_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "derivation_id": { "$ref": "#/$defs/derivationId" }
+      }
+    },
+    "frontier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frontier_id", "component_id", "branch_id", "topology", "lifecycle_state", "attachment_location_ids", "anchor_attachment_location_id", "active_yarn_id", "created_by_transition_id"],
+      "properties": {
+        "frontier_id": { "$ref": "#/$defs/frontierId" },
+        "component_id": { "$ref": "#/$defs/componentId" },
+        "branch_id": { "$ref": "#/$defs/branchId" },
+        "topology": { "enum": ["LINEAR", "CYCLIC"] },
+        "lifecycle_state": { "enum": ["ACTIVE", "RESERVED", "CLOSED", "DECLARED_OPEN"] },
+        "attachment_location_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } },
+        "anchor_attachment_location_id": { "oneOf": [{ "$ref": "#/$defs/attachmentLocationId" }, { "type": "null" }] },
+        "active_yarn_id": { "$ref": "#/$defs/nullableYarnId" },
+        "created_by_transition_id": { "$ref": "#/$defs/frontierTransitionId" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "topology": { "const": "CYCLIC" }, "lifecycle_state": { "enum": ["ACTIVE", "RESERVED"] } }, "required": ["topology", "lifecycle_state"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "attachment_location_ids": { "type": "array", "minItems": 1 },
+              "anchor_attachment_location_id": { "$ref": "#/$defs/attachmentLocationId" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "lifecycle_state": { "const": "CLOSED" } }, "required": ["lifecycle_state"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "attachment_location_ids": { "type": "array", "maxItems": 0 },
+              "anchor_attachment_location_id": { "type": "null" },
+              "active_yarn_id": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": { "type": "object", "properties": { "lifecycle_state": { "const": "DECLARED_OPEN" } }, "required": ["lifecycle_state"] },
+          "then": {
+            "type": "object",
+            "properties": {
+              "active_yarn_id": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "frontierTransition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frontier_transition_id", "transition_index", "after_event_index", "caused_by_subject_ref", "transition_type", "input_frontier_ids", "output_frontier_ids", "retired_attachment_location_ids", "created_attachment_location_ids", "reserved_attachment_location_ids", "opening_id"],
+      "properties": {
+        "frontier_transition_id": { "$ref": "#/$defs/frontierTransitionId" },
+        "transition_index": { "type": "integer", "minimum": 0 },
+        "after_event_index": { "type": "integer", "minimum": 0 },
+        "caused_by_subject_ref": { "$ref": "#/$defs/subjectRef" },
+        "transition_type": { "enum": ["CREATE", "ADVANCE", "SPLIT", "RESERVE", "REATTACH", "JOIN", "CLOSE", "DECLARE_OPENING"] },
+        "input_frontier_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "output_frontier_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "retired_attachment_location_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } },
+        "created_attachment_location_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } },
+        "reserved_attachment_location_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } },
+        "opening_id": { "$ref": "#/$defs/nullableOpeningId" }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "CREATE" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "maxItems": 0 }, "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "retired_attachment_location_ids": { "type": "array", "maxItems": 0 }, "created_attachment_location_ids": { "type": "array", "minItems": 1 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "ADVANCE" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "SPLIT" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "output_frontier_ids": { "type": "array", "minItems": 2 }, "created_attachment_location_ids": { "type": "array", "maxItems": 0 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "RESERVE" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "output_frontier_ids": { "type": "array", "minItems": 2 }, "created_attachment_location_ids": { "type": "array", "maxItems": 0 }, "reserved_attachment_location_ids": { "type": "array", "minItems": 1 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "REATTACH" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "retired_attachment_location_ids": { "type": "array", "maxItems": 0 }, "created_attachment_location_ids": { "type": "array", "maxItems": 0 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "JOIN" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 2 }, "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "created_attachment_location_ids": { "type": "array", "maxItems": 0 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "CLOSE" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "created_attachment_location_ids": { "type": "array", "maxItems": 0 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "type": "null" } } }
+        },
+        {
+          "if": { "type": "object", "properties": { "transition_type": { "const": "DECLARE_OPENING" } }, "required": ["transition_type"] },
+          "then": { "type": "object", "properties": { "input_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "output_frontier_ids": { "type": "array", "minItems": 1, "maxItems": 1 }, "retired_attachment_location_ids": { "type": "array", "maxItems": 0 }, "created_attachment_location_ids": { "type": "array", "maxItems": 0 }, "reserved_attachment_location_ids": { "type": "array", "maxItems": 0 }, "opening_id": { "$ref": "#/$defs/openingId" } } }
+        }
+      ]
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch_id", "component_id", "parent_branch_ids", "created_by_transition_id", "course_ids", "entry_frontier_ids", "terminal_frontier_ids"],
+      "properties": {
+        "branch_id": { "$ref": "#/$defs/branchId" },
+        "component_id": { "$ref": "#/$defs/componentId" },
+        "parent_branch_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/branchId" } },
+        "created_by_transition_id": { "oneOf": [{ "$ref": "#/$defs/frontierTransitionId" }, { "type": "null" }] },
+        "course_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/courseId" } },
+        "entry_frontier_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "terminal_frontier_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_id", "branch_ids", "initial_frontier_ids", "terminal_frontier_ids"],
+      "properties": {
+        "component_id": { "$ref": "#/$defs/componentId" },
+        "branch_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/branchId" } },
+        "initial_frontier_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } },
+        "terminal_frontier_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/frontierId" } }
+      }
+    },
+    "opening": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["opening_id", "component_id", "design_requirement_id", "declared_by_operation_id", "boundary_attachment_location_ids", "purpose", "closure_expectation", "derivation_id"],
+      "properties": {
+        "opening_id": { "$ref": "#/$defs/openingId" },
+        "component_id": { "$ref": "#/$defs/componentId" },
+        "design_requirement_id": { "$ref": "#/$defs/openingRequirementId" },
+        "declared_by_operation_id": { "$ref": "#/$defs/operationId" },
+        "boundary_attachment_location_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/attachmentLocationId" } },
+        "purpose": { "enum": ["ARMHOLE", "NECKLINE", "SLEEVE_OPENING", "CUFF", "HEM", "FRONT_OPENING", "STUFFING_OPENING", "LACE_VOID", "HANDLE", "OTHER"] },
+        "closure_expectation": { "enum": ["REMAIN_OPEN", "CLOSE_DURING_CONSTRUCTION"] },
+        "derivation_id": { "$ref": "#/$defs/derivationId" }
+      }
+    },
+    "yarnSegment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["yarn_segment_id", "start_operation_id", "start_operation_type", "event_ids", "end_operation_id", "end_operation_type"],
+      "properties": {
+        "yarn_segment_id": { "$ref": "#/$defs/yarnSegmentId" },
+        "start_operation_id": { "$ref": "#/$defs/operationId" },
+        "start_operation_type": { "enum": ["MAGIC_RING", "ATTACH", "COLOR_CHANGE"] },
+        "event_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/eventId" } },
+        "end_operation_id": { "oneOf": [{ "$ref": "#/$defs/operationId" }, { "type": "null" }] },
+        "end_operation_type": { "oneOf": [{ "enum": ["CUT_YARN", "COLOR_CHANGE"] }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "type": "object", "properties": { "end_operation_id": { "type": "null" } }, "required": ["end_operation_id"] },
+          "then": { "type": "object", "properties": { "end_operation_type": { "type": "null" } } },
+          "else": { "type": "object", "properties": { "end_operation_type": { "enum": ["CUT_YARN", "COLOR_CHANGE"] } } }
+        }
+      ]
+    },
+    "yarnPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["yarn_path_id", "yarn_id", "segments"],
+      "properties": {
+        "yarn_path_id": { "$ref": "#/$defs/yarnPathId" },
+        "yarn_id": { "$ref": "#/$defs/yarnId" },
+        "segments": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/yarnSegment" } }
+      }
+    },
+    "derivationSubjectRef": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["entity_type", "stitch_id"], "properties": { "entity_type": { "const": "STITCH" }, "stitch_id": { "$ref": "#/$defs/stitchId" } } },
+        { "type": "object", "additionalProperties": false, "required": ["entity_type", "operation_id"], "properties": { "entity_type": { "const": "CONSTRUCTION_OPERATION" }, "operation_id": { "$ref": "#/$defs/operationId" } } },
+        { "type": "object", "additionalProperties": false, "required": ["entity_type", "course_id"], "properties": { "entity_type": { "const": "COURSE" }, "course_id": { "$ref": "#/$defs/courseId" } } },
+        { "type": "object", "additionalProperties": false, "required": ["entity_type", "frontier_id"], "properties": { "entity_type": { "const": "FRONTIER" }, "frontier_id": { "$ref": "#/$defs/frontierId" } } },
+        { "type": "object", "additionalProperties": false, "required": ["entity_type", "opening_id"], "properties": { "entity_type": { "const": "OPENING" }, "opening_id": { "$ref": "#/$defs/openingId" } } }
+      ]
+    },
+    "derivation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["derivation_id", "method", "rule_id", "rule_version", "parameter_sha256", "subject_refs"],
+      "properties": {
+        "derivation_id": { "$ref": "#/$defs/derivationId" },
+        "method": { "enum": ["ANALYTIC_RULE", "GEODESIC_COUPLING", "FRONTIER_SEARCH", "GARMENT_RULE", "FLAT_COMBINATORIC", "LACE_TOPOLOGY", "IMPORTED", "MANUAL_BOOTSTRAP"] },
+        "rule_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "rule_version": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "parameter_sha256": { "$ref": "#/$defs/sha256" },
+        "subject_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/derivationSubjectRef" } }
+      }
+    },
+    "solverParameterValue": {
+      "anyOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "integer" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "anyOf": [{ "type": "boolean" }, { "type": "number" }, { "type": "string" }] } }
+      ]
+    },
+    "solverParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,119}$" },
+        "value": { "$ref": "#/$defs/solverParameterValue" }
+      }
+    },
+    "inputArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_role", "sha256"],
+      "properties": {
+        "artifact_id": { "type": "string", "pattern": "^asset_[A-Za-z0-9][A-Za-z0-9._-]{0,115}$" },
+        "artifact_role": { "enum": ["TARGET_GEOMETRY", "AUXILIARY_GEOMETRY", "CONSTRUCTION_PLAN", "USER_INPUT"] },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["solver_family", "name", "version"],
+      "properties": {
+        "solver_family": { "enum": ["ANALYTIC", "GEODESIC", "FRONTIER", "GARMENT", "FLAT", "LACE", "IMPORT"] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 80 }
+      }
+    },
+    "searchBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["budget_type", "limit", "consumed", "exhausted"],
+      "properties": {
+        "budget_type": { "const": "CANDIDATE_EVALUATIONS" },
+        "limit": { "type": "integer", "minimum": 1 },
+        "consumed": { "type": "integer", "minimum": 0 },
+        "exhausted": { "type": "boolean" }
+      }
+    },
+    "canonicalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "hash_algorithm"],
+      "properties": {
+        "profile": { "const": "CROCHET_IR_CANONICAL_JSON_V1" },
+        "hash_algorithm": { "const": "SHA-256" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator", "solver_parameters", "solver_parameters_sha256", "random_seed", "search_budget", "input_artifacts", "software_commit", "canonicalization"],
+      "properties": {
+        "generator": { "$ref": "#/$defs/generator" },
+        "solver_parameters": { "type": "array", "items": { "$ref": "#/$defs/solverParameter" } },
+        "solver_parameters_sha256": { "$ref": "#/$defs/sha256" },
+        "random_seed": { "oneOf": [{ "type": "integer", "minimum": 0, "maximum": 4294967295 }, { "type": "null" }] },
+        "search_budget": { "$ref": "#/$defs/searchBudget" },
+        "input_artifacts": { "type": "array", "items": { "$ref": "#/$defs/inputArtifact" } },
+        "software_commit": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        "canonicalization": { "$ref": "#/$defs/canonicalization" }
+      }
+    }
+  }
+}
