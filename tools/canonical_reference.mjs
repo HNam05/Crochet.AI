@@ -165,7 +165,13 @@ function project(input, profile) {
 }
 
 function digest(profile, canonicalJson) {
-  return createHash("sha256").update(Buffer.from(`Crochet.AI\0${profile}\0${canonicalJson}`, "utf8")).digest("hex");
+  const prefix = `Crochet.AI\0${profile}\0`;
+  const preimage = Buffer.from(prefix + canonicalJson, "utf8");
+  return {
+    prefix,
+    preimage,
+    sha256: createHash("sha256").update(preimage).digest("hex"),
+  };
 }
 
 const vectors = JSON.parse(readFileSync(process.argv[2], "utf8"));
@@ -182,14 +188,22 @@ for (const vector of vectors) {
       };
     }
     const canonicalJson = jcs(project(input, vector.profile));
-    const hash = digest(vector.profile, canonicalJson);
+    const expectedCanonicalJson = vector.expected_canonical_file
+      ? readFileSync(vector.expected_canonical_file, "utf8").replace(/\r?\n$/, "")
+      : vector.expected_canonical_json;
+    const result = digest(vector.profile, canonicalJson);
     if (
-      (vector.expected_canonical_json && canonicalJson !== vector.expected_canonical_json)
-      || hash !== vector.expected_sha256
+      (expectedCanonicalJson && canonicalJson !== expectedCanonicalJson)
+      || (vector.expected_preimage_prefix_ascii && result.prefix !== vector.expected_preimage_prefix_ascii)
+      || (
+        expectedCanonicalJson
+        && !result.preimage.equals(Buffer.from(result.prefix + expectedCanonicalJson, "utf8"))
+      )
+      || result.sha256 !== vector.expected_sha256
     ) {
       throw new Error("canonical JSON or hash mismatch");
     }
-    console.log(`PASS ${vector.id}`);
+    console.log(`PASS ${vector.id}: canonical JSON, UTF-8 preimage, SHA-256`);
   } catch (error) {
     failed = true;
     console.error(`FAIL ${vector.id}: ${error.message}`);

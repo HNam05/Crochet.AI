@@ -20,10 +20,12 @@
     "expected_sha256": "f4e733cf64a4e0ce1f47c273fd62ea4a7bcd3c724b98a6afa90720d5824c4fdd"
   },
   {
-    "id": "crochet-ir-projection",
+    "id": "crochet-ir-closed-semantic-valid",
     "profile": "CROCHET_IR_CANONICAL_JSON_V1",
-    "input_file": "tests/fixtures/schema-valid/crochet-ir.magic-ring-single-course.valid.json",
-    "expected_sha256": "338036d62090c81bcc39727ed4a4e1e58ac977df9a8d3baa5eebdfa85c932395"
+    "input_file": "tests/fixtures/conformance/crochet-ir.closed.valid.json",
+    "expected_canonical_file": "tests/conformance/crochet-ir.closed.canonical.json",
+    "expected_preimage_prefix_ascii": "Crochet.AI\u0000CROCHET_IR_CANONICAL_JSON_V1\u0000",
+    "expected_sha256": "405dfcb5258e5d74a63be9f8dcc6fe3500a46853384441b0a4f93e784fcd050a"
   },
   {
     "id": "semantic-projection-jcs",
