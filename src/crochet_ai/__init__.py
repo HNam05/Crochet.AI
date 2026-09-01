@@ -9,7 +9,13 @@ from .canonical import (
 )
 from .diagnostics import Diagnostic, FailureCode, ValidationReport
 from .equivalence import are_semantically_equivalent, semantic_projection
-from .models import CrochetIR, DesignSpec, MaterialProfile
+from .mesh_preflight import (
+    MeshPreflightResult,
+    MeshPreflightValidator,
+    PreflightOutcome,
+    preflight_mesh,
+)
+from .models import CrochetIR, DesignSpec, IndexedTriangleMesh, MaterialProfile
 from .validation import SemanticValidator
 
 __all__ = [
@@ -18,7 +24,11 @@ __all__ = [
     "DesignSpec",
     "Diagnostic",
     "FailureCode",
+    "IndexedTriangleMesh",
     "MaterialProfile",
+    "MeshPreflightResult",
+    "MeshPreflightValidator",
+    "PreflightOutcome",
     "SemanticValidator",
     "ValidationReport",
     "are_semantically_equivalent",
@@ -26,5 +36,6 @@ __all__ = [
     "canonical_hash",
     "canonical_projection",
     "parse_json",
+    "preflight_mesh",
     "semantic_projection",
 ]

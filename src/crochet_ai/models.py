@@ -54,3 +54,10 @@ class MaterialProfile(ArtifactModel):
 @dataclass(frozen=True, slots=True)
 class CrochetIR(ArtifactModel):
     schema_kind: ClassVar[str] = "crochet_ir"
+
+
+@dataclass(frozen=True, slots=True)
+class IndexedTriangleMesh(ArtifactModel):
+    """Immutable runtime value for the canonical V0 triangle-surface schema."""
+
+    schema_kind: ClassVar[str] = "indexed_triangle_mesh"

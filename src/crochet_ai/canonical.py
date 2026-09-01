@@ -28,6 +28,8 @@ class CanonicalProfile(StrEnum):
     CROCHET_IR = "CROCHET_IR_CANONICAL_JSON_V1"
     MATERIAL_PROFILE = "MATERIAL_PROFILE_CANONICAL_JSON_V1"
     SEMANTIC_EQUIVALENCE = "CROCHET_SEMANTIC_EQUIVALENCE_V1"
+    INDEXED_TRIANGLE_MESH = "INDEXED_TRIANGLE_MESH_CANONICAL_JSON_V1"
+    NUMERICAL_GEOMETRY_PROFILE = "V0_NUMERICAL_GEOMETRY_PROFILE_JSON_V1"
 
 
 class CanonicalizationError(ValueError):
@@ -331,6 +333,11 @@ def canonical_projection(
             return crochet_ir_projection(value)
         return deepcopy(value)
     if profile in {CanonicalProfile.SURFACE_OF_REVOLUTION, CanonicalProfile.SEMANTIC_EQUIVALENCE}:
+        return deepcopy(value)
+    if profile in {
+        CanonicalProfile.INDEXED_TRIANGLE_MESH,
+        CanonicalProfile.NUMERICAL_GEOMETRY_PROFILE,
+    }:
         return deepcopy(value)
     raise CanonicalizationError(f"unsupported profile: {profile}")
 

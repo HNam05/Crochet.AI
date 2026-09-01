@@ -26,7 +26,13 @@ def test_published_schema_fixture_is_valid(kind: str, filename: str) -> None:
 
 
 def test_all_authoritative_schemas_compile() -> None:
-    assert set(schema_documents()) == {"design_spec", "material_profile", "crochet_ir"}
+    assert set(schema_documents()) == {
+        "design_spec",
+        "material_profile",
+        "crochet_ir",
+        "indexed_triangle_mesh",
+        "numerical_geometry_profile",
+    }
 
 
 def test_runtime_models_defensively_copy(

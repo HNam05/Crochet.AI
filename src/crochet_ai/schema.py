@@ -20,6 +20,8 @@ SCHEMA_FILENAMES = {
     "design_spec": "design-spec.schema.json",
     "material_profile": "material-profile.schema.json",
     "crochet_ir": "crochet-ir.schema.json",
+    "indexed_triangle_mesh": "indexed-triangle-mesh.schema.json",
+    "numerical_geometry_profile": "numerical-geometry-profile.schema.json",
 }
 
 
@@ -84,7 +86,9 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
             [
                 Diagnostic(
                     code=FailureCode.INPUT,
-                    gate="V1" if kind in {"design_spec", "material_profile"} else "V2",
+                    gate="V0"
+                    if kind in {"indexed_triangle_mesh", "numerical_geometry_profile"}
+                    else ("V1" if kind in {"design_spec", "material_profile"} else "V2"),
                     message_key="input.not_ijson",
                     summary=str(canonical_error),
                     artifact_hash=fingerprint,
@@ -102,7 +106,11 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
         validator.iter_errors(value),
         key=lambda error: (list(error.absolute_path), error.validator or "", error.message),
     )
-    gate = "V1" if kind in {"design_spec", "material_profile"} else "V2"
+    gate = (
+        "V0"
+        if kind in {"indexed_triangle_mesh", "numerical_geometry_profile"}
+        else ("V1" if kind in {"design_spec", "material_profile"} else "V2")
+    )
     for error in errors:
         pointer = _json_pointer(list(error.absolute_path))
         diagnostics.append(
