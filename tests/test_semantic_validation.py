@@ -224,6 +224,71 @@ def test_single_observation_gauge_is_independently_recomputed(
     assert "material.gauge_observation_mismatch" in keys(report)
 
 
+def _replicate_material_profile(material_profile: dict[str, object]) -> dict[str, object]:
+    response = material_profile["calibration_responses"][0]
+    response["observations"] = [
+        {
+            "specimen_id": "specimen_fixture_002",
+            "stitch_span_count": 2,
+            "stitch_span_length_mm": 8,
+            "course_span_count": 2,
+            "course_span_length_mm": 7,
+        },
+        {
+            "specimen_id": "specimen_fixture_003",
+            "stitch_span_count": 2,
+            "stitch_span_length_mm": 9,
+            "course_span_count": 2,
+            "course_span_length_mm": 7.5,
+        },
+    ]
+    response["effective_gauge"] = {
+        "effective_stitch_pitch_mm": 4.25,
+        "effective_course_pitch_mm": 3.625,
+    }
+    response["uncertainty"] = {
+        "stitch_pitch_standard_uncertainty_mm": 0.25,
+        "course_pitch_standard_uncertainty_mm": 0.125,
+        "basis": "REPLICATE_COMBINED_STANDARD_UNCERTAINTY",
+    }
+    return material_profile
+
+
+def test_replicate_gauge_and_type_a_uncertainty_are_independently_recomputed(
+    material_profile: dict[str, object],
+) -> None:
+    value = _replicate_material_profile(material_profile)
+    assert SemanticValidator().validate_material_profile(value).ok
+
+    value["calibration_responses"][0]["effective_gauge"]["effective_stitch_pitch_mm"] = 999
+    report = SemanticValidator().validate_material_profile(value)
+    assert "material.replicate_gauge_mismatch" in keys(report)
+
+
+def test_replicate_estimator_is_independent_of_unordered_observation_input_order(
+    material_profile: dict[str, object],
+) -> None:
+    left = _replicate_material_profile(material_profile)
+    right = deepcopy(left)
+    right["calibration_responses"][0]["observations"].reverse()
+
+    validator = SemanticValidator()
+    assert validator.validate_material_profile(left).ok
+    assert validator.validate_material_profile(right).ok
+
+
+def test_replicate_uncertainty_contradiction_fails_closed(
+    material_profile: dict[str, object],
+) -> None:
+    value = _replicate_material_profile(material_profile)
+    value["calibration_responses"][0]["uncertainty"][
+        "course_pitch_standard_uncertainty_mm"
+    ] = 0.5
+
+    report = SemanticValidator().validate_material_profile(value)
+    assert "material.replicate_uncertainty_mismatch" in keys(report)
+
+
 def test_transition_event_index_must_resolve(closed_ir: dict[str, object]) -> None:
     closed_ir["frontier_transitions"][1]["after_event_index"] = 999
     report = structural_validator().validate_crochet_ir(closed_ir)
@@ -422,3 +487,18 @@ def test_implied_capability_must_be_declared() -> None:
     value["required_capabilities"].remove("SHAPING_V1")
     report = structural_validator().validate_crochet_ir(value)
     assert "capability.missing_declaration" in keys(report)
+
+
+def test_live_cyclic_frontier_must_begin_at_its_declared_anchor() -> None:
+    """A cyclic snapshot cannot encode the same boundary from a different origin."""
+    value = make_split_join_ir()
+    frontier = next(
+        item
+        for item in value["frontiers"]
+        if item["frontier_id"] == "frontier_fixture_branch_b_after"
+    )
+    frontier["attachment_location_ids"].reverse()
+
+    report = structural_validator().validate_crochet_ir(value)
+
+    assert "frontier.cyclic_anchor_origin" in keys(report)
