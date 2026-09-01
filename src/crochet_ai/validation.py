@@ -6,6 +6,7 @@ from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
+from math import sqrt
 from typing import Any
 
 from .diagnostics import Diagnostic, FailureCode, ValidationReport
@@ -38,6 +39,22 @@ def _rotate_to(values: list[str], anchor: str | None) -> list[str] | None:
         return None
     index = values.index(anchor)
     return values[index:] + values[:index]
+
+
+def _type_a_replicate_estimate(values: Sequence[float]) -> tuple[float, float]:
+    """Return the V1 sequential-binary64 mean and Type-A uncertainty of replicates."""
+    count = len(values)
+    if count < 2:
+        raise ValueError("Type-A replicate estimation requires at least two observations")
+    total = 0.0
+    for value in values:
+        total += value
+    mean = total / count
+    squared_deviations = 0.0
+    for value in values:
+        deviation = value - mean
+        squared_deviations += deviation * deviation
+    return mean, sqrt(squared_deviations / (count * (count - 1)))
 
 
 @dataclass(slots=True)
@@ -141,6 +158,54 @@ class SemanticValidator:
                         ),
                     )
                 seen_observations.add(marker)
+            if response["uncertainty"]["basis"] == "REPLICATE_COMBINED_STANDARD_UNCERTAINTY":
+                from .canonical import jcs_bytes
+
+                ordered = sorted(response["observations"], key=jcs_bytes)
+                dimensions = (
+                    (
+                        "stitch_span_length_mm",
+                        "stitch_span_count",
+                        "effective_stitch_pitch_mm",
+                        "stitch_pitch_standard_uncertainty_mm",
+                    ),
+                    (
+                        "course_span_length_mm",
+                        "course_span_count",
+                        "effective_course_pitch_mm",
+                        "course_pitch_standard_uncertainty_mm",
+                    ),
+                )
+                for length_key, count_key, gauge_key, uncertainty_key in dimensions:
+                    values = [
+                        observation[length_key] / observation[count_key]
+                        for observation in ordered
+                    ]
+                    estimate, type_a_uncertainty = _type_a_replicate_estimate(values)
+                    if response["effective_gauge"][gauge_key] != estimate:
+                        collector.add(
+                            FailureCode.COUNT,
+                            "V1",
+                            "material.replicate_gauge_mismatch",
+                            "Replicate effective gauge must equal the V1 Type-A mean",
+                            refs=(response_id,),
+                            pointers=(f"/calibration_responses/{index}/effective_gauge/{gauge_key}",),
+                            expected=estimate,
+                            observed=response["effective_gauge"][gauge_key],
+                            units="mm",
+                        )
+                    if response["uncertainty"][uncertainty_key] != type_a_uncertainty:
+                        collector.add(
+                            FailureCode.COUNT,
+                            "V1",
+                            "material.replicate_uncertainty_mismatch",
+                            "Replicate standard uncertainty must equal the V1 Type-A result",
+                            refs=(response_id,),
+                            pointers=(f"/calibration_responses/{index}/uncertainty/{uncertainty_key}",),
+                            expected=type_a_uncertainty,
+                            observed=response["uncertainty"][uncertainty_key],
+                            units="mm",
+                        )
             if len(response["observations"]) == 1:
                 observation = response["observations"][0]
                 expected_gauge = (
@@ -1447,6 +1512,23 @@ class SemanticValidator:
             )
         frontiers = tables["frontiers"]
         locations = tables["attachment_locations"]
+        for snapshot in frontiers.values():
+            if (
+                snapshot["topology"] == "CYCLIC"
+                and snapshot["lifecycle_state"] in {"ACTIVE", "RESERVED"}
+                and snapshot["attachment_location_ids"][0]
+                != snapshot["anchor_attachment_location_id"]
+            ):
+                collector.add(
+                    FailureCode.FRONTIER,
+                    "V4",
+                    "frontier.cyclic_anchor_origin",
+                    "A live cyclic frontier must serialize from its declared anchor",
+                    refs=(snapshot["frontier_id"], snapshot["anchor_attachment_location_id"]),
+                    pointers=("/frontiers",),
+                    expected=snapshot["anchor_attachment_location_id"],
+                    observed=snapshot["attachment_location_ids"][0],
+                )
         current: set[str] = set()
         produced_frontiers: set[str] = set()
         ownership: dict[str, str] = {}

@@ -87,6 +87,19 @@ They are not confidence percentages and do not imply a normal distribution. Zero
 
 V1 does not encode covariance. Therefore robustness verification must not infer probabilistic independence. It uses a documented conservative scenario/interval policy and reports the limitation. Correlation and hierarchical maker/lot effects require a future schema version.
 
+### V1 replicate estimator
+
+**ENGINEERING DECISION:** `REPLICATE_COMBINED_STANDARD_UNCERTAINTY` means Type-A evaluation for at least two independent repeated observations of the same gauge measurand under the response's one frozen measurement-condition key. For each of stitch pitch and course pitch independently, V1 first computes each observation's pitch as its declared span length divided by its declared interval count. It then sorts the complete observation objects by their RFC 8785 JCS UTF-8 bytes and evaluates binary64 arithmetic strictly left to right:
+
+```text
+mean = sum(x_i) / n
+u_A = sqrt(sum((x_i - mean)^2) / (n * (n - 1)))
+```
+
+The supplied `effective_gauge` and its corresponding standard uncertainty are redundant assertions. They must equal `mean` and `u_A` exactly as parsed binary64 values; otherwise V1 fails with `E_COUNT`. No rounding tolerance, weighting by span count, locale parsing, Type-B component, covariance, or additional uncertainty component is implied by this basis. The current closed schema represents none of those additional components, so V1 does not silently combine them. Correlated or otherwise incompatible observations require a future versioned profile and fail closed rather than being treated as replicates.
+
+This is the standard Type-A treatment for independent repeated observations in JCGM 100:2008, section 4.2, and NIST's Type-A uncertainty guidance. It is an estimator contract, not evidence that any physical sample is representative.
+
 ## Measurement conditions
 
 Gauge is invalid outside its stated conditions unless an explicit transfer/calibration rule exists. Every calibration response requires:

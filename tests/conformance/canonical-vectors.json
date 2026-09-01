@@ -1,0 +1,34 @@
+[
+  {
+    "id": "numeric-key-permutation",
+    "profile": "DESIGN_SPEC_CANONICAL_JSON_V1",
+    "input": {"b": 1.0, "a": -0.0, "c": 1e0},
+    "expected_canonical_json": "{\"a\":0,\"b\":1,\"c\":1}",
+    "expected_sha256": "cdad409ca7db907c63cefbf9419ded3e5d98c912727fc679ca961c41e2f65fb7"
+  },
+  {
+    "id": "material-profile",
+    "profile": "MATERIAL_PROFILE_CANONICAL_JSON_V1",
+    "input_file": "tests/fixtures/schema-valid/material-profile.minimal.valid.json",
+    "expected_sha256": "c29a5c43d292c5749e2af40b41a945f8a49f435c58ad73538e45bb33a0e0d40f"
+  },
+  {
+    "id": "design-inline-material",
+    "profile": "DESIGN_SPEC_CANONICAL_JSON_V1",
+    "input_file": "tests/fixtures/schema-valid/design-spec.analytic-sphere.valid.json",
+    "inline_material_file": "tests/fixtures/schema-valid/material-profile.minimal.valid.json",
+    "expected_sha256": "f4e733cf64a4e0ce1f47c273fd62ea4a7bcd3c724b98a6afa90720d5824c4fdd"
+  },
+  {
+    "id": "crochet-ir-projection",
+    "profile": "CROCHET_IR_CANONICAL_JSON_V1",
+    "input_file": "tests/fixtures/schema-valid/crochet-ir.magic-ring-single-course.valid.json",
+    "expected_sha256": "338036d62090c81bcc39727ed4a4e1e58ac977df9a8d3baa5eebdfa85c932395"
+  },
+  {
+    "id": "semantic-projection-jcs",
+    "profile": "CROCHET_SEMANTIC_EQUIVALENCE_V1",
+    "input": {"renamed_stitch": "alpha-normalized", "event_order": [0, 1]},
+    "expected_sha256": "fb5478c1ccf173f9cfe71b803ec00a8bdae7862633137f8528a86f9fee920911"
+  }
+]

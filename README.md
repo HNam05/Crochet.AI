@@ -2,7 +2,11 @@
 
 Crochet.AI is a research-grade foundation for a deterministic crochet CAD/compiler. Its long-term purpose is to translate a strict `DesignSpec` into physically plausible, formally valid, independently verified crochet instructions.
 
-This repository is currently in the **bootstrap specification phase**. It intentionally contains no production solver, UI, LLM integration, or claim of physical verification.
+Milestone 0 is implemented: strict `DesignSpec`, `MaterialProfile`, and
+`CrochetIR` runtime models; deterministic canonicalization and hashing; an
+independent V1 semantic validator; and execution-normalized semantic
+equivalence. The repository intentionally contains no production solver, UI,
+LLM integration, forward simulation, or claim of physical verification.
 
 ## Architectural contract
 
@@ -65,9 +69,9 @@ The system rejects questionable results instead of averaging a critical failure 
 
 ## Development milestones
 
-1. **Current:** specifications, schemas, repository structure, and test architecture.
-2. **Next:** `DesignSpec` + canonical `CrochetIR` data types and an independent semantic validator.
-3. Canonical parser/exporter with semantic round-trip tests.
+1. Specifications, schemas, repository structure, and test architecture.
+2. **Current:** `DesignSpec` and canonical `CrochetIR` data types, JCS/domain-separated hashing, independent semantic validation, and V1 semantic equivalence.
+3. Next: canonical parser/exporter with semantic round-trip tests.
 4. Analytic solver for calibrated surfaces of revolution.
 5. F0 graph/spring forward model and geometric metric stack.
 6. Physical benchmark calibration and threshold revision.
