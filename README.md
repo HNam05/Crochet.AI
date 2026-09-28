@@ -8,6 +8,16 @@ independent V1 semantic validator; and execution-normalized semantic
 equivalence. The repository intentionally contains no production solver, UI,
 LLM integration, forward simulation, or claim of physical verification.
 
+The working backend now also includes the non-branching
+[Pattern V1 parser/exporter](docs/PATTERN_FORMAT_V1.md), the separately versioned
+[multi-stitch ring extension](docs/adr/0016-versioned-multi-stitch-ring-sites.md),
+an exact bounded [analytic count-search kernel](docs/ANALYTIC_COUNT_SEARCH.md),
+closed-pole analytic candidate compilation, a versioned local API/CLI, durable
+SQLite jobs, and a target-free physical-semantic projection. Read
+[backend runtime usage and limits](docs/BACKEND_RUNTIME.md). These are research
+components, not a production solver or physical simulator. See the
+[backend acceptance plan](docs/BACKEND_ACCEPTANCE_PLAN.md) for remaining packages.
+
 ## Architectural contract
 
 ```text
@@ -71,8 +81,8 @@ The system rejects questionable results instead of averaging a critical failure 
 
 1. Specifications, schemas, repository structure, and test architecture.
 2. **Current:** `DesignSpec` and canonical `CrochetIR` data types, JCS/domain-separated hashing, independent semantic validation, and V1 semantic equivalence.
-3. Next: canonical parser/exporter with semantic round-trip tests.
-4. Analytic solver for calibrated surfaces of revolution.
+3. Implemented non-branching parser/exporter subset; advanced M1B operations remain open.
+4. In progress: analytic candidate pipeline; independent physical acceptance remains open.
 5. F0 graph/spring forward model and geometric metric stack.
 6. Physical benchmark calibration and threshold revision.
 7. Geodesic solver experiments.

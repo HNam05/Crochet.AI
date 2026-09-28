@@ -14,8 +14,19 @@ This project is a deterministic crochet CAD/compiler. Read the relevant contract
 - Every numerical tolerance requires units, rationale, and an owner or calibration path.
 - Preserve canonical stitch semantics; US/UK/German names exist only at export boundaries.
 - Do not let target geometry constrain the independent forward simulation.
-- Do not spawn subagents for trivial tasks. Use focused agents only when independent work materially improves quality or speed.
+- Follow the cost-aware delegation policy below for implementation work.
 - Do not copy external source code without an explicit compatible-license review; record uncertainty instead.
+
+## Cost-aware delegation policy
+
+- The primary agent keeps the user-selected chat model (Astra is preferred) and owns planning, contracts, critical decisions, integration, and final review. Project configuration must not force the top-level model or reasoning effort.
+- Bundle a coherent implementation task with its targeted tests. Delegate bounded implementation and exploration to one Luna/low worker by default; use up to three workers only for independent, non-overlapping tasks. Do not duplicate parent implementation or split work by file. Simple replies stay with the primary agent.
+- For coordinated work requiring more judgment, the primary may explicitly choose the `implementer_medium` profile (Luna/medium). This is a task-specific override, not an automatic escalation. Do not automatically escalate to Sol/Astra or high effort, and do not permit recursive delegation.
+- Give a short fresh-context brief with objective, relevant paths/contracts, owned files, baseline dirty edits, invariants, non-goals, acceptance checks, risk, model/effort, and a two-repair-attempt stop. Use `fork_turns=none` unless a relevant continuation needs context; send concise deltas to a continuing worker and use a fresh worker for unrelated work. Never omit or truncate required skill/contract reading.
+- Read targeted files with `rg` and batched independent reads; avoid rereading unchanged files. Keep logs concise and preserve full diagnostics on failure. Do not blindly rerun or poll. After two unsuccessful repairs of the same failure, stop and report evidence plus the next hypothesis; the primary replans a bounded next action rather than respawning into the same failure.
+- Run targeted checks per patch and the required full suite at integration or risk checkpoints. Preserve every acceptance requirement. Critical math, security, migration, and independent-verification decisions require primary review; worker output is evidence, not approval.
+- Numeric effort and budget guidance is behavioral, not a hard runtime token or cost cap. Do not change global, cache, compaction, credential, or security settings; these policies do not guarantee savings. Where runtime usage metadata is available, record it under ignored `artifacts/agent-costs/` and summarize it in the final report. Unknown measurements stay null; this is not automatic billing integration.
+- Cost preferences never weaken correctness, reproducibility, security, solver, licensing, tests, or independent-verification requirements. Preserve fail-closed behavior and all applicable subsystem contracts.
 
 ## Required reading
 

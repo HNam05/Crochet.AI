@@ -12,6 +12,9 @@ dependencies = [
   "rfc8785>=0.1.4,<1",
 ]
 
+[project.scripts]
+crochet-ai = "crochet_ai.cli:main"
+
 [project.optional-dependencies]
 test = [
   "hypothesis>=6.112,<7",
@@ -33,6 +36,7 @@ crochet_ai = ["py.typed"]
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100

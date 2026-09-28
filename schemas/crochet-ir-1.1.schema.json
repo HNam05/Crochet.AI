@@ -1,0 +1,911 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://crochet.ai/schemas/crochet-ir-1.1.schema.json",
+  "title": "CrochetIR 1.1.0",
+  "description": "Canonical, explicit, deterministic crochet construction graph.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "semantics_profile",
+    "crochet_ir_id",
+    "design_spec_ref",
+    "units",
+    "required_capabilities",
+    "colors",
+    "yarns",
+    "attachment_locations",
+    "stitches",
+    "construction_operations",
+    "construction_sequence",
+    "courses",
+    "course_order",
+    "frontiers",
+    "frontier_transitions",
+    "branches",
+    "components",
+    "openings",
+    "yarn_paths",
+    "derivations",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.1.0"
+    },
+    "semantics_profile": {
+      "const": "CROCHET_CORE_1.1.0"
+    },
+    "crochet_ir_id": {
+      "$ref": "#/$defs/crochetIrId"
+    },
+    "design_spec_ref": {
+      "$ref": "#/$defs/designSpecRef"
+    },
+    "units": {
+      "$ref": "#/$defs/units"
+    },
+    "required_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/capability"
+      }
+    },
+    "colors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/color"
+      }
+    },
+    "yarns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/yarn"
+      }
+    },
+    "attachment_locations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/attachmentLocation"
+      }
+    },
+    "stitches": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/stitch"
+      }
+    },
+    "construction_operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/constructionOperation"
+      }
+    },
+    "construction_sequence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/sequenceEvent"
+      }
+    },
+    "courses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/course"
+      }
+    },
+    "course_order": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/courseId"
+      }
+    },
+    "frontiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/frontier"
+      }
+    },
+    "frontier_transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/frontierTransition"
+      }
+    },
+    "branches": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/branch"
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    },
+    "openings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/opening"
+      }
+    },
+    "yarn_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/yarnPath"
+      }
+    },
+    "derivations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/derivation"
+      }
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/sha256"
+    },
+    "crochetIrId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/crochetIrId"
+    },
+    "designSpecId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/designSpecId"
+    },
+    "materialProfileId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/materialProfileId"
+    },
+    "colorId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/colorId"
+    },
+    "yarnId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/yarnId"
+    },
+    "attachmentLocationId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/attachmentLocationId"
+    },
+    "stitchId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/stitchId"
+    },
+    "operationId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/operationId"
+    },
+    "eventId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/eventId"
+    },
+    "courseId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/courseId"
+    },
+    "frontierId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/frontierId"
+    },
+    "frontierTransitionId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/frontierTransitionId"
+    },
+    "branchId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/branchId"
+    },
+    "componentId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/componentId"
+    },
+    "openingId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/openingId"
+    },
+    "openingRequirementId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/openingRequirementId"
+    },
+    "yarnPathId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/yarnPathId"
+    },
+    "yarnSegmentId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/yarnSegmentId"
+    },
+    "derivationId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/derivationId"
+    },
+    "designSpecRef": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/designSpecRef"
+    },
+    "materialProfileRef": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/materialProfileRef"
+    },
+    "units": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/units"
+    },
+    "capability": {
+      "enum": [
+        "CORE_STITCHES_V1",
+        "SHAPING_V1",
+        "MAGIC_RING_V1",
+        "FRONTIER_BRANCHING_V1",
+        "COLOR_CHANGES_V1",
+        "SEWN_JOINS_V1",
+        "CHAIN_SPACES_V1",
+        "MOTIF_ATTACHMENTS_V1",
+        "MULTI_STITCH_RING_V1"
+      ]
+    },
+    "color": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/color"
+    },
+    "yarn": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/yarn"
+    },
+    "producerRef": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/producerRef"
+    },
+    "attachmentLocation": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/attachmentLocation"
+    },
+    "stitchType": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/stitchType"
+    },
+    "nullableAttachmentLocationId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/nullableAttachmentLocationId"
+    },
+    "frontierEdit": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/frontierEdit"
+    },
+    "stitch": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/stitch"
+    },
+    "operationType": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/operationType"
+    },
+    "nullableOpeningId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/nullableOpeningId"
+    },
+    "nullableOpeningRequirementId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/nullableOpeningRequirementId"
+    },
+    "constructionOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_id",
+        "operation_type",
+        "input_frontier_ids",
+        "output_frontier_ids",
+        "attachment_location_ids",
+        "join_input_mappings",
+        "input_yarn_ids",
+        "output_yarn_ids",
+        "opening_id",
+        "design_requirement_id",
+        "join_method",
+        "derivation_id"
+      ],
+      "properties": {
+        "operation_id": {
+          "$ref": "#/$defs/operationId"
+        },
+        "operation_type": {
+          "$ref": "#/$defs/operationType"
+        },
+        "input_frontier_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/frontierId"
+          }
+        },
+        "output_frontier_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/frontierId"
+          }
+        },
+        "attachment_location_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/attachmentLocationId"
+          }
+        },
+        "join_input_mappings": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/joinInputMapping"
+          }
+        },
+        "input_yarn_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/yarnId"
+          }
+        },
+        "output_yarn_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/yarnId"
+          }
+        },
+        "opening_id": {
+          "$ref": "#/$defs/nullableOpeningId"
+        },
+        "design_requirement_id": {
+          "$ref": "#/$defs/nullableOpeningRequirementId"
+        },
+        "join_method": {
+          "enum": [
+            "NONE",
+            "CROCHETED",
+            "SEWN"
+          ]
+        },
+        "derivation_id": {
+          "$ref": "#/$defs/derivationId"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "MAGIC_RING"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "minItems": 1
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "JOIN"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": {
+                "type": "array",
+                "minItems": 2
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "minItems": 1
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "minItems": 2
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "enum": [
+                  "CROCHETED",
+                  "SEWN"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "SPLIT"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 2
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "RESERVE"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 2
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "ATTACH"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": {
+                "type": "array",
+                "maxItems": 1
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "COLOR_CHANGE"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_yarn_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "input_frontier_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "CUT_YARN"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_yarn_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_frontier_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "DECLARE_OPENING"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "opening_id": {
+                "$ref": "#/$defs/openingId"
+              },
+              "design_requirement_id": {
+                "$ref": "#/$defs/openingRequirementId"
+              },
+              "input_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "operation_type": {
+                "const": "CLOSE"
+              }
+            },
+            "required": [
+              "operation_type"
+            ]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "input_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "output_frontier_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "attachment_location_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "join_input_mappings": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "input_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "output_yarn_ids": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "opening_id": {
+                "type": "null"
+              },
+              "design_requirement_id": {
+                "type": "null"
+              },
+              "join_method": {
+                "const": "NONE"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "joinInputMapping": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/joinInputMapping"
+    },
+    "subjectRef": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/subjectRef"
+    },
+    "nullableYarnId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/nullableYarnId"
+    },
+    "nullableColorId": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/nullableColorId"
+    },
+    "sequenceEvent": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/sequenceEvent"
+    },
+    "course": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/course"
+    },
+    "frontier": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/frontier"
+    },
+    "frontierTransition": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/frontierTransition"
+    },
+    "branch": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/branch"
+    },
+    "component": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/component"
+    },
+    "opening": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/opening"
+    },
+    "yarnSegment": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/yarnSegment"
+    },
+    "yarnPath": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/yarnPath"
+    },
+    "derivationSubjectRef": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/derivationSubjectRef"
+    },
+    "derivation": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/derivation"
+    },
+    "solverParameterValue": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/solverParameterValue"
+    },
+    "solverParameter": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/solverParameter"
+    },
+    "inputArtifact": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/inputArtifact"
+    },
+    "generator": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/generator"
+    },
+    "searchBudget": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/searchBudget"
+    },
+    "canonicalization": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/canonicalization"
+    },
+    "provenance": {
+      "$ref": "https://crochet.ai/schemas/crochet-ir.schema.json#/$defs/provenance"
+    }
+  }
+}

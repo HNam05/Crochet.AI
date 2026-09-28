@@ -2,6 +2,13 @@
 
 Normative schema: [`schemas/crochet-ir.schema.json`](../schemas/crochet-ir.schema.json)
 
+The original contract below remains core 1.0. The separately versioned,
+user-approved [core 1.1 extension](adr/0016-versioned-multi-stitch-ring-sites.md)
+uses [its own schema](../schemas/crochet-ir-1.1.schema.json) for ordered single-use
+insertion sites on one magic ring. It requires the matching schema/profile pair
+and `MULTI_STITCH_RING_V1` for multi-site rings. Existing 1.0 artifacts, canonical
+bytes and approved goldens are unchanged; there is no automatic migration.
+
 ## Role and trust boundary
 
 `CrochetIR` is the canonical, executable construction graph shared by all solver families, verifiers, forward models, parsers, and exporters.

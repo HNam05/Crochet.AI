@@ -20,10 +20,14 @@ SCHEMA_FILENAMES = {
     "design_spec": "design-spec.schema.json",
     "material_profile": "material-profile.schema.json",
     "crochet_ir": "crochet-ir.schema.json",
+    "crochet_ir_1_1": "crochet-ir-1.1.schema.json",
 }
 
 
 def _schema_directory() -> Path:
+    bundled = Path(__file__).resolve().parent / "schemas"
+    if all((bundled / name).is_file() for name in SCHEMA_FILENAMES.values()):
+        return bundled
     current = Path(__file__).resolve()
     for parent in current.parents:
         candidate = parent / "schemas"
@@ -76,6 +80,8 @@ def _json_pointer(parts: list[object]) -> str:
 
 
 def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
+    if kind == "crochet_ir" and isinstance(value, dict) and value.get("schema_version") == "1.1.0":
+        kind = "crochet_ir_1_1"
     fingerprint = artifact_fingerprint(value)
     try:
         validate_ijson(value)

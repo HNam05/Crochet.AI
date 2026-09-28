@@ -1,11 +1,8 @@
-# Project-local defaults. Provider, authentication, and telemetry remain user-level.
-model = "gpt-5.6-terra"
-model_reasoning_effort = "medium"
-model_verbosity = "low"
+# Project-local agent settings. Model choice, provider, authentication, and
+# telemetry remain user-level so each chat can use the model selected by the user.
 
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 3
-default_subagent_model = "gpt-5.6-terra"
-default_subagent_reasoning_effort = "medium"
-
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "low"

@@ -16,6 +16,7 @@ SUPPORTED_CAPABILITIES = {
     "CORE_STITCHES_V1",
     "SHAPING_V1",
     "MAGIC_RING_V1",
+    "MULTI_STITCH_RING_V1",
     "FRONTIER_BRANCHING_V1",
     "COLOR_CHANGES_V1",
     "SEWN_JOINS_V1",
@@ -574,7 +575,60 @@ class SemanticValidator:
         self._validate_topology_tables(value, tables, collector)
         self._validate_frontier_replay(value, tables, collector, resolved_design_spec)
         self._validate_yarn_paths(value, tables, collector)
+        self._validate_multi_stitch_rings(value, tables, collector)
         return ValidationReport.from_iterable(collector.diagnostics)
+
+    @staticmethod
+    def _validate_multi_stitch_rings(
+        value: dict[str, Any],
+        tables: dict[str, dict[str, dict[str, Any]]],
+        collector: _Collector,
+    ) -> None:
+        """Independently check the 1.1 multi-site ring contract (ADR-0016)."""
+        if value["semantics_profile"] != "CROCHET_CORE_1.1.0":
+            return
+        for operation in value["construction_operations"]:
+            sites = operation["attachment_location_ids"]
+            if operation["operation_type"] != "MAGIC_RING" or len(sites) <= 1:
+                continue
+            consumers = [
+                stitch for stitch in value["stitches"]
+                if set(stitch["base_attachment_location_ids"]) & set(sites)
+            ]
+            by_subject = {stitch["stitch_id"]: stitch for stitch in consumers}
+            ordered = [
+                by_subject[event["subject_ref"]["stitch_id"]]
+                for event in sorted(value["construction_sequence"],
+                                    key=lambda item: item["sequence_index"])
+                if event["subject_ref"]["entity_type"] == "STITCH"
+                and event["subject_ref"]["stitch_id"] in by_subject
+            ]
+            course_ids = {stitch["course_id"] for stitch in consumers}
+            course = tables["courses"].get(next(iter(course_ids))) if len(course_ids) == 1 else None
+            valid = (
+                len(ordered) == len(sites)
+                and all(
+                    stitch["stitch_type"] == "SINGLE_CROCHET"
+                    and stitch["shaping"] == "PLAIN"
+                    and stitch["base_attachment_location_ids"] == [site]
+                    for stitch, site in zip(ordered, sites, strict=False)
+                )
+                and all(tables["attachment_locations"].get(site, {}).get("location_type")
+                        == "MAGIC_RING_ANCHOR" for site in sites)
+                and course is not None
+                and course["ordinal"] == 0
+                and course["course_form"] == "CYCLIC"
+                and course["input_frontier_ids"] == operation["output_frontier_ids"]
+                and len([stitch for stitch in value["stitches"]
+                         if stitch["course_id"] in course_ids]) == len(sites)
+            )
+            if not valid:
+                collector.add(
+                    FailureCode.FRONTIER, "V4", "magic_ring.initial_course",
+                    "Each ring site must feed exactly one ordered plain SC in the initial course",
+                    refs=(operation["operation_id"],), expected=list(sites),
+                    observed=[stitch["base_attachment_location_ids"] for stitch in ordered],
+                )
 
     def _validate_design_binding(
         self,
@@ -742,6 +796,10 @@ class SemanticValidator:
         }
         if "MAGIC_RING" in operation_types:
             implied.add("MAGIC_RING_V1")
+        if any(operation["operation_type"] == "MAGIC_RING"
+               and len(operation["attachment_location_ids"]) > 1
+               for operation in value["construction_operations"]):
+            implied.add("MULTI_STITCH_RING_V1")
         if operation_types & {"SPLIT", "RESERVE", "ATTACH", "JOIN"}:
             implied.add("FRONTIER_BRANCHING_V1")
         if "COLOR_CHANGE" in operation_types:
@@ -1581,7 +1639,8 @@ class SemanticValidator:
                 operation = tables["construction_operations"].get(subject["operation_id"])
                 if operation is not None:
                     self._validate_operation_transition(
-                        operation, transition, frontiers, collector, design_spec, tables
+                        operation, transition, frontiers, collector, design_spec, tables,
+                        value["semantics_profile"],
                     )
             else:
                 collector.add(
@@ -1968,6 +2027,7 @@ class SemanticValidator:
         collector: _Collector,
         design_spec: dict[str, Any] | None,
         tables: dict[str, dict[str, dict[str, Any]]],
+        semantics_profile: str,
     ) -> None:
         operation_id = operation["operation_id"]
         if (
@@ -2035,7 +2095,8 @@ class SemanticValidator:
                 )
             if operation["operation_type"] == "MAGIC_RING" and (
                 outputs[0]["topology"] != "CYCLIC"
-                or len(outputs[0]["attachment_location_ids"]) != 1
+                or (semantics_profile == "CROCHET_CORE_1.0.0"
+                    and len(outputs[0]["attachment_location_ids"]) != 1)
             ):
                 collector.add(
                     FailureCode.TOPOLOGY,
