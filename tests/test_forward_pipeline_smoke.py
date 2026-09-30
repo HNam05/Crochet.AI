@@ -9,6 +9,7 @@ from crochet_ai.analytic_compile import (
     CompileProvenance,
     compile_closed_schedule,
 )
+from crochet_ai.forward_aabb_broadphase import diagnose_initial_aabb_candidates
 from crochet_ai.forward_cells import (
     ForwardSurfaceCellsError,
     build_forward_surface_cells,
@@ -55,7 +56,7 @@ def _forward_inputs() -> ForwardInputs:
             "max_optimizer_iterations": 10,
             "max_energy_evaluations": 20,
             "max_linear_iterations": 30,
-            "max_contact_pairs_evaluated": 40,
+            "max_contact_pairs_evaluated": 276,
         },
         "tolerances": {
             name: {
@@ -106,13 +107,34 @@ def _run_pipeline(phases: tuple[int, int]) -> tuple[Any, ...]:
     cells = build_forward_surface_cells(projection, graph)
     triangulation = triangulate_forward_surface_cells(cells)
     diagnostic = diagnose_initial_triangle_geometry(cells, triangulation, initialization)
-    return crochet_ir, projection, graph, inputs, initialization, cells, triangulation, diagnostic
+    broadphase = diagnose_initial_aabb_candidates(cells, triangulation, initialization, inputs)
+    return (
+        crochet_ir,
+        projection,
+        graph,
+        inputs,
+        initialization,
+        cells,
+        triangulation,
+        diagnostic,
+        broadphase,
+    )
 
 
 def test_closed_compilation_preserves_open_surface_and_is_deterministic() -> None:
     first = _run_pipeline((0, 0))
     second = _run_pipeline((0, 0))
-    _, projection, graph, inputs, initialization, cells, triangulation, diagnostic = first
+    (
+        _,
+        projection,
+        graph,
+        inputs,
+        initialization,
+        cells,
+        triangulation,
+        diagnostic,
+        broadphase,
+    ) = first
     (
         _,
         projection_again,
@@ -122,6 +144,7 @@ def test_closed_compilation_preserves_open_surface_and_is_deterministic() -> Non
         cells_again,
         triangulation_again,
         diagnostic_again,
+        broadphase_again,
     ) = second
 
     assert graph.projection_sha256 == projection.sha256
@@ -138,6 +161,14 @@ def test_closed_compilation_preserves_open_surface_and_is_deterministic() -> Non
     assert diagnostic.source_triangulation_sha256 == triangulation.sha256
     assert diagnostic.projection_sha256 == projection.sha256
     assert diagnostic.material_sha256 == graph.material_sha256
+    assert broadphase.status == "CANDIDATES_ONLY"
+    assert broadphase.source_triangulation_sha256 == triangulation.sha256
+    assert broadphase.forward_inputs_sha256 == inputs.sha256
+    assert broadphase.unordered_aabb_comparisons == 276
+    assert all(
+        pair.first_face_index < pair.second_face_index
+        for pair in broadphase.candidate_pairs
+    )
     assert len(cells.cells) == 12
     assert len(triangulation.triangles) == 24
     assert len(cells.lower_boundary_location_ids) == 6
@@ -155,6 +186,7 @@ def test_closed_compilation_preserves_open_surface_and_is_deterministic() -> Non
     assert cells_again == cells
     assert triangulation_again == triangulation
     assert diagnostic_again == diagnostic
+    assert broadphase_again == broadphase
 
 
 def test_phase_shifted_compilation_fails_closed_at_surface_cell_admission() -> None:

@@ -16,10 +16,10 @@ approved goldens remain frozen. Frontend work is out of scope.
 | --- | --- | --- | --- |
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A subset implemented; M1B and V9/V10 remain |
-| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Partial input/material validation and meridional samplers; certified mesh path missing |
+| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Partial input/material validation, meridional samplers, indexed-mesh decode/topology/exact-geometry/diameter diagnostics, hash-locked profile, exact relative area/coordinate-distance and algebraic six-volume, bounded exact face-pair intersections and nonadjacent near-contact plus non-certifying vertex/face ordering diagnostics; adjacent residual contact, boundary matching and V0 certification missing |
 | B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole SC proposal implemented; full V5 and domains remain |
-| B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Projection and topology-only graph/material resolution implemented; no F0 simulation or V6 pass |
-| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Missing |
+| B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free stretch-only prototype, initial surface/intersection/distance diagnostics; shear, bend, contact response, calibrated convergence and V6 missing |
+| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Initial open-surface arithmetic, exact intersection and squared-distance diagnostics only; robust V0-V10 gates missing |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
 | B7 | Durable jobs and artifacts | Atomicity, idempotency, cancellation, resource limits, concurrency and recovery tests | Local SQLite jobs subset implemented; operational gates open |
 | B8 | Security, packaging and operation | Untrusted input limits, path safety, isolation, diagnostics, install and end-to-end tests | Request limits and wheel subset implemented; service hardening open |
@@ -99,8 +99,21 @@ boundaries and combinatorial manifold checks; they do not invent ring/closure
 caps or establish geometric embedding/contact. A target-free initial-coordinate
 triangle diagnostic reports represented area and shape quality, with exact-zero
 and arithmetic-indeterminate rejection; it is not a calibrated or robust
-geometry gate. Next: establish robust geometric predicates and
-implement and test contact and
+geometry gate. A bounded, target-free AABB pass now lists all inclusive
+triangle-box overlap candidates at initial coordinates with stable global face
+ordinals and exact artifact provenance. The contact-pair budget limits *all*
+unordered comparisons, including non-overlaps; exhaustion returns no partial
+result. Adjacent faces remain candidates. This is not triangle intersection,
+penetration, a collision-free result or V6 evidence. An exact binary-rational
+candidate narrowphase now detects intersections beyond intended shared
+vertices/edges at the initial coordinates, including coplanar folded faces.
+It is intersection-only: near-disjoint pairs, physical thickness, penetration,
+contact response and V0/V6 clearance are not established. An exact all-pair
+minimum squared-distance diagnostic now also covers disjoint AABBs without
+rounding the rational mm² result. It has no acceptance threshold and excludes
+shared-ID adjacent faces, so it still establishes no physical clearance or
+contact response. Next: define and implement a versioned F0 contact policy and
+calibrated model, then
 V6 outcomes; then implement V7/V8 and V0-V10 orchestration with independent
 negative tests. None of those stages may infer a physical pass from a valid IR,
 an analytic proposal, or a converged numerical result alone. Free-form,
@@ -115,10 +128,47 @@ versioned golden review. Physical specimens, calibrated material/model profiles
 and independent holdouts are external B11 requirements; until they exist the
 honest physical status is `UNTESTED`. Release remains **not ready**.
 
+## Software checkpoint: 2026-09-29
+
+The current source tree has exact, budgeted, source-bound V0 diagnostics through
+nonadjacent face-pair intersection and near-contact, plus source-index-preserving
+vertex/face ordering without a canonical mesh identity. Shared-index adjacent
+residual contact is explicitly unresolved; no normalized mesh or V0 pass is
+issued. The B7 isolated-worker IPC boundary now records malformed or deeply
+nested child replies as immediate generic internal failures. Integration checks
+passed: 534 Python tests, Ruff, strict mypy on 47 source files, all five
+independent Node canonical vectors, and `git diff --check`.
+
+The profile-bearing source distribution and wheel built successfully. On
+2026-09-30 the wheel was installed into a separate venv and its CLI, bundled
+schemas and immutable profile passed checks outside the source checkout.
+This venv inherited existing runtime dependencies via system-site-packages;
+fully isolated dependency installation remains a release check. Next software package: specify and
+test the missing adjacent residual-contact policy without treating incidental
+shared-simplex contact as physical clearance, then complete V0 canonical
+normalization, boundary assignment and fail-closed admission. The open B1/B3-B10
+packages remain required independently of this V0 work.
+
+## Software checkpoint: 2026-09-30
+
+Directed boundary cycles now preserve source-face winding, have canonical
+starting vertices, and retain source-to-ordered index maps. Component keys and
+loops are ordered deterministically. The stage revalidates the full source and
+prior ordering evidence and refuses invalid topology. It does not assign
+openings or certify a semantic mesh identity. Exact landmark-to-loop eligibility
+now records per-loop rational distances and all candidates under the immutable
+slack rule, with whole-work budgets and explicit ambiguity. It does not yet bind
+complete DesignSpec openings. Integration passed 558 tests, Ruff, strict mypy on
+49 source files, all five independent Node canonical vectors, and diff checks.
+Certified filtered orientation is the next bounded stage; further V0 admission
+and independent backend gates remain open.
+
 ## External dependencies and operational authority
 
 Physical specimens and new golden approvals require human input. Numerical
 policies need units, rationale, owner and calibration evidence. Multi-user
 authentication depends on deployment scope; local-only operation must not be
 presented as a multi-user service. No commits, pushes, publication or paid
-services are authorized. Record exact remaining work at an interrupted checkpoint.
+services are authorized by this plan. The user subsequently authorized GitHub
+checkpoint commits and pushes on 2026-09-30; deployment and paid services still
+require separate authority. Record exact remaining work at an interrupted checkpoint.

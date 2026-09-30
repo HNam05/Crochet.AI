@@ -31,6 +31,8 @@ def test_all_authoritative_schemas_compile() -> None:
         "material_profile",
         "crochet_ir",
         "crochet_ir_1_1",
+        "indexed_triangle_mesh",
+        "numerical_geometry_profile",
     }
 
 

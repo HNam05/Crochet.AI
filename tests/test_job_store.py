@@ -142,3 +142,74 @@ def test_spawn_failure_is_recorded_without_waiting_for_lease(
     row = store.get(job_id)
     assert row["status"] == "FAILED"
     assert row["result"]["error"]["reason"] == "worker.start_failed.OSError"
+
+
+@pytest.mark.parametrize(
+    "child_payload",
+    [b'{"payload":"private child bytes"', b"[" * 2000 + b"]" * 2000],
+)
+def test_malformed_child_response_fails_immediately_without_exposing_payload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, child_payload: bytes
+) -> None:
+    import crochet_ai.job_worker as job_worker
+
+    class FakeConnection:
+        def __init__(self, payload: bytes | None = None) -> None:
+            self.payload = payload
+
+        def close(self) -> None:
+            pass
+
+        def poll(self, _timeout: float) -> bool:
+            return self.payload is not None
+
+        def recv_bytes(self, *, maxlength: int) -> bytes:
+            assert maxlength == 32_000_000
+            assert self.payload is not None
+            return self.payload
+
+    class FakeProcess:
+        def __init__(self, *, target: object, args: tuple[object, ...], daemon: bool) -> None:
+            assert target is job_worker._child_run
+            assert daemon
+            self.started = False
+
+        def start(self) -> None:
+            self.started = True
+
+        def is_alive(self) -> bool:
+            return False
+
+        def join(self, timeout: float) -> None:
+            assert timeout == 1
+
+        def close(self) -> None:
+            pass
+
+    parent = FakeConnection(child_payload)
+    child = FakeConnection()
+
+    class FakeContext:
+        @staticmethod
+        def Pipe(*, duplex: bool) -> tuple[FakeConnection, FakeConnection]:
+            assert not duplex
+            return parent, child
+
+        @staticmethod
+        def Process(*, target: object, args: tuple[object, ...], daemon: bool) -> FakeProcess:
+            return FakeProcess(target=target, args=args, daemon=daemon)
+
+    monkeypatch.setattr(job_worker.multiprocessing, "get_context", lambda _method: FakeContext())
+    monkeypatch.setattr(job_worker.time, "monotonic", lambda: 1.0)
+    store = JobStore(tmp_path / "malformed-response.sqlite")
+    job_id = store.submit(REQUEST, "first")
+
+    assert execute_one_isolated(store, BackendAPI(PROVENANCE), max_wall_seconds=20)
+
+    row = store.get(job_id)
+    assert row["status"] == "FAILED"
+    assert row["result"]["error"] == {
+        "code": "E_INTERNAL",
+        "reason": "worker.invalid_response",
+    }
+    assert "private child bytes" not in json.dumps(row["result"])

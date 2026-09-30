@@ -91,7 +91,13 @@ def execute_one_isolated(store: JobStore, api: BackendAPI, *, max_wall_seconds: 
                         claim, error_response("E_INTERNAL", "worker.child_interrupted"), failed=True
                     )
                     return True
-                value = parse_json(payload)
+                try:
+                    value = parse_json(payload)
+                except (RecursionError, TypeError, ValueError):
+                    store.finish(
+                        claim, error_response("E_INTERNAL", "worker.invalid_response"), failed=True
+                    )
+                    return True
                 if not isinstance(value, dict) or type(value.get("ok")) is not bool:
                     store.finish(
                         claim, error_response("E_INTERNAL", "worker.invalid_response"), failed=True

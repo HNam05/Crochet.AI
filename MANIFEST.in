@@ -1,1 +1,2 @@
 recursive-include schemas *.schema.json
+include profiles/v0-mesh-numeric-profile-1.json

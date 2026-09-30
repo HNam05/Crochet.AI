@@ -72,41 +72,7 @@ def diagnose_initial_triangle_geometry(
     artifacts and does not apply any physical near-degeneracy threshold.
     """
 
-    if not isinstance(source, ForwardSurfaceCells):
-        raise ForwardTriangleGeometryError("triangle_geometry.source_type")
-    if not isinstance(triangulation, ForwardSurfaceTriangulation):
-        raise ForwardTriangleGeometryError("triangle_geometry.triangulation_type")
-    if not isinstance(initialization, ForwardInitialization):
-        raise ForwardTriangleGeometryError("triangle_geometry.initialization_type")
-    if source.status != "EXPERIMENTAL_TOPOLOGY":
-        raise ForwardTriangleGeometryError("triangle_geometry.source_status")
-    if triangulation.status != "EXPERIMENTAL_TOPOLOGY":
-        raise ForwardTriangleGeometryError("triangle_geometry.triangulation_status")
-    if initialization.status != "EXPERIMENTAL_INITIALIZATION":
-        raise ForwardTriangleGeometryError("triangle_geometry.initialization_status")
-
-    try:
-        expected_triangulation = triangulate_forward_surface_cells(source)
-    except (ForwardTriangulationError, TypeError, ValueError) as error:
-        raise ForwardTriangleGeometryError("triangle_geometry.source_integrity") from error
-    if triangulation != expected_triangulation:
-        raise ForwardTriangleGeometryError("triangle_geometry.triangulation_mismatch")
-    if triangulation.source_cells_sha256 != source.sha256:
-        raise ForwardTriangleGeometryError("triangle_geometry.source_hash_mismatch")
-
-    if not _is_sha256(initialization.projection_sha256):
-        raise ForwardTriangleGeometryError("triangle_geometry.provenance_hash_invalid")
-    if initialization.projection_sha256 != source.projection_sha256:
-        raise ForwardTriangleGeometryError("triangle_geometry.projection_mismatch")
-    if initialization.material_sha256 != source.material_sha256:
-        raise ForwardTriangleGeometryError("triangle_geometry.material_mismatch")
-    if not _is_sha256(initialization.material_sha256) or not _is_sha256(
-        initialization.forward_inputs_sha256
-    ):
-        raise ForwardTriangleGeometryError("triangle_geometry.provenance_hash_invalid")
-
-    _validate_initialization_integrity(initialization)
-    coordinates = _coordinates(initialization)
+    coordinates = validate_initial_geometry_inputs(source, triangulation, initialization)
     metrics: list[TriangleGeometryMetric] = []
     for triangle in triangulation.triangles:
         try:
@@ -164,6 +130,50 @@ def diagnose_initial_triangle_geometry(
         encoded,
         digest,
     )
+
+
+def validate_initial_geometry_inputs(
+    source: ForwardSurfaceCells,
+    triangulation: ForwardSurfaceTriangulation,
+    initialization: ForwardInitialization,
+) -> dict[str, tuple[float, float, float]]:
+    """Validate provenance and represented coordinates without area serialization."""
+    if not isinstance(source, ForwardSurfaceCells):
+        raise ForwardTriangleGeometryError("triangle_geometry.source_type")
+    if not isinstance(triangulation, ForwardSurfaceTriangulation):
+        raise ForwardTriangleGeometryError("triangle_geometry.triangulation_type")
+    if not isinstance(initialization, ForwardInitialization):
+        raise ForwardTriangleGeometryError("triangle_geometry.initialization_type")
+    if source.status != "EXPERIMENTAL_TOPOLOGY":
+        raise ForwardTriangleGeometryError("triangle_geometry.source_status")
+    if triangulation.status != "EXPERIMENTAL_TOPOLOGY":
+        raise ForwardTriangleGeometryError("triangle_geometry.triangulation_status")
+    if initialization.status != "EXPERIMENTAL_INITIALIZATION":
+        raise ForwardTriangleGeometryError("triangle_geometry.initialization_status")
+
+    try:
+        expected_triangulation = triangulate_forward_surface_cells(source)
+    except (ForwardTriangulationError, TypeError, ValueError) as error:
+        raise ForwardTriangleGeometryError("triangle_geometry.source_integrity") from error
+    if triangulation != expected_triangulation:
+        raise ForwardTriangleGeometryError("triangle_geometry.triangulation_mismatch")
+    if triangulation.source_cells_sha256 != source.sha256:
+        raise ForwardTriangleGeometryError("triangle_geometry.source_hash_mismatch")
+
+    if not _is_sha256(initialization.projection_sha256):
+        raise ForwardTriangleGeometryError("triangle_geometry.provenance_hash_invalid")
+    if initialization.projection_sha256 != source.projection_sha256:
+        raise ForwardTriangleGeometryError("triangle_geometry.projection_mismatch")
+    if initialization.material_sha256 != source.material_sha256:
+        raise ForwardTriangleGeometryError("triangle_geometry.material_mismatch")
+    if not _is_sha256(initialization.material_sha256) or not _is_sha256(
+        initialization.forward_inputs_sha256
+    ):
+        raise ForwardTriangleGeometryError("triangle_geometry.provenance_hash_invalid")
+
+    _validate_initialization_integrity(initialization)
+    coordinates = _coordinates(initialization)
+    return coordinates
 
 
 def _validate_initialization_integrity(initialization: ForwardInitialization) -> None:
@@ -287,7 +297,12 @@ def _exactly_collinear(
 
 
 def _finite_number(value: object) -> bool:
-    return not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def _is_sha256(value: object) -> bool:

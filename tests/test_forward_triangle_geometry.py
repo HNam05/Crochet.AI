@@ -185,6 +185,15 @@ def test_non_finite_coordinate_is_rejected_before_integrity_check() -> None:
         _run(initialization=initialization)
 
 
+def test_integer_beyond_binary64_range_is_rejected_without_overflow_exception() -> None:
+    coordinates = list(_coordinates())
+    coordinates[0] = (coordinates[0][0], (10**1000, 0.0, 0.0))
+    initialization = replace(_initialization(), coordinates_mm=tuple(sorted(coordinates)))
+
+    with pytest.raises(ForwardTriangleGeometryError, match="coordinate_non_finite"):
+        _run(initialization=initialization)
+
+
 def test_missing_coordinate_and_provenance_mismatch_fail_closed() -> None:
     incomplete = tuple(row for row in _coordinates() if row[0] != "lower_0")
     with pytest.raises(ForwardTriangleGeometryError, match="coordinate_missing"):

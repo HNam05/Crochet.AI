@@ -126,7 +126,9 @@ leases when executing the next queue step. SUCCEEDED means API execution
 succeeded; inspect embedded generation and verification status separately.
 
 The CLI uses a spawned process and wall-clock watchdog. Timeout, process-start
-failure and child termination produce explicit job failure. The watchdog is an
+failure and child termination produce explicit job failure. Malformed or
+excessively nested child IPC responses also fail the job immediately with a
+generic internal error; their bytes are not published. The watchdog is an
 operational limit, not a deterministic solver proof. Defaults: 1,000 jobs,
 256 MB aggregate request/result payload, 32 MB per result, 300-second lease.
 SQLite page overhead is not covered by the payload quota. No disk-full guarantee,
@@ -257,6 +259,163 @@ admission, initialization, open cells, triangulation and this diagnostic. A
 valid phase-shifted construction is rejected by the narrow surface-cell
 profile rather than silently rotated into it.
 
+`diagnose_initial_aabb_candidates` now exhaustively compares the inclusive
+axis-aligned bounds of every unordered pair of source-ordered triangles at the
+same initial coordinates. Global face ordinals disambiguate the per-cell
+triangle indices. The admitted `max_contact_pairs_evaluated` budget bounds the
+*total* AABB comparisons, including non-overlaps; an insufficient budget fails
+before a partial result is emitted. Candidates retain topologically adjacent
+faces and their shared-location count. The diagnostic is bound to the exact
+source triangulation, initialization and forward-input hashes. Its
+`CANDIDATES_ONLY` status never establishes triangle intersection, penetration,
+collision freedom, contact response, converged geometry or V6. It introduces
+no contact tolerance and does not borrow V0 target-mesh thresholds.
+The AABB and exact-intersection stages share provenance validation with the
+area diagnostic but do not require its binary64 mm² metric to be representable;
+finite coordinate scales with underflowing or overflowing area remain eligible
+for the exact intersection-only calculation if the triangles are exactly
+nondegenerate.
+
+`diagnose_initial_exact_intersections` recomputes that candidate set and checks
+each pair using exact rational arithmetic on the represented binary64 initial
+coordinates. It rejects exact-zero-area triangles and records intersections
+beyond an intended shared vertex or edge, including coplanar folded overlaps.
+Its artifact is bound to the source, initialization, inputs and broadphase.
+`EXACT_INTERSECTION_DIAGNOSTIC_ONLY` is the status even if no forbidden pair is
+found. Disjoint AABBs may still be closer than a physical contact threshold;
+the routine does not measure distance, thickness or penetration, provide
+contact forces, prove collision freedom, or satisfy V0/V6. The V0
+`NUMERICAL_GEOMETRY` near-contact tolerance is not applied to this F0
+experimental prototype.
+
+`diagnose_initial_exact_distances` separately examines every unordered
+source-face pair, including pairs whose AABBs do not overlap. It excludes only
+faces sharing an attachment-location ID, checks the admitted pair budget before
+emitting a result, and reports the minimum nonadjacent squared distance in
+mm² as reduced rational numerator/denominator strings. A face intersection
+has exact squared distance zero. If there is no nonadjacent pair, the minimum
+is explicitly null. The result and stable minimizing face pairs are bound to
+the source, initialization and forward-input hashes. This is a
+`DISTANCE_DIAGNOSTIC_ONLY` measurement of initial coordinates: it supplies no
+calibrated contact threshold, fabric thickness, force, clearance certificate,
+convergence or V6 outcome. The V0 near-contact profile is a separate contract.
+
+## Target mesh decode-only boundary
+
+`decode_indexed_triangle_mesh` accepts immutable raw bytes under the explicit
+`application/vnd.crochet.indexed-triangle-mesh+json` media type, an expected
+DesignSpec coordinate-frame ID, and positive byte/vertex/face budgets. The
+registered `IndexedTriangleMeshV1` Draft 2020-12 schema and I-JSON parser
+reject duplicate names, unsupported units/handedness, non-finite or unsafe
+numbers and unknown fields. The adapter additionally checks in-range,
+non-repeated zero-based face indices. It returns immutable ordered vertices
+and faces, the raw-byte SHA-256, parser identity and identity source-index maps.
+Its status is `DECODED_ONLY`: no geometry-valid normalized mesh hash or V0 pass
+exists yet. `diagnose_indexed_triangle_mesh` re-decodes the raw source and
+compares the complete immutable decoded record before inspecting exact index
+topology. Its versioned, content-bound `EXACT_TOPOLOGY_DIAGNOSTIC_ONLY` report
+records duplicate and isolated elements, edge incidence, face components,
+boundary loops, winding, orientability and vertex-link failures. A nonmanifold
+edge leaves orientability unknown rather than claiming a result. The loop
+tuples identify undirected cycles in deterministic order, not
+face-induced boundary winding. Indices and the diagnostic hash are source-order
+dependent until a separately validated canonical normalization exists.
+`diagnose_indexed_triangle_mesh_exact_geometry` likewise revalidates the raw
+source and reports exact coordinate-equal vertex groups and exactly zero-area
+faces using binary64 values interpreted as rationals. This diagnostic cannot
+decide near-zero area or numerical coincidence.
+`diagnose_indexed_triangle_mesh_diameter` computes the exact squared mesh
+vertex diameter as a reduced mm² rational over every identity pair after
+prechecking the entire pair budget. Its maximizing pairs and zero-diameter
+case are diagnostic only; it does not certify a positive numerical-profile
+scale or compute a floating square root. Contact, profile thresholds, boundary
+matching and permitted normalization remain separate unimplemented V0 checks.
+No OBJ, STL or other source-format inference is offered by this adapter.
+
+`resolve_v0_numeric_profile` loads the single documented
+`v0_num_mesh_binary64_v1` record from immutable bytes (or the bundled source
+record), validates its closed schema and I-JSON form, and requires the frozen
+domain-separated record hash before returning typed thresholds. The build
+copies the authoritative root profile into the package, with an out-of-checkout
+resolution smoke test. This establishes profile identity only: no numerical
+predicate, mesh certification or V0 pass follows from loading it.
+
+`diagnose_indexed_triangle_mesh_relative_thresholds` applies only the
+profile's inclusive `2^-40` relative doubled-area and distinct-coordinate
+distance boundaries. It computes the exact squared vertex diameter and
+compares rational squares, so threshold equality and extreme representable
+binary64 scales need no floating square root or guessed epsilon. It checks
+the complete two-pass vertex-pair budget before quadratic work and records
+the source/profile hashes, predicate backend and exact findings. Exact
+coordinate-equal groups and exactly zero-area faces are reported separately;
+the near-zero face set also contains exact-zero faces because they satisfy the
+inclusive threshold. Zero scale fails closed. The report remains diagnostic
+only: it does not implement contact, volume, robust orientation/coplanarity,
+boundary assignment or V0 acceptance.
+
+`diagnose_indexed_triangle_mesh_signed_six_volume` accepts only fully closed,
+exactly manifold, consistently wound topology with no other topology issues;
+the source, topology report and numerical profile are revalidated. It computes
+translation-invariant algebraic signed six-volume for each face-connected
+component using exact binary64 rationals, and compares the profile's strict
+`2^-36` stability limit against the exact mesh diameter. Equality is
+indeterminate, not a sign decision. The report records a stable algebraic sign
+or indeterminacy but leaves self-intersection unresolved, performs no winding
+reversal and makes no outward-orientation or V0-pass claim.
+This pre-normalization report uses decoded source indices for its reference
+vertex and face order, so its diagnostic hash is source-order dependent. Final
+V0 evidence still requires the contract's canonical mesh ordering and maps.
+
+An isolated `exact_triangle_relation` kernel now classifies two nondegenerate
+triangles as disjoint, point, segment or coplanar-area intersection using exact
+rational geometry and deterministic witness points. It carries no mesh index,
+adjacency, component, budget or near-contact policy. It cannot establish
+allowed contact or V0 pass; a separate target-mesh pair diagnostic must apply
+those rules and independently test the intended shared simplex.
+`diagnose_indexed_triangle_mesh_pair_relations` now does that exact
+intersection-only pair check over a pre-admitted exhaustive face-pair budget.
+It revalidates source and topology evidence, rejects zero-area triangles, and
+records each relation with string-encoded rational witnesses. A shared indexed
+vertex is allowed only as that point; a shared indexed edge only as exactly
+that segment. Any extra intersection is marked forbidden. This is still a
+source-order-dependent diagnostic, not a V0 outcome: component-specific error
+classification, near-contact distance and certified final normalization remain
+open.
+An isolated `triangle_distance_squared` kernel now computes exact minimum
+squared distance for nondegenerate triangles, returning zero for intersection
+and checking vertex-face plus edge-edge features for disjoint surfaces. It has
+no mesh identity, profile threshold or clearance semantics by itself.
+`diagnose_indexed_triangle_mesh_near_contact` applies that kernel to all
+nonadjacent indexed face pairs after source, topology, profile and complete
+vertex/face pair-budget checks. It reports exact zero separately from positive
+distance at or below the inclusive profile-relative `2^-40` threshold, using
+exact squared mm² rationals and the exact squared vertex diameter. Face-pair
+component relation and the minimum nonadjacent distance remain diagnostic;
+pairs sharing an indexed vertex are counted but skipped with adjacent residual
+contact explicitly `UNRESOLVED`. This does not certify clearance, permissible
+adjacent contact, a normalized mesh or V0 acceptance.
+`diagnose_indexed_triangle_mesh_canonical_order` separately revalidates the
+source, issue-free orientable index topology and exact nondegeneracy, then
+lexicographically orders binary64 vertices and cyclically rotated faces while
+retaining both source-to-derived index maps. It is only an ordering diagnostic:
+further V0 geometry checks, certified component/boundary normalization and permitted global
+winding correction are missing, so it emits no canonical semantic mesh hash.
+`diagnose_indexed_triangle_mesh_boundaries` recomputes this ordering and index
+topology before deriving directed boundary cycles from face winding. It rotates
+each cycle to its least ordered vertex and sorts loops and component keys,
+retaining source maps. It refuses invalid topology and does not infer opening
+assignments or outward orientation. These directed cycles remain diagnostic
+evidence until the remaining V0 gates and normalization records are complete.
+`diagnose_boundary_landmark_eligibility` revalidates source, ordering, directed
+cycles and the immutable profile, then computes exact point-to-segment squared
+distances per landmark and loop. It compares against the declared tolerance
+plus `2^-40` times the mesh diameter algebraically, without a rounded square
+root. Landmark, vertex-pair and segment-test limits are checked before distance
+work. It records rational distances and all eligible loops; zero, one or several
+candidates become `UNMATCHED`, `UNIQUE` or `AMBIGUOUS`. Typed landmark requests
+are validated and sorted by ID. Complete DesignSpec/opening binding and V0
+acceptance are separate gates.
+
 ## Executable checks
 
 ```powershell
@@ -271,3 +430,7 @@ Packaging additionally requires building/installing a wheel in an isolated
 environment, checking bundled schema bytes, and invoking the console script
 from outside the checkout. Passing these checks covers the implemented subset
 only. See `BACKEND_ACCEPTANCE_PLAN.md` for open release gates.
+The V0 numerical profile is included in the source distribution manifest.
+On 2026-09-30 a fresh wheel installed into a separate venv passed out-of-checkout
+CLI, bundled-schema and profile-resolution checks. The venv inherited existing
+runtime dependencies, so clean dependency installation remains a release gate.
