@@ -251,9 +251,12 @@ class BackendAPI:
             }
         except GenerationError as error:
             return error_response("E_INPUT", error.reason)
+        except TargetMeshOpeningError as error:
+            if str(error).startswith("E_UNSUPPORTED_FEATURE:"):
+                return error_response("E_UNSUPPORTED_FEATURE", str(error))
+            return error_response("E_INPUT", str(error))
         except (
             ApiInputError,
-            TargetMeshOpeningError,
             CanonicalizationError,
             rfc8785.CanonicalizationError,
             RecursionError,

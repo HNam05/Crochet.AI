@@ -20,6 +20,10 @@ class BuildWithSchemas(build_py):
             Path(__file__).parent / "profiles" / "v0-mesh-numeric-profile-1.json",
             profiles_destination / "v0-mesh-numeric-profile-1.json",
         )
+        copy2(
+            Path(__file__).parent / "profiles" / "v0-mesh-numeric-profile-2.json",
+            profiles_destination / "v0-mesh-numeric-profile-2.json",
+        )
 
 
 setup(cmdclass={"build_py": BuildWithSchemas})

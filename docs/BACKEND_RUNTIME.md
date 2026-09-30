@@ -455,6 +455,14 @@ original contact beyond the intended shared entity. It emits `EXPERIMENTAL`
 evidence only, has no default lambda and does not change the frozen V0 profile.
 Its equations and non-retessellation-invariant scope are recorded in
 [`ADJACENT_RESIDUAL_EXPERIMENT.md`](ADJACENT_RESIDUAL_EXPERIMENT.md).
+`propose_indexed_triangle_mesh_winding` separately recomputes source, topology,
+exact geometry, ordering, all original pair relations and closed-volume
+evidence. Only a reliable negative closed component can receive one recorded
+whole-component reversal. Open winding is preserved; mixed open/closed meshes
+are explicitly unsupported in this stage. Maps are rebuilt after reversal and
+sorting. The result remains a source-bound diagnostic proposal with unresolved
+admission gates, not a canonical mesh or V0 pass. See
+[`MESH_WINDING_PROPOSAL.md`](MESH_WINDING_PROPOSAL.md).
 
 ## Executable checks
 

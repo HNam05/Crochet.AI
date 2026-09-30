@@ -18,11 +18,13 @@ from .json_types import JSONValue
 
 SCHEMA_FILENAMES = {
     "design_spec": "design-spec.schema.json",
+    "design_spec_1_1": "design-spec-1.1.schema.json",
     "material_profile": "material-profile.schema.json",
     "crochet_ir": "crochet-ir.schema.json",
     "crochet_ir_1_1": "crochet-ir-1.1.schema.json",
     "indexed_triangle_mesh": "indexed-triangle-mesh.schema.json",
     "numerical_geometry_profile": "numerical-geometry-profile.schema.json",
+    "numerical_geometry_profile_1_1": "numerical-geometry-profile-1.1.schema.json",
 }
 
 
@@ -82,6 +84,14 @@ def _json_pointer(parts: list[object]) -> str:
 
 
 def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
+    if kind == "design_spec" and isinstance(value, dict) and value.get("schema_version") == "1.1.0":
+        kind = "design_spec_1_1"
+    if (
+        kind == "numerical_geometry_profile"
+        and isinstance(value, dict)
+        and value.get("schema_version") == "1.1.0"
+    ):
+        kind = "numerical_geometry_profile_1_1"
     if kind == "crochet_ir" and isinstance(value, dict) and value.get("schema_version") == "1.1.0":
         kind = "crochet_ir_1_1"
     fingerprint = artifact_fingerprint(value)
@@ -94,9 +104,13 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
                     code=FailureCode.INPUT,
                     gate=(
                         "V0"
-                        if kind in {"indexed_triangle_mesh", "numerical_geometry_profile"}
+                        if kind in {
+                            "indexed_triangle_mesh",
+                            "numerical_geometry_profile",
+                            "numerical_geometry_profile_1_1",
+                        }
                         else "V1"
-                        if kind in {"design_spec", "material_profile"}
+                        if kind in {"design_spec", "design_spec_1_1", "material_profile"}
                         else "V2"
                     ),
                     message_key="input.not_ijson",
@@ -118,9 +132,13 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
     )
     gate = (
         "V0"
-        if kind in {"indexed_triangle_mesh", "numerical_geometry_profile"}
+        if kind in {
+            "indexed_triangle_mesh",
+            "numerical_geometry_profile",
+            "numerical_geometry_profile_1_1",
+        }
         else "V1"
-        if kind in {"design_spec", "material_profile"}
+        if kind in {"design_spec", "design_spec_1_1", "material_profile"}
         else "V2"
     )
     for error in errors:
@@ -140,6 +158,18 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
     return ValidationReport.from_iterable(diagnostics)
 
 
-def schema_documents() -> Mapping[str, Mapping[str, Any]]:
-    """Return schema documents for read-only tooling and explicit schema checks."""
-    return _schemas()
+def schema_documents(
+    *, include_additive_versions: bool = False,
+) -> Mapping[str, Mapping[str, Any]]:
+    """Return schema documents; additive versions are opt-in for tooling compatibility."""
+    if include_additive_versions:
+        return _schemas()
+    legacy_kinds = {
+        "design_spec",
+        "material_profile",
+        "crochet_ir",
+        "crochet_ir_1_1",
+        "indexed_triangle_mesh",
+        "numerical_geometry_profile",
+    }
+    return {kind: schema for kind, schema in _schemas().items() if kind in legacy_kinds}

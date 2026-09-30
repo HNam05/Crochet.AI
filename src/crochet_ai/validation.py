@@ -394,6 +394,25 @@ class SemanticValidator:
     ) -> None:
         target = value["target_geometry"]
         if target["geometry_type"] == "MESH_3D":
+            numerical_profile_id = target["preflight_numerical_profile_id"]
+            if numerical_profile_id == "v0_num_mesh_binary64_adjacent_barycentric_v2":
+                from .v0_adjacent_profile import (
+                    AdjacentProfileError,
+                    parse_adjacent_exclusion_zone,
+                    resolve_v0_adjacent_numeric_profile,
+                )
+
+                try:
+                    parse_adjacent_exclusion_zone(target["adjacent_exclusion_zone"])
+                    resolve_v0_adjacent_numeric_profile(numerical_profile_id)
+                except AdjacentProfileError as error:
+                    collector.add(
+                        FailureCode.INPUT,
+                        "V1",
+                        "design.adjacent_exclusion_zone_invalid",
+                        str(error),
+                        pointers=("/target_geometry/adjacent_exclusion_zone",),
+                    )
             expected_profile = None
             if value["project_type"] == "AMIGURUMI_3D":
                 expected_profile = {

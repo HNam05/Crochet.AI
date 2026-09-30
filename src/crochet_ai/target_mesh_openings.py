@@ -191,6 +191,8 @@ def diagnose_target_mesh_openings(
                      float(landmark_values[identifier]["position_mm"][2])),
         tolerance_mm=float(landmark_values[identifier]["tolerance_mm"]),
     ) for identifier in referenced_ids)
+    if target["preflight_numerical_profile_id"] != "v0_num_mesh_binary64_v1":
+        raise TargetMeshOpeningError("E_UNSUPPORTED_FEATURE: openings.numerical_profile")
     numeric_profile = resolve_v0_numeric_profile(target["preflight_numerical_profile_id"])
     try:
         landmark_report = diagnose_boundary_landmark_eligibility(

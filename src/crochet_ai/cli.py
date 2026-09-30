@@ -39,7 +39,8 @@ def _provenance(commit: str) -> CompileProvenance:
         for p in sorted(Path(__file__).parent.glob("*.py"))
     }
     schema_hashes = {
-        name: sha256(rfc8785.dumps(doc)).hexdigest() for name, doc in schema_documents().items()
+        name: sha256(rfc8785.dumps(doc)).hexdigest()
+        for name, doc in schema_documents(include_additive_versions=True).items()
     }
     snapshot = sha256(
         b"Crochet.AI\0BACKEND_SOURCE_SNAPSHOT_V1\0"
@@ -118,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
                 "data": {
                     "mode": "OFFLINE_LOCAL",
                     "auth_required": False,
-                    "schema_kinds": sorted(schema_documents()),
+                    "schema_kinds": sorted(schema_documents(include_additive_versions=True)),
                     "source_snapshot_sha256": provenance.source_snapshot_sha256,
                     "generation_commit_supplied": bool(args.software_commit),
                     "physical_verification_available": False,

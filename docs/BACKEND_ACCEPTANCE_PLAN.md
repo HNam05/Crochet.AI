@@ -185,6 +185,21 @@ installed smoke tool, strict mypy on 53 source files, all five Node vectors and
 diff checks. A freshly built wheel passed `pip check` and installed smoke in a
 clean Python 3.11.9 venv with no system-site packages, outside the checkout.
 
+The user-approved additive DesignSpec 1.1 and numerical profile 2 now require
+an explicit reduced rational barycentric exclusion size. Legacy records,
+schemas and goldens remain unchanged. See `DESIGN_SPEC_1_1.md` and
+`NUMERICAL_GEOMETRY_2.md`. Version-specific end-to-end V0 integration remains
+open; legacy-only operations reject the new profile rather than downgrade it.
+The source-bound winding proposal checks complete pair and volume-component
+evidence and proposes only whole closed-component reversals. Mixed open and
+closed meshes remain explicitly unsupported. It is not an outward-orientation
+or complete mesh-acceptance proof. Integration passed 746 Python tests, strict
+mypy on 55 source modules, Ruff, all five independent Node vectors and diff
+checks. The rebuilt wheel passed dependency checks and isolated installed smoke
+outside the checkout in the clean Python 3.11.9 venv, including byte parity for
+all eight schemas and both numerical records. This is a local installation
+check, not a cross-platform or production deployment acceptance.
+
 ## External dependencies and operational authority
 
 Physical specimens and new golden approvals require human input. Numerical

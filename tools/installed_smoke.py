@@ -7,6 +7,7 @@ the source checkout; only authoritative schema/profile bytes are read from it.
 from __future__ import annotations
 
 import json
+import os
 import site
 import subprocess
 import sys
@@ -28,6 +29,13 @@ from crochet_ai.target_mesh_adjacent_residual import (
     diagnose_indexed_triangle_mesh_adjacent_residual,
 )
 from crochet_ai.target_mesh_decode import MESH_MEDIA_TYPE
+from crochet_ai.v0_adjacent_profile import (
+    PROFILE_ID as ADJACENT_PROFILE_ID,
+)
+from crochet_ai.v0_adjacent_profile import (
+    parse_adjacent_exclusion_zone,
+    resolve_v0_adjacent_numeric_profile,
+)
 from crochet_ai.v0_numeric_profile import PROFILE_ID, resolve_v0_numeric_profile
 
 
@@ -64,13 +72,19 @@ def main() -> int:
             == (repository / "schemas" / filename).read_bytes(),
             f"smoke.schema_bytes_mismatch:{filename}",
         )
-    profile_filename = "v0-mesh-numeric-profile-1.json"
-    _require(
-        package.joinpath("profiles", profile_filename).read_bytes()
-        == (repository / "profiles" / profile_filename).read_bytes(),
-        "smoke.profile_bytes_mismatch",
-    )
-    _require(set(schema_documents()) == set(SCHEMA_FILENAMES), "smoke.schema_registry_mismatch")
+    for profile_filename in ("v0-mesh-numeric-profile-1.json", "v0-mesh-numeric-profile-2.json"):
+        _require(
+            package.joinpath("profiles", profile_filename).read_bytes()
+            == (repository / "profiles" / profile_filename).read_bytes(),
+            "smoke.profile_bytes_mismatch",
+        )
+    _require(set(schema_documents(include_additive_versions=True)) == set(SCHEMA_FILENAMES),
+             "smoke.schema_registry_mismatch")
+    resolve_v0_adjacent_numeric_profile(ADJACENT_PROFILE_ID)
+    _require(parse_adjacent_exclusion_zone({
+        "policy_id": "BARYCENTRIC_PAIR_LOCAL_V1",
+        "lambda": {"numerator": "1", "denominator": "2"},
+    }) == Fraction(1, 2), "smoke.adjacent_zone")
     profile = resolve_v0_numeric_profile(PROFILE_ID)
     _require(
         orientation2d((0., 0.), (1., 0.), (0., 1.), max_exact_fallbacks=1).sign == 1,
@@ -118,6 +132,12 @@ def main() -> int:
     completed = subprocess.run(
         [str(console), "--json", "capabilities"], check=True,
         capture_output=True, text=True, timeout=20,
+        env={
+            **{name: value for name, value in os.environ.items() if name not in {
+                "PYTHONPATH", "PYTHONHOME", "PYTHONUSERBASE",
+            }},
+            "PYTHONNOUSERSITE": "1",
+        },
     )
     capabilities = json.loads(completed.stdout)
     _require(capabilities["ok"] is True, "smoke.capabilities_failed")
