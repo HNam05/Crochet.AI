@@ -42,6 +42,20 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | generate_analytic | design_spec, material_profile, run_config |
 | validate_ir | design_spec, material_profile, crochet_ir |
 | export_ir | design_spec, material_profile, crochet_ir, terminology |
+| inspect_mesh_openings | design_spec, material_profile, mesh_json |
+
+`inspect_mesh_openings` is an additive diagnostic capability within the 1.0
+envelope, not generation or mesh acceptance. `mesh_json` contains the exact UTF-8
+source text; its bytes must match the DesignSpec digest, media type and frame.
+The supplied material must match the inline or referenced binding. No asset URI
+is followed. Server-owned inspection limits are 262,144 mesh bytes, 128 vertices,
+256 faces, 16 openings, 64 retained-opening landmark references, 32 referenced
+landmarks, 8,128 vertex pairs and 16,384 landmark-edge tests. Clients cannot
+override these limits. A handled ambiguous/unmatched mapping can have `ok:true`;
+inspect `diagnostic.classification`. Every result still reports
+`mesh_preflight_state:INDETERMINATE`, `verification_state:NOT_VERIFIED` and
+`physical_status:UNTESTED`. The existing local queue can execute and persist this
+operation without new storage formats.
 
 `terminology` is `US_EN`, `UK_EN` or `DE_DE`. The complete strict run configuration is
 defined by `AnalyticRunConfig` in `src/crochet_ai/analytic_solver.py`, with nested
@@ -413,8 +427,34 @@ plus `2^-40` times the mesh diameter algebraically, without a rounded square
 root. Landmark, vertex-pair and segment-test limits are checked before distance
 work. It records rational distances and all eligible loops; zero, one or several
 candidates become `UNMATCHED`, `UNIQUE` or `AMBIGUOUS`. Typed landmark requests
-are validated and sorted by ID. Complete DesignSpec/opening binding and V0
-acceptance are separate gates.
+are validated and sorted by ID. V0 acceptance remains a separate gate.
+`diagnose_target_mesh_openings` binds full semantically validated DesignSpecs
+and inline/resolved MaterialProfiles to the exact source bytes and target frame.
+It recomputes ordering, directed loops and landmark evidence within explicit
+limits, verifies declared component/loop counts and requires a bijection between
+`REMAIN_OPEN` declarations and loops. Empty, unmatched, ambiguous, split or shared
+landmark assignments fail closed. Construction-time closure declarations do not
+create target boundary loops. Purpose labels are preserved, not inferred from
+geometry. Sorted references make rejection evidence independent of list order.
+The result remains `OPENING_BINDING_DIAGNOSTIC_ONLY`, not V0 or physical acceptance.
+The isolated `orientation2d` and `orientation3d` backend evaluates outward
+binary64 intervals and returns a sign only when the determinant interval
+excludes zero. An inconclusive filter uses exact binary64 rationals under an
+explicit fallback budget. Format and subnormal-arithmetic guards accompany
+the documented correctly-rounded IEEE runtime assumptions; callers must keep
+the floating environment unchanged. Results identify backend/version, path
+and bounded determinant-node work. The independent 3D test oracle uses a
+homogeneous determinant with independent Leibniz expansion. Deterministic
+Hypothesis properties cover finite binary64 values, subnormals and overflow
+against rational oracles, including sign antisymmetry. This backend is not yet wired into complete V0
+admission or its mesh intersection pipeline.
+The separate `adjacent_triangle_residual_squared` experiment evaluates exact
+distance outside a caller-defined rational barycentric pair-local exclusion
+zone. It includes mixed retained/excluded point pairs and first rejects any
+original contact beyond the intended shared entity. It emits `EXPERIMENTAL`
+evidence only, has no default lambda and does not change the frozen V0 profile.
+Its equations and non-retessellation-invariant scope are recorded in
+[`ADJACENT_RESIDUAL_EXPERIMENT.md`](ADJACENT_RESIDUAL_EXPERIMENT.md).
 
 ## Executable checks
 

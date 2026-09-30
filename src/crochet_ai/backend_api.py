@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import fields
+from dataclasses import asdict, fields
 from fractions import Fraction
 from typing import Any
 
@@ -22,9 +22,11 @@ from .canonical import (
     validate_ijson,
 )
 from .diagnostics import ArtifactValidationError
+from .models import DesignSpec, MaterialProfile
 from .pattern import TerminologyProfile, export_pattern
 from .schema import validate_schema
 from .solver_types import GenerationError
+from .target_mesh_openings import TargetMeshOpeningError, diagnose_target_mesh_openings
 from .validation import SemanticValidator
 
 API_VERSION = "1.0.0"
@@ -125,10 +127,34 @@ class BackendAPI:
             if operation == "capabilities":
                 _object(request, {"api_version", "operation"}, "request")
                 data: dict[str, Any] = {
-                    "operations": ["capabilities", "generate_analytic", "validate_ir", "export_ir"],
+                    "operations": [
+                        "capabilities", "generate_analytic", "validate_ir", "export_ir",
+                        "inspect_mesh_openings",
+                    ],
                     "candidate_domains": ["CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC"],
                     "physical_verification_available": False,
                     "deployment_scope": "LOCAL_SINGLE_USER",
+                }
+            elif operation == "inspect_mesh_openings":
+                _object(request, {
+                    "api_version", "operation", "design_spec", "material_profile", "mesh_json",
+                }, "request")
+                if not isinstance(request["mesh_json"], str):
+                    raise ApiInputError("request.mesh_json")
+                # Bytes, not reserialized JSON, must match the declared source digest.
+                raw_mesh = request["mesh_json"].encode("utf-8")
+                result = diagnose_target_mesh_openings(
+                    DesignSpec.from_dict(request["design_spec"]), raw_mesh,
+                    material_profile=MaterialProfile.from_dict(request["material_profile"]),
+                    max_bytes=262_144, max_vertices=128, max_faces=256,
+                    max_openings=16, max_landmark_refs=64, max_landmarks=32,
+                    max_vertex_pairs=8_128, max_landmark_edge_tests=16_384,
+                )
+                data = {
+                    "diagnostic": parse_json(rfc8785.dumps(asdict(result))),
+                    "verification_state": "NOT_VERIFIED",
+                    "mesh_preflight_state": "INDETERMINATE",
+                    "physical_status": "UNTESTED",
                 }
             elif operation in {"generate_analytic", "validate_ir", "export_ir"}:
                 keys = {"api_version", "operation", "design_spec", "material_profile"}
@@ -227,6 +253,7 @@ class BackendAPI:
             return error_response("E_INPUT", error.reason)
         except (
             ApiInputError,
+            TargetMeshOpeningError,
             CanonicalizationError,
             rfc8785.CanonicalizationError,
             RecursionError,

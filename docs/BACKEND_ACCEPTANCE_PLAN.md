@@ -16,7 +16,7 @@ approved goldens remain frozen. Frontend work is out of scope.
 | --- | --- | --- | --- |
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A subset implemented; M1B and V9/V10 remain |
-| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Partial input/material validation, meridional samplers, indexed-mesh decode/topology/exact-geometry/diameter diagnostics, hash-locked profile, exact relative area/coordinate-distance and algebraic six-volume, bounded exact face-pair intersections and nonadjacent near-contact plus non-certifying vertex/face ordering diagnostics; adjacent residual contact, boundary matching and V0 certification missing |
+| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Partial input/material validation, meridional samplers, indexed-mesh decode/topology/exact-geometry/diameter diagnostics, hash-locked profile, exact relative area/coordinate-distance and algebraic six-volume, bounded exact face-pair intersections and nonadjacent near-contact, directed loops and full DesignSpec opening-binding diagnostics; experimental adjacent residual kernel and isolated certified orientation; complete V0 admission and normalization missing |
 | B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole SC proposal implemented; full V5 and domains remain |
 | B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free stretch-only prototype, initial surface/intersection/distance diagnostics; shear, bend, contact response, calibrated convergence and V6 missing |
 | B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Initial open-surface arithmetic, exact intersection and squared-distance diagnostics only; robust V0-V10 gates missing |
@@ -157,11 +157,25 @@ loops are ordered deterministically. The stage revalidates the full source and
 prior ordering evidence and refuses invalid topology. It does not assign
 openings or certify a semantic mesh identity. Exact landmark-to-loop eligibility
 now records per-loop rational distances and all candidates under the immutable
-slack rule, with whole-work budgets and explicit ambiguity. It does not yet bind
-complete DesignSpec openings. Integration passed 558 tests, Ruff, strict mypy on
-49 source files, all five independent Node canonical vectors, and diff checks.
-Certified filtered orientation is the next bounded stage; further V0 admission
-and independent backend gates remain open.
+slack rule, with whole-work budgets and explicit ambiguity. Full semantically
+validated DesignSpec/material/source binding now requires a unique bijection
+between retained openings and boundary loops. The additive API operation
+`inspect_mesh_openings` exposes this under server-owned limits and persists
+through the local queue; it explicitly reports preflight `INDETERMINATE`.
+Certified filtered orientation is implemented separately with independent
+homogeneous rational test oracles, not yet wired into V0 mesh admission.
+
+The user's adjacent-zone decision is implemented as a separate experimental
+exact kernel. Its caller-explicit rational barycentric zone excludes only
+point pairs with both points inside their respective open zones; mixed pairs
+are checked. Full original-face overlap/contact is checked before exclusion.
+No default lambda, physical calibration, retessellation invariance, frozen
+profile mutation or V0 pass is introduced. See
+[`ADJACENT_RESIDUAL_EXPERIMENT.md`](ADJACENT_RESIDUAL_EXPERIMENT.md).
+Further mesh-wide integration, versioned admission policy and independent
+backend gates remain open.
+Integration checkpoint passed 649 Python tests, Ruff, strict mypy on 52 source
+files, all five independent Node canonical vectors and `git diff --check`.
 
 ## External dependencies and operational authority
 
