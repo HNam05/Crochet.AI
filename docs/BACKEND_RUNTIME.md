@@ -466,11 +466,19 @@ node tools/canonical_reference.mjs tests/conformance/canonical-vectors.json
 git diff --check
 ```
 
-Packaging additionally requires building/installing a wheel in an isolated
-environment, checking bundled schema bytes, and invoking the console script
-from outside the checkout. Passing these checks covers the implemented subset
-only. See `BACKEND_ACCEPTANCE_PLAN.md` for open release gates.
-The V0 numerical profile is included in the source distribution manifest.
-On 2026-09-30 a fresh wheel installed into a separate venv passed out-of-checkout
-CLI, bundled-schema and profile-resolution checks. The venv inherited existing
-runtime dependencies, so clean dependency installation remains a release gate.
+Packaging additionally requires building/installing a wheel in a clean venv
+without `--system-site-packages`, running `python -m pip check` and checking the
+installed artifact outside the checkout. Invoke that venv's Python with `-I`
+and the absolute path to `tools/installed_smoke.py`. The script refuses global,
+user-site or source imports, compares all six bundled schema files and the
+immutable profile byte-for-byte with their authoritative sources, exercises
+orientation and mesh residual diagnostics, and runs the installed console
+entrypoint. It emits dependency versions in a machine-readable report.
+
+On 2026-09-30 this clean Python 3.11.9 installation and smoke passed with
+jsonschema 4.26.0 and rfc8785 0.1.4; `pip check` found no broken requirements.
+The earlier inherited-dependency smoke alone was not sufficient. The V0
+profile is included in the source distribution manifest. Installation evidence
+covers this Windows/Python environment and the implemented subset, not every
+supported Python/platform combination or full backend acceptance. See
+`BACKEND_ACCEPTANCE_PLAN.md` for open release gates.

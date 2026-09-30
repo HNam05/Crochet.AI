@@ -45,3 +45,20 @@ retained-retained-only result of `5`. A bounded property test checks the edge
 oracle across rational lambda values and checks translation and scale
 covariance. Tests also permute face vertices, swap face order, and exercise
 alternate fan diagonals for the shared-vertex quadrilateral.
+
+## Mesh-wide diagnostic
+
+`diagnose_indexed_triangle_mesh_adjacent_residual` re-decodes the complete source
+and recomputes exact topology, nondegeneracy and ordering; no caller-supplied
+intermediate report is trusted. It enumerates every unordered face pair,
+including nonadjacent pairs charged to the enumeration budget. For adjacent
+pairs, it checks aggregate predicted distance work (two primitive pairs per
+shared edge, four per shared vertex) before the first residual kernel call.
+The explicit lambda bit limit bounds numerator and denominator lengths.
+
+Results retain exact squared millimetre distances per pair, source/ordered
+index maps, source vertex identities, algorithm versions, ordering/topology
+hashes, all budgets and a source-specific diagnostic hash. Unexpected original
+contact fails with the offending ordered face pair and returns no partial
+report. Nonadjacent distances are deliberately not part of this experiment.
+It still supplies neither a clearance threshold nor complete V0 acceptance.

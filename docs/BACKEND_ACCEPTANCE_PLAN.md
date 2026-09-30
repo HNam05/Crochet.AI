@@ -143,7 +143,9 @@ The profile-bearing source distribution and wheel built successfully. On
 2026-09-30 the wheel was installed into a separate venv and its CLI, bundled
 schemas and immutable profile passed checks outside the source checkout.
 This venv inherited existing runtime dependencies via system-site-packages;
-fully isolated dependency installation remains a release check. Next software package: specify and
+that limitation was closed on 2026-09-30 by a clean venv installation and
+byte-exact installed-package smoke; additional platform/version combinations
+remain release checks. Next software package: specify and
 test the missing adjacent residual-contact policy without treating incidental
 shared-simplex contact as physical clearance, then complete V0 canonical
 normalization, boundary assignment and fail-closed admission. The open B1/B3-B10
@@ -172,10 +174,16 @@ are checked. Full original-face overlap/contact is checked before exclusion.
 No default lambda, physical calibration, retessellation invariance, frozen
 profile mutation or V0 pass is introduced. See
 [`ADJACENT_RESIDUAL_EXPERIMENT.md`](ADJACENT_RESIDUAL_EXPERIMENT.md).
-Further mesh-wide integration, versioned admission policy and independent
-backend gates remain open.
+The experimental mesh-wide residual wrapper now recomputes source, topology
+and ordering and prechecks aggregate pair work before distance evaluation,
+retaining exact distances and complete provenance. Versioned admission policy
+and independent backend gates remain open; no acceptance threshold is chosen.
 Integration checkpoint passed 649 Python tests, Ruff, strict mypy on 52 source
 files, all five independent Node canonical vectors and `git diff --check`.
+The following integration passed 692 Python tests, Ruff including the new
+installed smoke tool, strict mypy on 53 source files, all five Node vectors and
+diff checks. A freshly built wheel passed `pip check` and installed smoke in a
+clean Python 3.11.9 venv with no system-site packages, outside the checkout.
 
 ## External dependencies and operational authority
 
