@@ -44,6 +44,36 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | export_ir | design_spec, material_profile, crochet_ir, terminology |
 | run_forward_prototype | design_spec, material_profile, crochet_ir, forward_run |
 | inspect_mesh_openings | design_spec, material_profile, mesh_json |
+| inspect_closed_surface_topology | design_spec, material_profile, crochet_ir |
+| inspect_closed_cell_conformance | design_spec, material_profile, crochet_ir |
+| inspect_analytic_candidate_claims | design_spec, material_profile, crochet_ir |
+
+`inspect_closed_surface_topology` constructs the server-owned target-free closed
+SC cells, then independently audits their combinatorial topology and checks the
+source stitch-to-face mapping. `inspect_closed_cell_conformance` returns the same
+two proofs under `surface_topology` and `cell_conformance`, each with its hash.
+A proof `PASS` is a partial computational result; pattern status remains `NOT_VERIFIED`
+and physical status `UNTESTED`. A defective surface or mapping gives `REJECTED`. Faces,
+budgets, hashes and claimed evidence cannot be submitted by clients. See
+[`SURFACE_TOPOLOGY_AUDIT_V1.md`](SURFACE_TOPOLOGY_AUDIT_V1.md) and
+[`CLOSED_CELL_CONFORMANCE_V1.md`](CLOSED_CELL_CONFORMANCE_V1.md). The generic `request`
+CLI and durable jobs expose the same operation.
+
+`inspect_analytic_candidate_claims` returns an independent `candidate_claims`
+payload and `candidate_claims_sha256`. It derives schedule/construction quantities
+from validated raw IR and checks recorded parameter claims, not solver flags.
+Missing complete search evidence retains `INDETERMINATE` and NOT_VERIFIED/UNTESTED;
+known false claims yield FAIL and REJECTED. Clients cannot submit claimed proof,
+external traces or budgets. See [ANALYTIC_CANDIDATE_CLAIMS_V1.md](ANALYTIC_CANDIDATE_CLAIMS_V1.md).
+The generic CLI request and durable job paths expose the same operation.
+
+`generate_analytic` additionally returns `search_trace` and `search_trace_sha256`
+under [ANALYTIC_SEARCH_TRACE_V1.md](ANALYTIC_SEARCH_TRACE_V1.md). They are null for
+unadmitted runs and present for admitted terminal outcomes, including partial
+batch exhaustion. The trace binds inputs and records actual producer execution;
+it is not independent verification. New prototype projects persist this trace
+and a hashed `PROTOTYPE_GENERATION_LINK_V1` proposal-to-final phase-policy link.
+Legacy stored projects remain unchanged. V5 does not yet consume external traces.
 
 `inspect_mesh_openings` is an additive diagnostic capability within the 1.0
 envelope, not generation or mesh acceptance. `mesh_json` contains the exact UTF-8

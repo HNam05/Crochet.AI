@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import UTC, datetime
+from hashlib import sha256
 from threading import Lock
 from typing import Any
 from uuid import uuid4
 
 from .analytic_compile import CompileProvenance, compile_closed_schedule
 from .analytic_solver import AnalyticRunConfig, generate_analytic
-from .canonical import CanonicalProfile, canonical_hash
+from .canonical import CanonicalProfile, canonical_hash, jcs_bytes
 from .cli import _provenance
+from .json_types import JSONValue
 from .pattern import TerminologyProfile, export_pattern, verify_semantic_round_trip
 from .pattern_context import PatternParseContext, PatternYarnBinding
 from .prototype_input import PROTOTYPE_VERSION, assemble_request
@@ -56,6 +58,8 @@ class LocalPrototype:
             batch = generate_analytic(design, material, config, self.provenance)
             if batch.status.value != "CANDIDATES_EMITTED" or len(batch.candidates) != 1:
                 raise RuntimeError(f"generation.{batch.status.value}.{batch.reason}")
+            if batch.search_trace is None:
+                raise RuntimeError("generation.search_trace_missing")
             proposal = batch.candidates[0].crochet_ir.to_dict()
             counts = batch.candidates[0].count_search.counts
             proposal_provenance = proposal["provenance"]
@@ -95,6 +99,23 @@ class LocalPrototype:
             if not validated.ok:
                 raise RuntimeError("generation.semantic_validation")
             source_sha = canonical_hash(ir, CanonicalProfile.CROCHET_IR, validator=validator)
+            generation_link: dict[str, JSONValue] = {
+                "profile": "PROTOTYPE_GENERATION_LINK_V1",
+                "search_trace_sha256": batch.search_trace.sha256,
+                "proposal_crochet_ir_sha256": canonical_hash(
+                    proposal, CanonicalProfile.CROCHET_IR, validator=validator,
+                ),
+                "final_crochet_ir_sha256": source_sha,
+                "phase_policy": "FIXED_ZERO_CONTINUOUS_V1",
+                "counts": list(counts),
+                "proposal_phases": list(batch.candidates[0].placement.phases),
+                "final_phases": [0] * (len(counts) - 1),
+                "verification_state": "NOT_VERIFIED",
+                "physical_status": "UNTESTED",
+            }
+            generation_link_sha256 = sha256(
+                b"Crochet.AI\0PROTOTYPE_GENERATION_LINK_V1\0" + jcs_bytes(generation_link)
+            ).hexdigest()
             color = design["colors"][0]
             context = PatternParseContext(
                 design,
@@ -130,6 +151,10 @@ class LocalPrototype:
                     "generation": {
                         "status": batch.status.value,
                         "reason": batch.reason,
+                        "search_trace": batch.search_trace.to_dict(),
+                        "search_trace_sha256": batch.search_trace.sha256,
+                        "proposal_to_final": generation_link,
+                        "proposal_to_final_sha256": generation_link_sha256,
                         "work": {
                             "count_transitions": batch.count_transition_evaluations,
                             "placement_transitions": batch.placement_transition_evaluations,

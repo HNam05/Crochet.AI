@@ -1,8 +1,14 @@
 """Explicit failures shared by deterministic generation stages."""
 
+from __future__ import annotations
+
 from collections.abc import Mapping
 from enum import StrEnum
 from types import MappingProxyType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .analytic_placement import PlacementLayerTrace
 
 
 class GenerationStatus(StrEnum):
@@ -22,9 +28,11 @@ class GenerationError(ValueError):
         consumed: int = 0,
         *,
         work: Mapping[str, int] | None = None,
+        trace: tuple[PlacementLayerTrace, ...] = (),
     ) -> None:
         self.status = status
         self.reason = reason
         self.consumed = consumed
         self.work = MappingProxyType(dict(work or {}))
+        self.trace = trace
         super().__init__(f"{status}:{reason}")

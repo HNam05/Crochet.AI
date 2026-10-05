@@ -2,6 +2,9 @@
 
 This project is a deterministic crochet CAD/compiler. Read the relevant contract before changing a subsystem.
 
+For backend continuation, first read [`docs/BACKEND_HANDOFF.md`](docs/BACKEND_HANDOFF.md)
+for the latest implementation state, validation, local runtime and next bounded task.
+
 ## Permanent rules
 
 - Correctness, reproducibility, and explicit failure take priority over speed.

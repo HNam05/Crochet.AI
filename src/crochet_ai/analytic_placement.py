@@ -24,6 +24,18 @@ class PlacementResult:
     proximity_penalty_turns: Fraction
     transition_evaluations: int
     pair_evaluations: int
+    layer_trace: tuple[PlacementLayerTrace, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class PlacementLayerTrace:
+    transition_index: int
+    variant_count: int
+    input_state_count: int
+    output_state_count: int
+    transition_evaluations: int
+    pair_evaluations: int
+    completed: bool
 
 
 def choose_phases(
@@ -51,6 +63,7 @@ def choose_phases(
     }
     used = 0
     pairs_used = 0
+    trace: list[PlacementLayerTrace] = []
 
     def exhausted(reason: str, consumed: int) -> GenerationError:
         return GenerationError(
@@ -58,11 +71,17 @@ def choose_phases(
             reason,
             consumed,
             work={"placement_transitions": used, "placement_pairs": pairs_used},
+            trace=tuple(trace),
         )
 
-    for before, after in pairwise(counts):
+    for transition_index, (before, after) in enumerate(pairwise(counts)):
         variants = before if before != after else 1
+        input_states = len(states)
+        before_used, before_pairs = used, pairs_used
         if variants > budget.max_variants_per_transition:
+            trace.append(
+                PlacementLayerTrace(transition_index, variants, input_states, 0, 0, 0, False)
+            )
             raise exhausted("placement.variants", used)
         next_states: dict[tuple[Fraction, ...], tuple[int, Fraction, tuple[int, ...]]] = {}
         for phase in range(variants):
@@ -77,8 +96,19 @@ def choose_phases(
                     if len(stitch.base_indices) != stitch.top_count
                 )
             )
-            for history, (stack, penalty, trace) in sorted(states.items()):
+            for history, (stack, penalty, phase_path) in sorted(states.items()):
                 if used == budget.max_transition_evaluations:
+                    trace.append(
+                        PlacementLayerTrace(
+                            transition_index,
+                            variants,
+                            input_states,
+                            len(next_states),
+                            used - before_used,
+                            pairs_used - before_pairs,
+                            False,
+                        )
+                    )
                     raise exhausted("placement.transitions", used)
                 used += 1
                 extra_stack = 0
@@ -86,15 +116,37 @@ def choose_phases(
                 for angle in angles:
                     for previous in history:
                         if pairs_used == budget.max_pair_evaluations:
+                            trace.append(
+                                PlacementLayerTrace(
+                                    transition_index,
+                                    variants,
+                                    input_states,
+                                    len(next_states),
+                                    used - before_used,
+                                    pairs_used - before_pairs,
+                                    False,
+                                )
+                            )
                             raise exhausted("placement.pairs", pairs_used)
                         pairs_used += 1
                         delta = abs(angle - previous)
                         distance = min(delta, 1 - delta)
                         extra_stack += distance == 0
                         extra_penalty += max(Fraction(0), minimum_separation_turns - distance)
-                label = (stack + extra_stack, penalty + extra_penalty, (*trace, phase))
+                label = (stack + extra_stack, penalty + extra_penalty, (*phase_path, phase))
                 if angles not in next_states or label < next_states[angles]:
                     next_states[angles] = label
         states = next_states
+        trace.append(
+            PlacementLayerTrace(
+                transition_index,
+                variants,
+                input_states,
+                len(states),
+                used - before_used,
+                pairs_used - before_pairs,
+                True,
+            )
+        )
     stack, penalty, phases = min(states.values())
-    return PlacementResult(phases, stack, penalty, used, pairs_used)
+    return PlacementResult(phases, stack, penalty, used, pairs_used, tuple(trace))

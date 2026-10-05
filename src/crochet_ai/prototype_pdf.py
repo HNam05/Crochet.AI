@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import re
 from html import escape
 from io import BytesIO
+from itertools import groupby
 from typing import Any
 
 import rfc8785
@@ -16,7 +16,6 @@ from reportlab.lib.units import mm
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
-    KeepTogether,
     PageBreak,
     PageTemplate,
     Paragraph,
@@ -28,7 +27,6 @@ from reportlab.platypus import (
 from .canonical import CanonicalProfile, canonical_hash
 from .prototype_input import assemble_request
 from .prototype_presentation import present_ir
-from .prototype_shapes import shape_label
 from .validation import SemanticValidator
 
 
@@ -36,36 +34,100 @@ class PrototypePdfError(ValueError):
     """Saved project cannot be safely represented in a printable document."""
 
 
-def _group_course_steps(course_steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Compress contiguous repeated instructions without explicit base positions."""
-    groups: list[dict[str, Any]] = []
-    for step in course_steps:
-        instruction = step["instruction_de"]
-        has_position = re.search(r"\ban Einstichstelle \d", instruction) is not None
-        can_join = (
-            bool(groups)
-            and not has_position
-            and not groups[-1]["has_position"]
-            and groups[-1]["instruction"] == instruction
-            and groups[-1]["produced_each"] == step["produced_stitches"]
-        )
-        if can_join:
-            groups[-1]["event_ids"].append(step["step_id"])
-            groups[-1]["last_number"] = step["event_index"] + 1
-            groups[-1]["produced_total"] += step["produced_stitches"]
+_SHAPE_EN = {
+    "sphere": "Sphere",
+    "ellipsoid": "Ellipsoid",
+    "cylinder": "Cylinder",
+    "cone": "Cone",
+    "capsule": "Capsule",
+    "pear": "Pear",
+}
+
+
+def _run_notation(instructions: list[str]) -> str:
+    groups: list[str] = []
+    for instruction, members in groupby(instructions):
+        count = sum(1 for _ in members)
+        if instruction == "1 sc":
+            groups.append(f"{count} sc")
+        elif instruction in {"inc sc", "dec sc"} and count > 1:
+            groups.append(f"{count} {instruction}")
         else:
-            groups.append(
-                {
-                    "event_ids": [step["step_id"]],
-                    "first_number": step["event_index"] + 1,
-                    "last_number": step["event_index"] + 1,
-                    "instruction": instruction,
-                    "produced_each": step["produced_stitches"],
-                    "produced_total": step["produced_stitches"],
-                    "has_position": has_position,
-                }
-            )
-    return groups
+            groups.extend([instruction] * count)
+    return ", ".join(groups)
+
+
+def _round_notation(instructions: list[str]) -> str:
+    """Compact literal repeats and runs; preserve their order and any remainder."""
+    if not instructions:
+        raise PrototypePdfError("pdf.unsupported_ir")
+    for size in range(1, len(instructions) // 2 + 1):
+        repetitions = len(instructions) // size
+        end = size * repetitions
+        if instructions[:end] != instructions[:size] * repetitions:
+            continue
+        motif = _run_notation(instructions[:size])
+        if size == 1 and instructions[0] in {"1 sc", "inc sc", "dec sc"}:
+            repeated = _run_notation(instructions[:end])
+        else:
+            repeated = f"({motif}) x {repetitions}"
+        tail = _run_notation(instructions[end:])
+        return repeated + (", " + tail if tail else "")
+    return _run_notation(instructions)
+
+
+def _course_notation(course: dict[str, Any], ir: dict[str, Any]) -> tuple[str, int]:
+    """Export a complete cyclic SC round from canonical bases and tops only."""
+    events = {event["event_id"]: event for event in ir["construction_sequence"]}
+    stitches = {stitch["stitch_id"]: stitch for stitch in ir["stitches"]}
+    frontiers = {frontier["frontier_id"]: frontier for frontier in ir["frontiers"]}
+    locations = {
+        location["attachment_location_id"]: location for location in ir["attachment_locations"]
+    }
+    if (
+        course["course_form"] != "CYCLIC"
+        or course["turn_mode"] != "CONTINUOUS_SPIRAL"
+        or len(course["input_frontier_ids"]) != 1
+        or len(course["output_frontier_ids"]) != 1
+    ):
+        raise PrototypePdfError("pdf.unsupported_ir")
+    available = frontiers[course["input_frontier_ids"][0]]["attachment_location_ids"]
+    if not available:
+        raise PrototypePdfError("pdf.unsupported_ir")
+    initial = course["ordinal"] == 0
+    consumed = total = 0
+    instructions: list[str] = []
+    for event_id in course["member_event_ids"]:
+        ref = events[event_id]["subject_ref"]
+        if ref["entity_type"] != "STITCH":
+            raise PrototypePdfError("pdf.unsupported_ir")
+        stitch = stitches[ref["stitch_id"]]
+        bases = stitch["base_attachment_location_ids"]
+        tops = stitch["top_attachment_location_ids"]
+        semantic = (stitch["stitch_type"], stitch["shaping"], len(bases), len(tops))
+        notation = {
+            ("SINGLE_CROCHET", "PLAIN", 1, 1): "1 sc",
+            ("SINGLE_CROCHET", "INCREASE", 1, 2): "inc sc",
+            ("SINGLE_CROCHET", "DECREASE", 2, 1): "dec sc",
+        }.get(semantic)
+        if notation is None:
+            raise PrototypePdfError("pdf.unsupported_ir")
+        ring_bases = all(locations[base]["location_type"] == "MAGIC_RING_ANCHOR" for base in bases)
+        if initial != ring_bases or (initial and stitch["shaping"] != "PLAIN"):
+            raise PrototypePdfError("pdf.unsupported_ir")
+        positions = [available.index(base) + 1 for base in bases]
+        expected = [((consumed + offset) % len(available)) + 1 for offset in range(len(bases))]
+        if positions != expected:
+            if initial:
+                raise PrototypePdfError("pdf.unsupported_ir")
+            notation += " at prior-round stitch " + " & ".join(map(str, positions))
+        instructions.append(notation)
+        consumed += len(bases)
+        total += len(tops)
+    output = frontiers[course["output_frontier_ids"][0]]["attachment_location_ids"]
+    if consumed != len(available) or total != len(output):
+        raise PrototypePdfError("pdf.unsupported_ir")
+    return ("MR, " if initial else "") + _round_notation(instructions), total
 
 
 def _text(value: object, field: str) -> str:
@@ -118,8 +180,8 @@ def _styles() -> dict[str, ParagraphStyle]:
             leading=10,
             textColor=colors.HexColor("#514A43"),
         ),
-        "step": ParagraphStyle(
-            "PdfStep",
+        "round": ParagraphStyle(
+            "PdfRound",
             parent=base["BodyText"],
             fontName="Helvetica",
             fontSize=9.5,
@@ -192,157 +254,144 @@ def render_project_pdf(project: object, expected_id: str) -> bytes:
         )
     except (KeyError, TypeError, ValueError) as error:
         raise PrototypePdfError("pdf.unsupported_ir") from error
-    steps = {step["step_id"]: step for step in presentation["steps"]}
-    events = {event["event_id"]: event for event in ir["construction_sequence"]}
-    stitches = {stitch["stitch_id"]: stitch for stitch in ir["stitches"]}
+    operations = {
+        operation["operation_id"]: operation for operation in ir["construction_operations"]
+    }
+    ordered_events = sorted(ir["construction_sequence"], key=lambda event: event["sequence_index"])
+    magic_ring_events = [
+        event
+        for event in ordered_events
+        if event["subject_ref"]["entity_type"] == "CONSTRUCTION_OPERATION"
+        and operations[event["subject_ref"]["operation_id"]]["operation_type"] == "MAGIC_RING"
+    ]
+    if len(magic_ring_events) != 1 or magic_ring_events[0] != ordered_events[0]:
+        raise PrototypePdfError("pdf.unsupported_ir")
     style = _styles()
-    story: list[Any] = [Paragraph("Häkelanleitung", style["title"])]
+    story: list[Any] = [Paragraph("Crochet Pattern", style["title"])]
     requested_shape = request.get("shape")
     if not isinstance(requested_shape, str):
         raise PrototypePdfError("pdf.project_invalid")
-    try:
-        shape = shape_label(requested_shape)
-    except ValueError as error:
-        raise PrototypePdfError("pdf.project_invalid") from error
+    shape = _SHAPE_EN.get(requested_shape)
+    if shape is None:
+        raise PrototypePdfError("pdf.project_invalid")
     story.extend(
         [
             Paragraph(
-                f"{shape}: max. Breite / Ø {request['diameter_mm']:g} mm x "
-                f"Höhe {request['height_mm']:g} mm",
+                f"{shape}: maximum width / diameter {request['diameter_mm']:g} mm x "
+                f"height {request['height_mm']:g} mm",
                 style["heading"],
             ),
             Paragraph(
-                f"Garn: {_text(request['yarn_label'], 'yarn')} &nbsp; "
-                f"Farbe: {_text(request['color_hex'], 'color')} &nbsp; "
-                f"Häkelnadel: {request['hook_diameter_mm']:g} mm",
+                f"Yarn: {_text(request['yarn_label'], 'yarn')} &nbsp; "
+                f"Color: {_text(request['color_hex'], 'color')} &nbsp; "
+                f"Hook: {request['hook_diameter_mm']:g} mm",
                 style["body"],
             ),
             Paragraph(
-                f"Maschenprobe (Eingabe): {request['stitches_per_100mm']} fM x "
-                f"{request['courses_per_100mm']} Runden je 100 mm. "
-                f"Intervall-/Unsicherheitsannahme: +/-{request['uncertainty_percent']:g} %. "
-                f"Effektive Teilung: {gauge['effective_stitch_pitch_mm']:.2f} mm je Masche "
-                f"und {gauge['effective_course_pitch_mm']:.2f} mm je Runde.",
+                f"Gauge (entered): {request['stitches_per_100mm']} sc x "
+                f"{request['courses_per_100mm']} rounds per 100 mm. "
+                f"Interval / uncertainty assumption: +/-{request['uncertainty_percent']:g}%. "
+                f"Effective pitch: {gauge['effective_stitch_pitch_mm']:.2f} mm per stitch "
+                f"and {gauge['effective_course_pitch_mm']:.2f} mm per round.",
                 style["body"],
             ),
             Paragraph(
-                "Status: NOT_VERIFIED · UNTESTED. Die Maße und die Maschenprobe sind Eingaben; "
-                "Form, Passform und physische Größe sind nicht bestätigt.",
+                "Status: NOT_VERIFIED / UNTESTED. Dimensions and gauge are inputs; shape, fit, "
+                "and physical size have not been confirmed.",
                 style["body"],
             ),
             Paragraph(
-                "Abkürzungen: fM = feste Masche. Zunahme: 2 fM in dieselbe Einstichstelle "
-                "(eine Basis, zwei Maschen oben). Abnahme: zwei Basen gemeinsam abmaschen "
-                "(zwei Basen, eine Masche oben). Die Anweisungen folgen "
-                "der Reihenfolge der Vorrunde.",
+                "US terms: MR = magic ring; sc = single crochet; "
+                "inc sc = increase (2 sc in one stitch); "
+                "dec sc = decrease (work the next 2 stitches together as one sc). "
+                "Instructions follow "
+                "the previous round's order. The final parentheses give the total stitches "
+                "after completing that round.",
                 style["body"],
             ),
             Paragraph(
-                f"[ ] Schritt 1: Fadenring beginnen und die "
+                f"Start with an MR (magic ring), then work the "
                 f"{presentation['courses'][0]['total_stitches']} "
-                "fM der ersten Runde wie unten angegeben in denselben Ring arbeiten. "
-                "Jede Runde fortlaufend häkeln und nach Abschluss abhaken. "
-                "Falls Füllung gewünscht ist: in den letzten Runden vor den "
-                "Schließabnahmen füllen; ungefüllt ist ebenfalls möglich.",
+                "sc in Round 1 into the ring as instructed below. Work continuously in a spiral "
+                "and check off each round when complete. If stuffing is desired, add it during "
+                "the final rounds before closing the opening; "
+                "leaving it unstuffed is also possible.",
                 style["body"],
             ),
         ]
     )
     for course in courses:
-        course_summary = presentation["courses"][course["ordinal"]]
-        total_stitches = course_summary["total_stitches"]
-        course_header = Table(
-            [
+        round_text, total_stitches = _course_notation(course, ir)
+        story.append(
+            Table(
                 [
-                    Paragraph(
-                        f"[ ] Runde {course['ordinal'] + 1} · {total_stitches} Maschen",
-                        style["heading"],
-                    )
-                ]
-            ],
-            colWidths=[170 * mm],
-            style=TableStyle(
-                [
-                    ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#9B8B78")),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 3 * mm),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 3 * mm),
-                    ("TOPPADDING", (0, 0), (-1, -1), 1 * mm),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 1 * mm),
-                ]
-            ),
-        )
-        course_header.keepWithNext = 1
-        course_block: list[Any] = [course_header]
-        course_steps: list[dict[str, Any]] = []
-        for event_id in course["member_event_ids"]:
-            step = steps[event_id]
-            event = events[event_id]
-            instruction = step["instruction_de"]
-            if event["subject_ref"]["entity_type"] == "STITCH":
-                stitch = stitches[event["subject_ref"]["stitch_id"]]
-                if stitch["shaping"] == "INCREASE":
-                    instruction = instruction.replace(
-                        "fM zweimal in dieselbe Einstichstelle",
-                        "2 fM in dieselbe Einstichstelle",
-                    )
-            course_steps.append({**step, "instruction_de": instruction})
-        for group in _group_course_steps(course_steps):
-            number = str(group["first_number"])
-            if len(group["event_ids"]) > 1:
-                number = (
-                    f"{group['first_number']}-{group['last_number']} ({len(group['event_ids'])}x)"
-                )
-            text = (
-                f"[ ] Schritt {number}: {_text(group['instruction'], 'instruction')} "
-                f"({group['produced_total']} Maschen neu)"
+                    [
+                        Paragraph(
+                            f"[ ] R{course['ordinal'] + 1}: "
+                            f"{_text(round_text, 'instruction')} ({total_stitches} stitches)",
+                            style["round"],
+                        )
+                    ]
+                ],
+                colWidths=[170 * mm],
+                splitInRow=1,
+                style=TableStyle(
+                    [
+                        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#9B8B78")),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 3 * mm),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 3 * mm),
+                        ("TOPPADDING", (0, 0), (-1, -1), 2 * mm),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 2 * mm),
+                    ]
+                ),
             )
-            course_block.append(Paragraph(text, style["step"]))
-        course_block.append(Spacer(1, 3 * mm))
-        story.append(KeepTogether(course_block))
+        )
+        story.append(Spacer(1, 2 * mm))
     close_steps = [step for step in presentation["steps"] if step["kind"] == "CLOSE"]
     if len(close_steps) != 1:
         raise PrototypePdfError("pdf.unsupported_ir")
     story.append(
         Paragraph(
-            f"[ ] {close_steps[0]['event_index'] + 1}. Arbeit schließen",
+            "[ ] Close the remaining opening.",
             style["body"],
         )
     )
     story.extend(
         [
             PageBreak(),
-            Paragraph("Rückmeldung nach dem Häkeln", style["title"]),
-            Paragraph("Projekt-Kurz-ID: " + expected_id[:12], style["body"]),
-            Paragraph("Vollständiger CrochetIR-SHA-256: " + expected_id, style["small"]),
+            Paragraph("Feedback After Crocheting", style["title"]),
+            Paragraph("Project short ID: " + expected_id[:12], style["body"]),
+            Paragraph("Full CrochetIR SHA-256: " + expected_id, style["small"]),
             Paragraph(
-                "Dieses Blatt dokumentiert Ihre Rückmeldung. "
-                "Sie ändert keinen Prüfstatus automatisch.",
+                "Use this page to record your feedback. It does not automatically change "
+                "verification status.",
                 style["body"],
             ),
         ]
     )
     story.append(
         Paragraph(
-            "Ergebnis: [ ] ungefüllt  [ ] gefüllt &nbsp;&nbsp; "
-            "Rückmeldung: [ ] hat geklappt  [ ] Änderungen nötig  [ ] nicht fertig",
+            "Result: [ ] unstuffed  [ ] stuffed &nbsp;&nbsp; "
+            "Feedback: [ ] worked well  [ ] changes needed  [ ] unfinished",
             style["body"],
         )
     )
     fields = [
-        "Gemessene Breite: ____________________ mm",
-        "Gemessene Höhe: ____________________ mm",
-        "Garn und Häkelnadel tatsächlich verwendet: ______________________________",
-        "Maschenprobe tatsächlich gemessen: ______ fM / 100 mm; ______ Runden / 100 mm",
-        "Änderungen an der Anleitung: _____________________________________________",
-        "Problemrunde / Stelle: _________________________________________________",
-        "Notizen: _______________________________________________________________",
+        "Measured width: ____________________ mm",
+        "Measured height: ____________________ mm",
+        "Yarn and hook actually used: ____________________________________________",
+        "Gauge measured: ______ sc / 100 mm; ______ rounds / 100 mm",
+        "Pattern changes: _______________________________________________________",
+        "Problem round / location: ______________________________________________",
+        "Notes: __________________________________________________________________",
         "________________________________________________________________________",
     ]
     story.extend(Paragraph(_text(line, "report_field"), style["body"]) for line in fields)
     story.append(Spacer(1, 8 * mm))
     story.append(
         Paragraph(
-            "Foto oder PDF der fertigen Arbeit hier zuordnen: Projekt-Kurz-ID " + expected_id[:12],
+            "Associate a photo or PDF of the finished work with project short ID "
+            + expected_id[:12],
             style["body"],
         )
     )
@@ -355,7 +404,7 @@ def render_project_pdf(project: object, expected_id: str) -> bytes:
         rightMargin=20 * mm,
         topMargin=20 * mm,
         bottomMargin=20 * mm,
-        title="Crochet.AI Häkelanleitung",
+        title="Crochet.AI Crochet Pattern",
         author="Crochet.AI local prototype",
         invariant=1,
     )
@@ -375,8 +424,8 @@ def render_project_pdf(project: object, expected_id: str) -> bytes:
         canvas.saveState()
         canvas.setFont("Helvetica", 7)
         canvas.setFillColor(colors.HexColor("#514A43"))
-        canvas.drawString(20 * mm, 12 * mm, f"{expected_id[:12]} · NOT_VERIFIED / UNTESTED")
-        canvas.drawRightString(A4[0] - 20 * mm, 12 * mm, f"Seite {document.page}")
+        canvas.drawString(20 * mm, 12 * mm, f"{expected_id[:12]} | NOT_VERIFIED / UNTESTED")
+        canvas.drawRightString(A4[0] - 20 * mm, 12 * mm, f"Page {document.page}")
         canvas.restoreState()
 
     doc.addPageTemplates([PageTemplate(id="pattern", frames=frame, onPage=footer)])

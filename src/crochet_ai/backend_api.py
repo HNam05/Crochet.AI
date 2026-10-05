@@ -9,11 +9,21 @@ from typing import Any
 
 import rfc8785
 
+from .analytic_claims import AnalyticClaimsInputError, inspect_analytic_candidate_claims
 from .analytic_compile import CompileProvenance
 from .analytic_counts import CountSearchBudget
 from .analytic_geometry import MeridianNumerics
 from .analytic_placement import PlacementBudget
 from .analytic_solver import AnalyticRunConfig, generate_analytic
+from .analytic_target import AnalyticTargetError, admit_analytic_target
+from .backend_capabilities import backend_capability_matrix
+from .calibration_campaign import (
+    CalibrationCampaign,
+    CalibrationError,
+    CalibrationMeasurement,
+    calibration_protocol,
+    derive_draft_material,
+)
 from .canonical import (
     CanonicalizationError,
     CanonicalProfile,
@@ -21,7 +31,9 @@ from .canonical import (
     parse_json,
     validate_ijson,
 )
+from .cell_conformance import CellConformanceInputError, inspect_closed_cell_conformance
 from .diagnostics import ArtifactValidationError
+from .forward_closed_cells import ClosedCellsError, build_closed_surface_cells
 from .forward_pipeline import (
     ForwardPipelineError,
     admit_forward_pipeline_recipe,
@@ -32,6 +44,7 @@ from .pattern import TerminologyProfile, export_pattern
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
 from .schema import validate_schema
 from .solver_types import GenerationError
+from .surface_topology import SurfaceTopologyInputError, audit_surface_topology
 from .target_mesh_openings import (
     TargetMeshOpeningDiagnostic,
     TargetMeshOpeningError,
@@ -45,6 +58,10 @@ from .v0_mesh_preflight import (
     inspect_v0_mesh_v2,
 )
 from .validation import SemanticValidator
+from .verification_pipeline import (
+    BACKEND_SEMANTIC_CHECKPOINT_V1,
+    verify_artifacts,
+)
 
 API_VERSION = "1.0.0"
 MAX_REQUEST_BYTES = 2_000_000
@@ -145,22 +162,253 @@ class BackendAPI:
                 _object(request, {"api_version", "operation"}, "request")
                 data: dict[str, Any] = {
                     "operations": [
-                        "capabilities", "generate_analytic", "validate_ir", "export_ir",
+                        "capabilities",
+                        "generate_analytic",
+                        "validate_ir",
+                        "export_ir",
                         "inspect_mesh_openings",
                         "inspect_v0_closed_mesh_v2",
                         "inspect_v0_mesh_v2",
                         "run_forward_prototype",
+                        "verify_candidate",
+                        "calibration_protocol",
+                        "inspect_calibration_campaign",
+                        "derive_calibration_material",
+                        "inspect_analytic_target",
+                        "inspect_closed_surface_cells",
+                        "inspect_closed_surface_topology",
+                        "inspect_closed_cell_conformance",
+                        "inspect_analytic_candidate_claims",
                     ],
                     "candidate_domains": ["CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC"],
                     "physical_verification_available": False,
                     "deployment_scope": "LOCAL_SINGLE_USER",
+                    "verification_profiles": [
+                        {
+                            "profile_id": BACKEND_SEMANTIC_CHECKPOINT_V1.profile_id,
+                            "version": BACKEND_SEMANTIC_CHECKPOINT_V1.version,
+                            "sha256": BACKEND_SEMANTIC_CHECKPOINT_V1.content_hash,
+                            "calibrated": False,
+                            "required_gates": list(BACKEND_SEMANTIC_CHECKPOINT_V1.required_gates),
+                        }
+                    ],
+                    "capability_matrix": backend_capability_matrix(),
                 }
+            elif operation == "inspect_analytic_candidate_claims":
+                _object(
+                    request,
+                    {"api_version", "operation", "design_spec", "material_profile", "crochet_ir"},
+                    "request",
+                )
+                for key in ("design_spec", "material_profile", "crochet_ir"):
+                    if not isinstance(request[key], dict):
+                        raise ApiInputError(f"request.{key}")
+                claims_design = request["design_spec"]
+                claims_material = request["material_profile"]
+                DesignSpec.from_dict(claims_design)
+                MaterialProfile.from_dict(claims_material)
+                claims_validator = SemanticValidator(
+                    design_specs={claims_design.get("design_spec_id", ""): claims_design},
+                    material_profiles={claims_material.get("profile_id", ""): claims_material},
+                )
+                claims = inspect_analytic_candidate_claims(
+                    claims_design, claims_material, request["crochet_ir"],
+                    validator=claims_validator,
+                )
+                data = {
+                    "candidate_claims": claims.to_dict(), "candidate_claims_sha256": claims.sha256,
+                    "verification_state": "REJECTED" if claims.status == "FAIL" else "NOT_VERIFIED",
+                    "physical_status": "UNTESTED",
+                }
+            elif operation == "inspect_analytic_target":
+                _object(
+                    request,
+                    {"api_version", "operation", "design_spec", "material_profile"},
+                    "request",
+                )
+                if not isinstance(request["design_spec"], dict) or not isinstance(
+                    request["material_profile"], dict
+                ):
+                    raise ApiInputError("request.artifact_objects_required")
+                target_material = MaterialProfile.from_dict(request["material_profile"]).to_dict()
+                target_material_id = target_material["profile_id"]
+                if not isinstance(target_material_id, str):
+                    raise ApiInputError("target.material_profile_id")
+                validator = SemanticValidator(
+                    material_profiles={target_material_id: target_material}
+                )
+                design = request["design_spec"]
+                target = admit_analytic_target(design, validator)
+                binding = design["material_profile"]
+                binding_hash = (
+                    canonical_hash(binding["profile"], CanonicalProfile.MATERIAL_PROFILE)
+                    if binding["binding_type"] == "INLINE"
+                    else binding["sha256"]
+                )
+                if (
+                    canonical_hash(target_material, CanonicalProfile.MATERIAL_PROFILE)
+                    != binding_hash
+                ):
+                    raise ApiInputError("target.material_binding")
+                data = {
+                    "target": target.to_dict(),
+                    "verification_state": "NOT_VERIFIED",
+                    "physical_status": "UNTESTED",
+                }
+            elif operation in (
+                "inspect_closed_surface_cells", "inspect_closed_surface_topology",
+                "inspect_closed_cell_conformance",
+            ):
+                _object(
+                    request,
+                    {"api_version", "operation", "design_spec", "material_profile", "crochet_ir"},
+                    "request",
+                )
+                for key in ("design_spec", "material_profile", "crochet_ir"):
+                    if not isinstance(request[key], dict):
+                        raise ApiInputError(f"request.{key}")
+                cells_design = request["design_spec"]
+                cells_material = request["material_profile"]
+                DesignSpec.from_dict(cells_design)
+                MaterialProfile.from_dict(cells_material)
+                cells_validator = SemanticValidator(
+                    design_specs={cells_design["design_spec_id"]: cells_design},
+                    material_profiles={cells_material["profile_id"]: cells_material},
+                )
+                for report in (
+                    cells_validator.validate_design_spec(cells_design),
+                    cells_validator.validate_material_profile(cells_material),
+                ):
+                    if not report.ok:
+                        raise ArtifactValidationError(report)
+                cells_projection = PhysicalSemanticProjection(
+                    request["crochet_ir"], cells_material, validator=cells_validator
+                )
+                cells = build_closed_surface_cells(cells_projection)
+                data = {
+                    "surface_cells": cells.to_dict(),
+                    "surface_cells_sha256": cells.sha256,
+                    "verification_state": "NOT_VERIFIED",
+                    "physical_status": "UNTESTED",
+                }
+                if operation != "inspect_closed_surface_cells":
+                    surface = data["surface_cells"]
+                    audit = audit_surface_topology(surface["vertices"], surface["faces"])
+                    data["surface_topology"] = audit.to_dict()
+                    data["surface_topology_sha256"] = audit.sha256
+                    conformance = inspect_closed_cell_conformance(
+                        request["crochet_ir"], surface, validator=cells_validator,
+                        projection_sha256=cells_projection.sha256,
+                        surface_cells_sha256=cells.sha256,
+                    )
+                    data["cell_conformance"] = conformance.to_dict()
+                    data["cell_conformance_sha256"] = conformance.sha256
+                    if audit.status != "PASS" or conformance.status == "FAIL":
+                        data["verification_state"] = "REJECTED"
+            elif operation == "calibration_protocol":
+                _object(request, {"api_version", "operation"}, "request")
+                data = calibration_protocol()
+            elif operation == "inspect_calibration_campaign":
+                _object(request, {"api_version", "operation", "campaign"}, "request")
+                campaign = CalibrationCampaign(request["campaign"])
+                data = {
+                    "campaign": campaign.to_dict(),
+                    "campaign_sha256": campaign.sha256,
+                    "physical_status": "UNTESTED",
+                    "verification_state": "NOT_VERIFIED",
+                }
+            elif operation == "derive_calibration_material":
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "campaign",
+                        "measurements",
+                        "profile_id",
+                        "response_id",
+                        "created_at",
+                    },
+                    "request",
+                )
+                campaign = CalibrationCampaign(request["campaign"])
+                raw_measurements = request["measurements"]
+                if not isinstance(raw_measurements, list) or len(raw_measurements) > 64:
+                    raise ApiInputError("request.measurements")
+                for key in ("profile_id", "response_id", "created_at"):
+                    if not isinstance(request[key], str):
+                        raise ApiInputError(f"request.{key}")
+                data = derive_draft_material(
+                    campaign,
+                    [CalibrationMeasurement(value, campaign) for value in raw_measurements],
+                    profile_id=request["profile_id"],
+                    response_id=request["response_id"],
+                    created_at=request["created_at"],
+                )
+            elif operation == "verify_candidate":
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "design_spec",
+                        "material_profile",
+                        "crochet_ir",
+                        "mesh_json",
+                        "diagnostic_mode",
+                    },
+                    "request",
+                )
+                if type(request["diagnostic_mode"]) is not bool:
+                    raise ApiInputError("request.diagnostic_mode")
+                if request["mesh_json"] is not None and not isinstance(request["mesh_json"], str):
+                    raise ApiInputError("request.mesh_json")
+                for key in ("design_spec", "material_profile", "crochet_ir"):
+                    if not isinstance(request[key], dict):
+                        raise ApiInputError(f"request.{key}")
+                raw_mesh = (
+                    None if request["mesh_json"] is None else request["mesh_json"].encode("utf-8")
+                )
+                checkpoint = verify_artifacts(
+                    request["design_spec"],
+                    request["material_profile"],
+                    request["crochet_ir"],
+                    mesh_json=raw_mesh,
+                    mesh_budgets=V0MeshBudgets(
+                        max_bytes=262_144,
+                        max_vertices=128,
+                        max_faces=256,
+                        max_vertex_pairs=8_128,
+                        max_face_pairs=32_640,
+                        max_distance_piece_pairs=130_560,
+                        max_lambda_bits=512,
+                        max_orientation_tests=800_000,
+                        max_openings=16,
+                        max_landmark_refs=64,
+                        max_landmarks=32,
+                        max_landmark_edge_tests=16_384,
+                    )
+                    if raw_mesh is not None
+                    else None,
+                    diagnostic_mode=request["diagnostic_mode"],
+                )
+                data = checkpoint.to_dict()
             elif operation in {
-                "inspect_mesh_openings", "inspect_v0_closed_mesh_v2", "inspect_v0_mesh_v2"
+                "inspect_mesh_openings",
+                "inspect_v0_closed_mesh_v2",
+                "inspect_v0_mesh_v2",
             }:
-                _object(request, {
-                    "api_version", "operation", "design_spec", "material_profile", "mesh_json",
-                }, "request")
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "design_spec",
+                        "material_profile",
+                        "mesh_json",
+                    },
+                    "request",
+                )
                 if not isinstance(request["mesh_json"], str):
                     raise ApiInputError("request.mesh_json")
                 # Bytes, not reserialized JSON, must match the declared source digest.
@@ -170,10 +418,17 @@ class BackendAPI:
                 result: TargetMeshOpeningDiagnostic | V0MeshResult
                 if operation == "inspect_mesh_openings":
                     result = diagnose_target_mesh_openings(
-                        design_model, raw_mesh, material_profile=material_model,
-                        max_bytes=262_144, max_vertices=128, max_faces=256,
-                        max_openings=16, max_landmark_refs=64, max_landmarks=32,
-                        max_vertex_pairs=8_128, max_landmark_edge_tests=16_384,
+                        design_model,
+                        raw_mesh,
+                        material_profile=material_model,
+                        max_bytes=262_144,
+                        max_vertices=128,
+                        max_faces=256,
+                        max_openings=16,
+                        max_landmark_refs=64,
+                        max_landmarks=32,
+                        max_vertex_pairs=8_128,
+                        max_landmark_edge_tests=16_384,
                     )
                     preflight_state = "INDETERMINATE"
                 else:
@@ -183,13 +438,21 @@ class BackendAPI:
                         else inspect_v0_mesh_v2
                     )
                     result = inspector(
-                        design_model, raw_mesh, material_profile=material_model,
+                        design_model,
+                        raw_mesh,
+                        material_profile=material_model,
                         budgets=V0MeshBudgets(
-                            max_bytes=262_144, max_vertices=128, max_faces=256,
-                            max_vertex_pairs=8_128, max_face_pairs=32_640,
-                            max_distance_piece_pairs=130_560, max_lambda_bits=512,
+                            max_bytes=262_144,
+                            max_vertices=128,
+                            max_faces=256,
+                            max_vertex_pairs=8_128,
+                            max_face_pairs=32_640,
+                            max_distance_piece_pairs=130_560,
+                            max_lambda_bits=512,
                             max_orientation_tests=800_000,
-                            max_openings=16, max_landmark_refs=64, max_landmarks=32,
+                            max_openings=16,
+                            max_landmark_refs=64,
+                            max_landmarks=32,
                             max_landmark_edge_tests=16_384,
                         ),
                     )
@@ -201,12 +464,22 @@ class BackendAPI:
                     "physical_status": "UNTESTED",
                 }
             elif operation == "run_forward_prototype":
-                _object(request, {
-                    "api_version", "operation", "design_spec", "material_profile",
-                    "crochet_ir", "forward_run",
-                }, "request")
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "design_spec",
+                        "material_profile",
+                        "crochet_ir",
+                        "forward_run",
+                    },
+                    "request",
+                )
                 design, material, value = (
-                    request["design_spec"], request["material_profile"], request["crochet_ir"]
+                    request["design_spec"],
+                    request["material_profile"],
+                    request["crochet_ir"],
                 )
                 if not isinstance(design, dict) or not isinstance(material, dict):
                     raise ApiInputError("request.artifacts")
@@ -273,6 +546,12 @@ class BackendAPI:
                         "verification_state": "NOT_VERIFIED",
                         "physical_status": "UNTESTED",
                         "completed_course_hypotheses": batch.completed_course_hypotheses,
+                        "search_trace": (
+                            batch.search_trace.to_dict() if batch.search_trace is not None else None
+                        ),
+                        "search_trace_sha256": (
+                            batch.search_trace.sha256 if batch.search_trace is not None else None
+                        ),
                         "work": {
                             "count_transitions": batch.count_transition_evaluations,
                             "placement_transitions": batch.placement_transition_evaluations,
@@ -339,8 +618,21 @@ class BackendAPI:
                     ],
                 },
             }
+        except (
+            SurfaceTopologyInputError, CellConformanceInputError, AnalyticClaimsInputError,
+        ) as error:
+            return error_response("E_INPUT", str(error))
+        except (ClosedCellsError, PhysicalProjectionError) as error:
+            return error_response("E_UNSUPPORTED_FEATURE", str(error))
+        except AnalyticTargetError as error:
+            return error_response(
+                "E_UNSUPPORTED_FEATURE" if error.status == "NOT_APPLICABLE" else "E_INPUT",
+                error.reason,
+            )
         except GenerationError as error:
             return error_response("E_INPUT", error.reason)
+        except CalibrationError as error:
+            return error_response("E_INPUT", str(error))
         except TargetMeshOpeningError as error:
             if str(error).startswith("E_UNSUPPORTED_FEATURE:"):
                 return error_response("E_UNSUPPORTED_FEATURE", str(error))
@@ -349,8 +641,12 @@ class BackendAPI:
             return {
                 "api_version": API_VERSION,
                 "ok": False,
-                "error": {"code": error.code, "reason": error.reason, "outcome": error.outcome,
-                          "gate": "V0"},
+                "error": {
+                    "code": error.code,
+                    "reason": error.reason,
+                    "outcome": error.outcome,
+                    "gate": "V0",
+                },
             }
         except ForwardPipelineError as error:
             return error_response(error.code, error.reason)

@@ -2,6 +2,11 @@
 
 Status: IN PROGRESS. This plan does not certify generated patterns.
 
+The complete ordered implementation roadmap, dependencies, package acceptance
+checks and physical-evidence prerequisites are maintained in
+[BACKEND_IMPLEMENTATION_ROADMAP.md](BACKEND_IMPLEMENTATION_ROADMAP.md)
+(2026-10-05). Its planned milestones do not change the implemented state below.
+
 ## Acceptance rule
 
 Each promised capability needs an executable implementation, independent tests,
@@ -23,13 +28,13 @@ not mandatory verification or physical acceptance.
 | B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; flat, lace and non-mesh adapters remain open |
 | B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole SC proposal implemented; full V5 and domains remain |
 | B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free experimental stretch, shear and bending terms with bounded combined descent and exact final-coordinate intersection/distance diagnostics; contact response, calibrated convergence and V6 missing |
-| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Supported mesh V0 is integrated; forward geometry remains experimental, and V1-V10 orchestration, V7 metrics and V8 scenarios remain open |
+| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered V0-V10 checkpoint, supported mesh V0, core V1-V3 and single-yarn M1A V9 are integrated; full V4/V5-V8/V10 and calibrated forward/metric evidence remain open |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
 | B7 | Durable jobs and artifacts | Atomicity, idempotency, cancellation, resource limits, concurrency and recovery tests | Local SQLite jobs subset implemented; operational gates open |
 | B8 | Security, packaging and operation | Untrusted input limits, path safety, isolation, diagnostics, install and end-to-end tests | Request limits and wheel subset implemented; service hardening open |
 | B9 | Free-form, geodesic, topology and frontier solvers | Separate applicability contracts, branch/join fixtures, budgets, independent reconstruction | Missing; research required |
 | B10 | Garment, flat and lace solvers | Separate domain contracts, semantics, fixtures and acceptance | Missing; research required |
-| B11 | Empirical material and acceptance profiles | Real calibration samples, frozen thresholds, separate holdouts, human review | External physical evidence needed |
+| B11 | Empirical material and acceptance profiles | Real calibration samples, frozen thresholds, separate holdouts, human review | Frozen pilot campaigns, append-only measurements, baseline Type-A drafts and PDF measurement sheets implemented; full uncertainty, open-tube instructions, physical evidence and accepted profiles remain open |
 | B12 | Backend release | Every promised package accepted; compatibility and operational evidence documented | Not ready |
 
 ## First checkpoint (historical)
@@ -349,6 +354,183 @@ full verification, broader organic/multipart generation and the separate mobile
 app remain open. Two bounded Luna/medium workers were used; runtime token/cost
 measurements are unavailable and recorded as null in
 `artifacts/agent-costs/extended-prototype-20261005.json`.
+
+## Gate and calibration implementation checkpoint: 2026-10-05
+
+The first executed roadmap section adds a versioned capability inventory,
+ordered V0-V10 evidence, strict profile/input/source identity, predecessor-bound
+resume and fail-closed status aggregation. Supported mesh V0, input/semantic
+checks and real single-yarn DE/US/UK M1A round trips execute through the local
+API, CLI and durable jobs. Job completion does not imply pattern verification.
+The configured verification profile remains uncalibrated.
+
+Frozen calibration campaigns and append-only SQLite measurements preserve
+specimen roles, raw readings and correction history. Draft material derivation
+uses one protocol-fixed raw baseline per independent specimen; repeated readings
+remain visible for review. SQL identity/link columns are checked against record
+content. Drafts cannot promote themselves to a calibrated profile. A four-page
+PDF measurement protocol is available in the browser; it is not the still-missing
+open-tube crochet construction. See [CALIBRATION_CAMPAIGNS.md](CALIBRATION_CAMPAIGNS.md).
+
+The P03/P04 follow-on adds explicit sphere/ellipsoid ideal target admission and
+bounded target-side sampling, plus a separate closed combinatorial cellulation
+for Plain/INC/DEC, ring anchors and final caps. Independent tests check edge
+incidence/orientation, vertex links and Euler characteristic. Source projection
+hashes are recomputed; target/source metadata cannot enter the cell builder.
+The API exposes both inspections without claiming candidate topology or physical
+verification. V4 is still INDETERMINATE, V5-V8/V10 are NOT_RUN.
+
+Integration passed 957 Python tests, strict mypy on 76 modules, Ruff, ten frontend
+state tests and five independent canonical Node vectors. Packaging dependency
+checks and isolated installed smoke checks passed, including the new operation
+inventory, analytic/cell modules and deterministic measurement PDF. Source and
+isolated installed API checks construct cells from actual saved sphere/pear IR;
+the installed PDF is identical to the reviewed HTTP/download artifact. The live
+sphere passes ideal-target V0, the generic pear remains INDETERMINATE, and both
+remain NOT_VERIFIED/UNTESTED. Five saved projects survive the server restart.
+The PDF was rendered and visually reviewed. Reopening calibration databases
+also verifies column order/types, primary/unique identities, correction-index
+predicate and foreign-key bindings before changing journal mode.
+These checks establish software behavior, not calibration or physical
+pattern validity. Complete topology, candidate verification, physical simulation,
+geometry comparison, robustness, physical provenance, further solver domains and
+release operations remain open. No solver, existing validator, schema or golden
+was changed. Six bounded Luna/low agents performed implementation and read-only
+reviews; unavailable cost/token measurements are recorded as null in
+`artifacts/agent-costs/backend-implementation-20261005.json`.
+Follow-on implementation is recorded in
+[BACKEND_IMPLEMENTATION_ROADMAP.md](BACKEND_IMPLEMENTATION_ROADMAP.md).
+
+## Independent surface topology checkpoint: 2026-10-05
+
+`SURFACE_TOPOLOGY_AUDIT_V1` independently checks the generated closed triangle
+complex, without importing the cell builder. It detects duplicated faces,
+unused vertices, invalid edge incidence/orientation, disconnected components
+and non-cyclic vertex links. Rational Betti dimensions are derived only after
+the closed oriented manifold prerequisites pass. Hand-authored tetrahedron,
+torus, disconnected and pinched fixtures establish separate positive/negative
+oracles; a bounded-identifier regression guards early input rejection.
+
+The additive `inspect_closed_surface_topology` API/CLI/job operation derives
+all cells from validated server-side source artifacts. V4 records exact surface
+metrics, budgets and linked projection/cell/audit hashes. Defective surfaces fail
+V4. A successful surface audit retains INDETERMINATE because the independent
+source-stitch-to-cell incidence conformance proof is not yet implemented.
+A wrong-but-spherical replacement fixture specifically verifies this boundary.
+No generator, existing semantic validator, schema, golden or physics rule was
+modified for this checkpoint. It introduces no numerical tolerances.
+
+Live saved sphere and pear projects pass the surface audit while remaining
+NOT_VERIFIED/UNTESTED; all eight saved projects survive the restart. HTTP V4,
+source CLI and isolated installed-wheel inspection produce identical audit
+evidence. The independent read-only review found no topology/Betti defect;
+its label-length admission suggestion is implemented and tested. Remaining
+P03-P13 and broader domain/release requirements retain their previous status.
+See [SURFACE_TOPOLOGY_AUDIT_V1.md](SURFACE_TOPOLOGY_AUDIT_V1.md). Unavailable
+worker usage/cost measurements remain null in
+`artifacts/agent-costs/surface-topology-20261005.json`.
+
+Integration validation passed 999 Python tests, Ruff, strict mypy on 77 modules,
+five independent canonical vectors and ten frontend state tests. The rebuilt
+wheel passes dependency checks and isolated out-of-checkout installation smoke;
+its actual saved-pear surface audit matches both CLI and HTTP evidence exactly.
+These are software checks, not full backend or physical acceptance.
+
+## Closed-cell source conformance checkpoint (2026-10-05)
+
+`CLOSED_CELL_CONFORMANCE_V1` validates and hashes raw CrochetIR independently
+of the cell builder and projection extraction. Exact face-slot predicates bind
+each triangle to source stitch bases/tops, ordered anchored cycles, event coverage
+and initial/terminal caps. Cell envelope/content digests and source identifiers
+are checked; source tables and reference lists are bounded before hashing.
+There are no numerical tolerances or changes to the generator, schemas, goldens,
+existing semantic validator or physical model.
+
+V4 now passes in the supported closed single-component, single-branch, single-yarn
+SC amigurumi scope only when surface manifold/Euler/Betti and source-cell proofs
+both pass and DesignSpec component/boundary requirements match. Unsupported scope
+or exhausted proof budgets remain INDETERMINATE. Mismatched generated mappings
+fail, including topology-preserving altered diagonals and unrelated spheres with
+refreshed hashes. Wider V4 construction coverage and V5-V8/V10 remain open;
+overall NOT_VERIFIED and physical UNTESTED remain unchanged.
+
+The additive `inspect_closed_cell_conformance` API/CLI/job operation exposes both
+separate immutable proofs and hashes. Live saved sphere and pear projects reach
+V4 PASS; all eight saved projects remain intact. Source CLI, isolated installed
+CLI and HTTP V4 proof payloads/hashes agree exactly. The rebuilt wheel passes
+dependency and isolated installation checks. The independent review's pre-hash
+table-bound finding is repaired and regression-tested. Worker usage measurements
+are unavailable and remain null in `artifacts/agent-costs/cell-conformance-20261005.json`.
+Integration validation passed 1,017 Python tests, Ruff, strict mypy on 78 modules,
+five independent canonical vectors and ten frontend state tests. These checks
+do not establish full backend or physical acceptance.
+See [CLOSED_CELL_CONFORMANCE_V1.md](CLOSED_CELL_CONFORMANCE_V1.md).
+
+## Independent analytic candidate-claims checkpoint (2026-10-05)
+
+`ANALYTIC_CANDIDATE_CLAIMS_V1` independently reconstructs course counts,
+binary SC transitions, balanced shaping, cyclic phases and construction quantities
+from validated raw CrochetIR. It checks recorded run bounds, parameter hashes,
+profile/material conditions and prototype final-count/phase metadata without
+calling the solver, compiler, placement optimizer or cell builder. Indexed source
+table permutations preserve identical proof hashes. This introduces no numerical
+tolerances or changes to generation, schemas, goldens or semantic validation.
+
+The additive `inspect_analytic_candidate_claims` API/CLI/job operation returns
+immutable source-bound evidence. V5 requires V1-V4 to pass, rejects false claims,
+and remains INDETERMINATE while actual input-bound search traces, count-window
+admission, work/completion and deterministic selection evidence are unavailable.
+Resource exhaustion emits no partial proof. Declared work-counter bounds do not
+establish actual search work or the validity of a proposal score after prototype
+phase-zero recompilation. V6-V8/V10 and physical acceptance remain open.
+
+All eight saved projects survive the server restart. Live sphere and pear pass
+every reconstructed assertion, retain V4 PASS and V5 INDETERMINATE, and remain
+NOT_VERIFIED/UNTESTED. Source CLI, isolated installed-wheel CLI and live HTTP V5
+payloads and hashes agree exactly for the saved pear. The rebuilt wheel passes
+dependency and isolated out-of-checkout installation smoke checks. The focused
+implementation/review findings are repaired and regression-tested. Unavailable
+worker token/cost measurements remain null in
+`artifacts/agent-costs/analytic-claims-20261005.json`.
+See [ANALYTIC_CANDIDATE_CLAIMS_V1.md](ANALYTIC_CANDIDATE_CLAIMS_V1.md).
+
+Integration validation passed 1,050 Python tests, including 81 targeted claim/API/
+checkpoint/pipeline tests, Ruff, strict mypy on 79 modules, five independent Node
+canonical vectors and ten frontend state tests. These checks establish software
+behavior, not complete V5, full backend acceptance or physical pattern validity.
+
+## Analytic search-trace producer checkpoint (2026-10-05)
+
+The separate producer `ANALYTIC_SEARCH_TRACE_V1` binds canonical design/material,
+target/config digests, algorithm versions and compiler source identity outside
+CrochetIR. It records ascending hypothesis attempts, exact rational sampling and
+circumferences, decimal-integer window bounds, per-pass/layer retained states and
+work, partial interruptions, objectives, terminal causes and ordered proposal
+hashes. Trace storage is limited to 8,192 reserved course slots; exhaustion remains
+a bounded-search outcome, not an impossibility claim. Early unadmitted runs carry
+no trace. No numerical tolerance, schema, golden or independent gate was changed.
+
+The generation API/CLI/job response includes immutable trace bytes/hash. New
+prototype projects persist a separate hashed `PROTOTYPE_GENERATION_LINK_V1` that
+binds the optimized proposal to the actual fixed-zero-phase final IR. Proposal
+scores are not final-IR quality evidence. Legacy saved records remain untouched.
+V5 still does not admit or independently replay this producer evidence, so
+NOT_VERIFIED/UNTESTED and all open physical/domain/release requirements remain.
+
+Hand-counted count/phase work oracles cover complete and interrupted passes;
+initial state exhaustion, sample failures, circumference overflow and extreme
+empty-window bounds are regression-tested. An isolated comparison against the
+pre-instrumentation Git HEAD preserved both proposal hashes exactly. Forty-eight
+targeted analytic tests and four API/job/prototype/legacy delivery tests passed.
+Ruff, strict mypy on 80 modules, five independent canonical Node vectors and ten
+frontend state tests passed. Wheel dependency and isolated out-of-checkout smoke
+checks passed. Live HTTP trace/proposal payloads and hashes match source and
+isolated installed-wheel CLI generation exactly. Eight existing project sessions
+are preserved; nine projects are now saved, including the new traced checkpoint.
+Full integration passed 1,062 Python tests. Validation and publication context are recorded in the current
+[BACKEND_HANDOFF.md](BACKEND_HANDOFF.md). Worker usage measurements are unavailable
+and remain null in `artifacts/agent-costs/analytic-search-trace-20261005.json`.
+See [ANALYTIC_SEARCH_TRACE_V1.md](ANALYTIC_SEARCH_TRACE_V1.md).
 
 ## External dependencies and operational authority
 

@@ -8,11 +8,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, fields, replace
 from fractions import Fraction
+from hashlib import sha256
 from math import ceil, floor, isfinite, pi
 from typing import Any
 
+import rfc8785
+
 from .analytic_compile import CompileProvenance, compile_closed_schedule
 from .analytic_counts import (
+    CountLayerTrace,
     CountSearchBudget,
     CountSearchInput,
     CountSearchResult,
@@ -21,8 +25,14 @@ from .analytic_counts import (
     search_counts,
 )
 from .analytic_geometry import MeridianNumerics, MeridianPoint, decode_meridian
-from .analytic_placement import PlacementBudget, PlacementResult, choose_phases
-from .canonical import CanonicalProfile, canonical_hash
+from .analytic_placement import (
+    PlacementBudget,
+    PlacementLayerTrace,
+    PlacementResult,
+    choose_phases,
+)
+from .analytic_trace import AnalyticSearchTrace
+from .canonical import CanonicalProfile, canonical_hash, jcs_bytes
 from .diagnostics import ArtifactValidationError
 from .models import CrochetIR
 from .solver_types import GenerationError, GenerationStatus
@@ -120,6 +130,7 @@ class AnalyticGenerationResult:
     count_transition_evaluations: int
     placement_transition_evaluations: int
     placement_pair_evaluations: int
+    search_trace: AnalyticSearchTrace | None = None
 
 
 def _parameters(config: AnalyticRunConfig) -> tuple[tuple[str, str | int | float | bool], ...]:
@@ -138,6 +149,32 @@ def _parameters(config: AnalyticRunConfig) -> tuple[tuple[str, str | int | float
     return tuple(result)
 
 
+def _rational(value: Fraction) -> str:
+    return f"{value.numerator}/{value.denominator}"
+
+
+def _count_layer(layer: CountLayerTrace) -> dict[str, Any]:
+    return {
+        "pass": layer.pass_index,
+        "layer": layer.layer_index,
+        "retained_states": layer.retained_state_count,
+        "transition_evaluations": layer.transition_evaluations,
+        "completed": layer.completed,
+    }
+
+
+def _placement_layer(layer: PlacementLayerTrace) -> dict[str, Any]:
+    return {
+        "transition": layer.transition_index,
+        "variants": layer.variant_count,
+        "input_states": layer.input_state_count,
+        "output_states": layer.output_state_count,
+        "transition_evaluations": layer.transition_evaluations,
+        "pair_evaluations": layer.pair_evaluations,
+        "completed": layer.completed,
+    }
+
+
 def generate_analytic(
     design: dict[str, Any],
     material: dict[str, Any],
@@ -147,10 +184,40 @@ def generate_analytic(
     """Generate complete unverified candidates; preserve partial batch on exhaustion."""
     candidates: list[AnalyticCandidate] = []
     completed = count_used = placement_used = pairs_used = 0
+    trace_base: dict[str, Any] | None = None
+    hypothesis_records: list[dict[str, Any]] = []
+    proposal_hashes: list[str] = []
+    reserved_course_slots = 0
 
     def result(status: GenerationStatus, reason: str) -> AnalyticGenerationResult:
+        search_trace = None
+        if trace_base is not None:
+            payload = {
+                **trace_base,
+                "hypotheses": hypothesis_records,
+                "terminal": {
+                    "status": status.value,
+                    "reason": reason,
+                    "completed_prefix_count": completed,
+                    "reserved_course_slots": reserved_course_slots,
+                    "proposal_ir_sha256": proposal_hashes,
+                    "work": {
+                        "count_transition_evaluations": count_used,
+                        "placement_transition_evaluations": placement_used,
+                        "placement_pair_evaluations": pairs_used,
+                    },
+                },
+            }
+            search_trace = AnalyticSearchTrace(payload)
         return AnalyticGenerationResult(
-            status, reason, tuple(candidates), completed, count_used, placement_used, pairs_used
+            status,
+            reason,
+            tuple(candidates),
+            completed,
+            count_used,
+            placement_used,
+            pairs_used,
+            search_trace,
         )
 
     try:
@@ -217,19 +284,84 @@ def generate_analytic(
             parameters=provenance.parameters
             + tuple((f"run.{k}", v) for k, v in _parameters(config)),
         )
+        target_payload = design["target_geometry"]
+        run_payload = [[name, value] for name, value in sorted(_parameters(config))]
+        trace_base = {
+            "profile": "ANALYTIC_SEARCH_TRACE_V1",
+            "version": "ANALYTIC_SEARCH_TRACE_V1",
+            "bindings": {
+                "design_spec_sha256": canonical_hash(
+                    design, CanonicalProfile.DESIGN_SPEC, validator=validator
+                ),
+                "material_profile_sha256": canonical_hash(
+                    material, CanonicalProfile.MATERIAL_PROFILE, validator=validator
+                ),
+                "target_sha256": sha256(
+                    b"Crochet.AI\x00ANALYTIC_SEARCH_TARGET_V1\x00" + jcs_bytes(target_payload)
+                ).hexdigest(),
+                "run_config_sha256": sha256(
+                    b"Crochet.AI\x00ANALYTIC_SEARCH_RUN_CONFIG_V1\x00" + rfc8785.dumps(run_payload)
+                ).hexdigest(),
+            },
+            "source": {
+                "source_snapshot_sha256": provenance.source_snapshot_sha256,
+                "software_commit": provenance.software_commit,
+            },
+            "algorithms": {
+                "solver": "analytic-solver-1",
+                "count": "analytic-count-dp-1",
+                "phase": "analytic-phase-dp-1",
+            },
+            "random_seed": None,
+            "material_response": {
+                "response_id": response["response_id"],
+                "stitch_pitch_mm": _rational(stitch_pitch),
+                "course_pitch_mm": _rational(Fraction(course_pitch)),
+            },
+            "budgets": {
+                "trace_course_slots": 8192,
+                **dict((str(k), v) for k, v in sorted(_parameters(config))),
+            },
+        }
         # Enumerate the complete explicit course-count domain in ascending order.
         for course_count in range(config.min_courses, config.max_courses + 1):
             if completed == config.max_course_hypotheses:
                 return result(GenerationStatus.SEARCH_BUDGET_EXHAUSTED, "budget.course_hypotheses")
             if len(candidates) == config.max_emitted_candidates:
                 return result(GenerationStatus.SEARCH_BUDGET_EXHAUSTED, "budget.emitted_candidates")
+            if reserved_course_slots + course_count > 8192:
+                return result(GenerationStatus.SEARCH_BUDGET_EXHAUSTED, "budget.trace_course_slots")
+            reserved_course_slots += course_count
+            record: dict[str, Any] = {
+                "course_count": course_count,
+                "samples": [],
+                "circumference_mm": [],
+                "count_windows": [],
+                "stage": "sample",
+                "completed": False,
+                "outcome": "RUNNING",
+            }
+            hypothesis_records.append(record)
             samples = tuple(
                 meridian.sample(Fraction(2 * i + 1, 2 * course_count)) for i in range(course_count)
             )
+            if not all(isfinite(point.s_mm) and isfinite(point.radius_mm) for point in samples):
+                raise GenerationError(GenerationStatus.NUMERICAL_FAILURE, "solver.sample")
+            record["samples"] = [
+                {
+                    "s_mm": _rational(Fraction(p.s_mm)),
+                    "radius_mm": _rational(Fraction(p.radius_mm)),
+                }
+                for p in samples
+            ]
+            record["stage"] = "circumference"
             circumferences = tuple(2 * pi * p.radius_mm for p in samples)
             if not all(isfinite(c) for c in circumferences):
                 raise GenerationError(GenerationStatus.NUMERICAL_FAILURE, "solver.circumference")
+            record["circumference_mm"] = [_rational(Fraction(value)) for value in circumferences]
             windows = []
+            window_records = []
+            record["stage"] = "count_windows"
             for i, circumference in enumerate(circumferences):
                 q = Fraction(circumference) / stitch_pitch
                 low = max(config.min_count, floor(q) - config.count_window_radius)
@@ -241,19 +373,35 @@ def generate_analytic(
                     )
                 if i == course_count - 1:
                     high = min(high, config.max_terminal_count)
+                window_records.append(
+                    {
+                        "course": i,
+                        "minimum": str(low),
+                        "maximum": str(high),
+                        "empty": low > high,
+                    }
+                )
                 if low > high:
                     break
                 windows.append(CountWindow(low, high))
+            record["count_windows"] = window_records
             if len(windows) != course_count:
+                record.update(completed=True, outcome="SKIPPED_EMPTY_WINDOW")
                 completed += 1
                 continue
             if count_used == config.count_budget.max_transition_evaluations:
+                record.update(
+                    outcome="SEARCH_BUDGET_EXHAUSTED",
+                    count_status="SEARCH_BUDGET_EXHAUSTED",
+                    count_reason="budget.transitions",
+                )
                 return result(GenerationStatus.SEARCH_BUDGET_EXHAUSTED, "budget.count_transitions")
             count_budget = replace(
                 config.count_budget,
                 max_transition_evaluations=config.count_budget.max_transition_evaluations
                 - count_used,
             )
+            record["stage"] = "count_search"
             search = search_counts(
                 CountSearchInput(
                     tuple(Fraction(c) for c in circumferences),
@@ -269,12 +417,36 @@ def generate_analytic(
                 )
             )
             count_used += search.transition_evaluations
+            record.update(
+                {
+                    "count_status": search.status.value,
+                    "count_reason": search.reason,
+                    "count_completed_passes": search.completed_passes,
+                    "count_layers": [_count_layer(layer) for layer in search.layer_trace],
+                    "counts": list(search.counts),
+                    "transitions": [
+                        {"plain": t.plain, "increases": t.increases, "decreases": t.decreases}
+                        for t in search.transitions
+                    ],
+                    "objective": None
+                    if search.objective is None
+                    else {
+                        "maximum_residual_mm": _rational(search.objective.max_residual_mm),
+                        "squared_residual_sum_mm2": _rational(
+                            search.objective.squared_residual_sum_mm2
+                        ),
+                        "shaping_events": search.objective.shaping_events,
+                    },
+                }
+            )
             if search.status in {
                 CountSearchStatus.INVALID_SOLVER_INPUT,
                 CountSearchStatus.SEARCH_BUDGET_EXHAUSTED,
             }:
+                record.update(outcome=search.status.value)
                 return result(GenerationStatus(search.status.value), search.reason)
             if search.status == CountSearchStatus.NO_FEASIBLE_CONSTRUCTION:
+                record.update(completed=True, outcome=search.status.value)
                 completed += 1
                 continue
             placement_budget = replace(
@@ -283,11 +455,18 @@ def generate_analytic(
                 - placement_used,
                 max_pair_evaluations=config.placement_budget.max_pair_evaluations - pairs_used,
             )
+            record["stage"] = "placement"
             placement = choose_phases(
                 search.counts, config.minimum_shaping_separation_turns, placement_budget
             )
             placement_used += placement.transition_evaluations
             pairs_used += placement.pair_evaluations
+            record["phase"] = {
+                "layers": [_placement_layer(layer) for layer in placement.layer_trace],
+                "phases": list(placement.phases),
+                "stacking_pairs": placement.stacking_pairs,
+                "proximity_penalty_turns": _rational(placement.proximity_penalty_turns),
+            }
             candidate_provenance = replace(
                 recorded,
                 parameters=(
@@ -301,6 +480,7 @@ def generate_analytic(
                     ("solver.material_response_id", response["response_id"]),
                 ),
             )
+            record["stage"] = "compile"
             value = compile_closed_schedule(
                 design,
                 material,
@@ -319,10 +499,28 @@ def generate_analytic(
                     response["response_id"],
                 )
             )
+            proposal_hash = canonical_hash(value, CanonicalProfile.CROCHET_IR, validator=validator)
+            proposal_hashes.append(proposal_hash)
+            record.update(
+                completed=True,
+                stage="complete",
+                outcome="COMPILED",
+                proposal_ir_sha256=proposal_hash,
+            )
             completed += 1
     except GenerationError as error:
         placement_used += error.work.get("placement_transitions", 0)
         pairs_used += error.work.get("placement_pairs", 0)
+        if hypothesis_records and not hypothesis_records[-1]["completed"]:
+            record = hypothesis_records[-1]
+            record.update(
+                outcome=error.status.value,
+                terminal_reason=error.reason,
+                terminal_status=error.status.value,
+            )
+            phase_trace = error.trace
+            if phase_trace:
+                record["phase"] = {"layers": [_placement_layer(layer) for layer in phase_trace]}
         return result(error.status, error.reason)
     return result(
         GenerationStatus.CANDIDATES_EMITTED

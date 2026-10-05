@@ -14,7 +14,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from .backend_api import bounded_json
+from .backend_api import BackendAPI, bounded_json
+from .calibration_pdf import render_calibration_packet
 from .prototype_backend import LocalPrototype
 from .prototype_input import PROTOTYPE_VERSION, REQUEST_FIELDS
 from .prototype_pdf import PrototypePdfError, render_project_pdf
@@ -55,6 +56,7 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
         raise ValueError("server.port")
     store = PrototypeStore(data_dir)
     service = LocalPrototype(store, _commit(software_commit))
+    backend = BackendAPI(service.provenance)
     token = uuid.uuid4().hex
     static_dir = Path(__file__).resolve().parent / "prototype_static"
 
@@ -181,6 +183,17 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         },
                     },
                 )
+            elif path == "/api/capabilities":
+                self._send(
+                    200, backend.handle({"api_version": "1.0.0", "operation": "capabilities"})
+                )
+            elif path == "/api/calibration-protocol.pdf":
+                self._send(
+                    200,
+                    render_calibration_packet(),
+                    "application/pdf",
+                    "crochet-calibration-measurements.pdf",
+                )
             elif path == "/api/projects":
                 self._send(200, {"ok": True, "data": {"projects": store.list_projects()}})
             elif path.startswith("/api/projects/"):
@@ -262,6 +275,27 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         raise ValueError("request.fields")
                     project = service.generate(body)
                     self._send(200, {"ok": True, "data": project})
+                elif path == "/api/verify":
+                    if set(body) != {"project_id"} or not isinstance(body["project_id"], str):
+                        raise ValueError("verification.project_id")
+                    if re.fullmatch(r"[0-9a-f]{64}", body["project_id"]) is None:
+                        raise ValueError("verification.project_id")
+                    verification_project = store.get_project(body["project_id"])
+                    if verification_project is None:
+                        self._error(404, "E_NOT_FOUND", "project.not_found")
+                        return
+                    response = backend.handle(
+                        {
+                            "api_version": "1.0.0",
+                            "operation": "verify_candidate",
+                            "design_spec": verification_project["design_spec"],
+                            "material_profile": verification_project["material_profile"],
+                            "crochet_ir": verification_project["crochet_ir"],
+                            "mesh_json": None,
+                            "diagnostic_mode": False,
+                        }
+                    )
+                    self._send(200 if response["ok"] else 422, response)
                 elif path == "/api/session":
                     required = {"prototype_version", "project_id", "expected_revision", "cursor"}
                     if set(body) != required or body["prototype_version"] != PROTOTYPE_VERSION:

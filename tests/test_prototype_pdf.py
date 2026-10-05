@@ -12,15 +12,19 @@ from typing import Any
 import pytest
 from pypdf import PdfReader
 
+from crochet_ai.analytic_compile import CompileProvenance, compile_closed_schedule
+from crochet_ai.canonical import CanonicalProfile, canonical_hash
 from crochet_ai.prototype_backend import LocalPrototype
 from crochet_ai.prototype_pdf import (
     PrototypePdfError,
-    _group_course_steps,
+    _course_notation,
+    _round_notation,
     _text,
     render_project_pdf,
 )
 from crochet_ai.prototype_server import make_server
 from crochet_ai.prototype_storage import PrototypeStore
+from crochet_ai.validation import SemanticValidator
 
 
 @pytest.fixture(scope="module")
@@ -60,28 +64,22 @@ def test_pdf_contains_instructions_provenance_gauge_and_report_page(
     assert text.count("Wolle") >= 14
     assert "0.04" in text or "4.00" in text
     assert "NOT_VERIFIED" in text and "UNTESTED" in text
-    assert "Rückmeldung nach dem Häkeln" in text
-    assert "Gemessene Breite" in text and "Problemrunde" in text
-    assert "gemeinsam abmaschen" in text
-    assert "2 fM in dieselbe Einstichstelle" in text
+    assert "Feedback After Crocheting" in text
+    assert "Measured width" in text and "Problem round" in text
+    assert "dec sc" in text
+    assert "inc sc" in text
     assert "loc_" not in text and "ev_" not in text
-    assert "letzten Runden vor den Schließabnahmen" in text
-    assert "ungefüllt" in text and "gefüllt" in text
-    assert "hat geklappt" in text and "Änderungen nötig" in text and "nicht fertig" in text
-    for course in project["courses"]:
-        source_steps = [
-            step for step in project["steps"] if step["course_id"] == course["course_id"]
-        ]
-        header = f"[ ] Runde {course['number']} · {course['total_stitches']} Maschen"
-        first_step = source_steps[0]["event_index"] + 1
-        assert any(
-            header in page_text and re.search(rf"\[ \] Schritt {first_step}(?:-|:)", page_text)
-            for page_text in page_texts
-        ), "A course header must share a page with its first instruction"
-        groups = _group_course_steps(source_steps)
-        expanded = [event_id for group in groups for event_id in group["event_ids"]]
-        assert expanded == course["step_ids"]
-        assert sum(group["produced_total"] for group in groups) == course["total_stitches"]
+    assert "final rounds before closing the opening" in text
+    assert "unstuffed" in text and "stuffed" in text
+    assert "worked well" in text and "changes needed" in text and "unfinished" in text
+    assert all(term not in text for term in ("Runde ", "Schritt ", "Step ", "Maschen neu"))
+    matches = re.findall(r"\[ \] R(\d+): (.*?) \((\d+) stitches\)", text)
+    assert len(matches) == len(project["courses"])
+    for (number, instruction, count), course in zip(matches, project["courses"], strict=True):
+        assert int(number) == course["number"]
+        assert int(count) == course["total_stitches"]
+        assert instruction
+    assert "[ ] R1: MR, 6 sc (6 stitches)" in text
 
 
 def test_pdf_fails_closed_when_saved_source_identity_is_changed(
@@ -99,6 +97,100 @@ def test_pdf_fails_closed_when_saved_source_identity_is_changed(
 def test_pdf_rejects_text_outside_builtin_helvetica_encoding(project: dict[str, Any]) -> None:
     with pytest.raises(PrototypePdfError, match=r"pdf\.unsupported_unicode"):
         _text("Yarn 🧶", "yarn")
+
+
+def test_compact_us_notation_keeps_final_round_totals() -> None:
+    assert _round_notation(["1 sc"] * 6) == "6 sc"
+    assert _round_notation(["inc sc"] * 6) == "6 inc sc"
+    assert _round_notation(["1 sc", "inc sc"] * 6) == "(1 sc, inc sc) x 6"
+    assert _round_notation(["1 sc"] * 6) + " (6 stitches)" == "6 sc (6 stitches)"
+    assert _round_notation(["inc sc"] * 6) + " (12 stitches)" == "6 inc sc (12 stitches)"
+    assert _round_notation(["1 sc", "inc sc"] * 6) + " (18 stitches)" == (
+        "(1 sc, inc sc) x 6 (18 stitches)"
+    )
+
+
+def test_compact_notation_preserves_uneven_tail_and_event_order() -> None:
+    assert _round_notation(["1 sc", "inc sc"] * 3 + ["1 sc"]) == ("(1 sc, inc sc) x 3, 1 sc")
+    assert _round_notation(["inc sc at prior-round stitch 3", "1 sc"]) == (
+        "inc sc at prior-round stitch 3, 1 sc"
+    )
+
+
+def _scheduled_project(
+    project: dict[str, Any], counts: tuple[int, ...], phases: tuple[int, ...]
+) -> dict[str, Any]:
+    ir = compile_closed_schedule(
+        project["design_spec"],
+        project["material_profile"],
+        counts,
+        phases,
+        CompileProvenance("a" * 40, "b" * 64, (("test_profile", "pdf"),)),
+        max_stitches=2000,
+    )
+    validator = SemanticValidator(
+        material_profiles={project["material_profile"]["profile_id"]: project["material_profile"]},
+        design_specs={project["design_spec"]["design_spec_id"]: project["design_spec"]},
+    )
+    digest = canonical_hash(ir, CanonicalProfile.CROCHET_IR, validator=validator)
+    return {
+        **project,
+        "crochet_ir": ir,
+        "project_id": digest,
+        "source_crochet_ir_sha256": digest,
+    }
+
+
+def test_pdf_exact_sample_rounds_and_decrease_totals(project: dict[str, Any]) -> None:
+    scheduled = _scheduled_project(project, (6, 12, 18, 12, 6, 3), (0, 0, 0, 0, 0))
+    pdf = render_project_pdf(scheduled, scheduled["project_id"])
+    text = " ".join(
+        " ".join((p.extract_text() or "").split()) for p in PdfReader(BytesIO(pdf)).pages
+    )
+    expected = [
+        "R1: MR, 6 sc (6 stitches)",
+        "R2: 6 inc sc (12 stitches)",
+        "R3: (1 sc, inc sc) x 6 (18 stitches)",
+        "R4: (1 sc, dec sc) x 6 (12 stitches)",
+        "R5: 6 dec sc (6 stitches)",
+        "R6: 3 dec sc (3 stitches)",
+    ]
+    for instruction in expected:
+        assert instruction in text
+    assert re.findall(r"\((\d+) stitches\)", text) == ["6", "12", "18", "12", "6", "3"]
+
+
+def test_canonical_positions_survive_rotated_rounds(project: dict[str, Any]) -> None:
+    scheduled = _scheduled_project(project, (6, 12, 6), (2, 11))
+    ir = scheduled["crochet_ir"]
+    courses = sorted(ir["courses"], key=lambda course: course["ordinal"])
+    notation, count = _course_notation(courses[1], ir)
+    assert count == 12
+    assert notation == ", ".join(f"inc sc at prior-round stitch {i}" for i in (3, 4, 5, 6, 1, 2))
+    notation, count = _course_notation(courses[2], ir)
+    assert count == 6
+    assert notation == ", ".join(
+        f"dec sc at prior-round stitch {a} & {b}"
+        for a, b in ((12, 1), (2, 3), (4, 5), (6, 7), (8, 9), (10, 11))
+    )
+    text = " ".join(
+        (page.extract_text() or "")
+        for page in PdfReader(BytesIO(render_project_pdf(scheduled, scheduled["project_id"]))).pages
+    )
+    assert "12 & 1" in text and "3" in text
+
+
+@pytest.mark.parametrize(
+    "instructions,expected",
+    [
+        (["1 sc", "1 sc", "inc sc"] * 6, "(2 sc, inc sc) x 6"),
+        (["dec sc"] * 4, "4 dec sc"),
+        (["1 sc"] * 3 + ["inc sc", "1 sc"], "3 sc, inc sc, 1 sc"),
+        (["inc sc", "1 sc", "dec sc"], "inc sc, 1 sc, dec sc"),
+    ],
+)
+def test_notation_compacts_runs_without_reordering(instructions: list[str], expected: str) -> None:
+    assert _round_notation(instructions) == expected
 
 
 def test_pdf_rejects_stale_request_metadata(project: dict[str, Any]) -> None:

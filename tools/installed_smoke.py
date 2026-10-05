@@ -24,7 +24,11 @@ import rpds
 
 import crochet_ai
 from crochet_ai.adjacent_triangle_residual import adjacent_triangle_residual_squared
+from crochet_ai.analytic_target import VERSION as ANALYTIC_TARGET_VERSION
+from crochet_ai.calibration_campaign import PROTOCOL_ID, calibration_protocol
+from crochet_ai.calibration_pdf import render_calibration_packet
 from crochet_ai.certified_orientation import orientation2d, orientation3d
+from crochet_ai.forward_closed_cells import PROFILE as CLOSED_CELLS_PROFILE
 from crochet_ai.forward_pipeline import PROFILE as FORWARD_PIPELINE_PROFILE
 from crochet_ai.schema import SCHEMA_FILENAMES, schema_documents
 from crochet_ai.target_mesh_adjacent_residual import (
@@ -179,6 +183,28 @@ def main() -> int:
         capabilities["data"]["physical_verification_available"] is False,
         "smoke.physical_claim",
     )
+    _require(
+        {"verify_candidate", "calibration_protocol", "inspect_calibration_campaign",
+         "derive_calibration_material", "inspect_analytic_target",
+         "inspect_closed_surface_cells", "inspect_closed_surface_topology",
+         "inspect_closed_cell_conformance",
+         "inspect_analytic_candidate_claims"}.issubset(capabilities["data"]["operations"]),
+        "smoke.backend_checkpoint_operations_missing",
+    )
+    _require(
+        capabilities["data"]["capability_matrix"]["backend_release_ready"] is False
+        and all(not profile["calibrated"] for profile in
+                capabilities["data"]["verification_profiles"]),
+        "smoke.backend_release_claim",
+    )
+    _require(calibration_protocol()["protocol_id"] == PROTOCOL_ID,
+             "smoke.calibration_protocol_mismatch")
+    _require(ANALYTIC_TARGET_VERSION == "ANALYTIC_TARGET_V1"
+             and CLOSED_CELLS_PROFILE == "FORWARD_CLOSED_SURFACE_CELLS_V1",
+             "smoke.target_cell_profiles_missing")
+    packet = render_calibration_packet()
+    _require(packet.startswith(b"%PDF-") and packet == render_calibration_packet(),
+             "smoke.calibration_packet")
     print(json.dumps({
         "status": "INSTALLATION_SMOKE_PASS", "physical_status": "UNTESTED",
         "package_version": metadata.version("crochet-ai-compiler"),

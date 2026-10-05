@@ -94,9 +94,15 @@ integer search budgets, admission limits and zero-phase compilation still apply.
 
 ### Printable export
 
+Pattern PDFs use US English crochet terminology (`sc`, `inc sc`, `dec sc`, `MR`)
+and compact numbered rounds (`R1`, `R2`, ...). The final parentheses contain the
+total stitches at the end of the round, including both tops of every increase.
+Repeated motifs retain the exact canonical work order; explicit insertion
+positions are preserved when the construction differs from sequential traversal.
+
 PDF export derives instructions from the saved validated IR and binds its
 source hash, design and material. It does not use submitted prose or current
-session progress as the pattern. A4 pagination includes German preparation,
+session progress as the pattern. A4 pagination includes English preparation,
 the exact round order, totals, shaping meanings, source identity, verification
 limits, and a printable report worksheet for remote human feedback.
 ReportLab is the reviewed local pagination dependency; no cloud, external font,

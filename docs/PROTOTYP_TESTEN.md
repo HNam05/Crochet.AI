@@ -39,6 +39,11 @@ Installationsanleitung in `BACKEND_RUNTIME.md`.
    Mit „Anleitung als PDF“ erhältst du eine druckbare Datei mit Materialwerten,
    geordneten Runden, Zu-/Abnahme-Erklärung und einem Testbericht. Diese Datei
    funktioniert ohne Server, Konto oder Zugriff auf deinen Rechner.
+   Die PDF verwendet englische US-Häkelbegriffe und kompakte Rundenangaben:
+   `R1: MR, 6 sc (6 stitches)`, `R2: 6 inc sc (12 stitches)` und beispielsweise
+   `R3: (1 sc, inc sc) x 6 (18 stitches)`. Die letzte Klammer nennt immer die
+   Gesamtmaschenzahl am Ende der Runde. Die Zahlen im eigenen Muster richten
+   sich nach der erzeugten Konstruktion; die Beispiele sind keine festen Vorgaben.
 4. Häkle in fortlaufenden Runden. Markiere den Rundenbeginn. Eine Zunahme bedeutet
    zwei feste Maschen in dieselbe Einstechstelle; eine Abnahme verwendet die zwei
    angegebenen Einstechstellen und erzeugt eine neue Masche. Beachte bei

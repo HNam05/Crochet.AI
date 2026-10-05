@@ -62,6 +62,11 @@ measurement affects results.
 
 ## Evidence and boundaries
 
+Producer instrumentation retains compact per-pass/layer state counts, work and
+completion, including interrupted layers. These records belong to the external
+[ANALYTIC_SEARCH_TRACE_V1](ANALYTIC_SEARCH_TRACE_V1.md); they do not change count
+ordering, recurrence, work-unit definitions or independent verification status.
+
 Hypothesis compares results against a separate exhaustive path oracle that
 enumerates S/I/D arities. Tests cover empty reachable domains, exact budget
 boundaries, second-pass exhaustion, rational limits, scaling and deterministic

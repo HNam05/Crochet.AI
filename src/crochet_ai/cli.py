@@ -4,17 +4,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import platform
 import sqlite3
 import sys
 from hashlib import sha256
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Never
 
 import rfc8785
 
-from .analytic_compile import CompileProvenance
 from .backend_api import (
     API_VERSION,
     MAX_REQUEST_BYTES,
@@ -23,40 +20,25 @@ from .backend_api import (
     bounded_json,
     error_response,
 )
+from .backend_provenance import runtime_provenance
+from .calibration_campaign import (
+    CalibrationCampaign,
+    CalibrationMeasurement,
+    calibration_protocol,
+    derive_draft_material,
+)
+from .calibration_pdf import render_calibration_packet
+from .calibration_store import CalibrationStore
 from .job_store import JobStore, JobStoreError
 from .job_worker import execute_one_isolated
 from .schema import schema_documents
+
+_provenance = runtime_provenance
 
 
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> Never:
         raise ApiInputError(message)
-
-
-def _provenance(commit: str) -> CompileProvenance:
-    source_hashes = {
-        p.name: sha256(p.read_bytes()).hexdigest()
-        for p in sorted(Path(__file__).parent.glob("*.py"))
-    }
-    schema_hashes = {
-        name: sha256(rfc8785.dumps(doc)).hexdigest()
-        for name, doc in schema_documents(include_additive_versions=True).items()
-    }
-    snapshot = sha256(
-        b"Crochet.AI\0BACKEND_SOURCE_SNAPSHOT_V1\0"
-        + rfc8785.dumps({"sources": source_hashes, "schemas": schema_hashes})
-    ).hexdigest()
-    return CompileProvenance(
-        commit,
-        snapshot,
-        (
-            ("runtime.python", platform.python_version()),
-            ("runtime.platform", platform.system()),
-            ("runtime.jsonschema", version("jsonschema")),
-            ("runtime.rfc8785", version("rfc8785")),
-            ("source.checkout_status", "UNCONFIRMED"),
-        ),
-    )
 
 
 def _read(path: str) -> bytes:
@@ -86,6 +68,27 @@ def _parser() -> _Parser:
             name, help=f"Execute {name} from a versioned JSON request file"
         )
         command.add_argument("--request-file", required=True)
+    calibration = commands.add_parser("calibration", help="Frozen local pilot measurement records")
+    calibration_actions = calibration.add_subparsers(dest="calibration_action", required=True)
+    calibration_actions.add_parser("protocol", help="Inspect the supported measurement protocol")
+    packet = calibration_actions.add_parser(
+        "packet", help="Write blank or campaign-bound PDF sheets"
+    )
+    packet.add_argument("--output", required=True)
+    packet.add_argument("--campaign-file")
+    for name in ("register", "record", "show", "derive"):
+        command = calibration_actions.add_parser(
+            name, help=f"{name} append-only calibration records"
+        )
+        command.add_argument("--db", required=True)
+        if name in {"register", "record"}:
+            command.add_argument("--record-file", required=True)
+        if name != "register":
+            command.add_argument("--campaign-sha256", required=True)
+        if name == "derive":
+            command.add_argument("--profile-id", required=True)
+            command.add_argument("--response-id", required=True)
+            command.add_argument("--created-at", required=True)
     jobs = commands.add_parser("jobs", help="Durable local job operations")
     actions = jobs.add_subparsers(dest="action", required=True)
     for name in ("submit", "get", "cancel", "run-next", "list"):
@@ -103,6 +106,73 @@ def _parser() -> _Parser:
             command.add_argument("--limit", type=int, default=20)
             command.add_argument("--offset", type=int, default=0)
     return parser
+
+
+def _calibration(args: argparse.Namespace) -> dict[str, Any]:
+    if args.calibration_action == "protocol":
+        return calibration_protocol()
+    if args.calibration_action == "packet":
+        campaign = (
+            CalibrationCampaign(bounded_json(_read(args.campaign_file)))
+            if args.campaign_file
+            else None
+        )
+        payload = render_calibration_packet(campaign)
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open("xb") as stream:
+            stream.write(payload)
+        return {
+            "output": str(output.resolve()),
+            "sha256": sha256(payload).hexdigest(),
+            "physical_status": "UNTESTED",
+            "document_kind": "MEASUREMENT_PROTOCOL",
+        }
+    path = Path(args.db)
+    if args.calibration_action != "register" and not path.is_file():
+        raise ValueError("calibration.store_not_found")
+    with CalibrationStore(path) as store:
+        if args.calibration_action == "register":
+            campaign = CalibrationCampaign(bounded_json(_read(args.record_file)))
+            return {
+                "campaign_sha256": store.register_campaign(campaign),
+                "physical_status": "UNTESTED",
+            }
+        campaign = store.get_campaign(args.campaign_sha256)
+        if campaign is None:
+            raise ValueError("calibration.campaign_not_found")
+        if args.calibration_action == "record":
+            record = CalibrationMeasurement(bounded_json(_read(args.record_file)), campaign)
+            return {
+                "measurement_sha256": store.add_measurement(record),
+                "physical_status": "UNTESTED",
+            }
+        if args.calibration_action == "show":
+            return {
+                "campaign": campaign.to_dict(),
+                "campaign_sha256": campaign.sha256,
+                "measurements": [
+                    record.to_dict() for record in store.list_measurements(campaign.sha256)
+                ],
+                "physical_status": "UNTESTED",
+            }
+        ids = {
+            item["specimen_id"]
+            for item in campaign.to_dict()["specimens"]
+            if item["role"] == "CALIBRATION"
+        }
+        records = [
+            record
+            for record in store.active_measurements(campaign.sha256)
+            if record.to_dict()["specimen_id"] in ids
+        ]
+        return derive_draft_material(
+            campaign,
+            records,
+            profile_id=args.profile_id,
+            response_id=args.response_id,
+            created_at=args.created_at,
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -137,6 +207,8 @@ def main(argv: list[str] | None = None) -> int:
             if args.command in expected and request.get("operation") != expected[args.command]:
                 raise ApiInputError("request.command_operation_mismatch")
             response = api.handle(request)
+        elif args.command == "calibration":
+            response = {"api_version": API_VERSION, "ok": True, "data": _calibration(args)}
         else:
             if args.action == "submit" and args.dry_run:
                 payload = rfc8785.dumps(bounded_json(_read(args.request_file)))

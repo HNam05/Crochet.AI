@@ -59,6 +59,15 @@ class CountObjective:
 
 
 @dataclass(frozen=True, slots=True)
+class CountLayerTrace:
+    pass_index: int
+    layer_index: int
+    retained_state_count: int
+    transition_evaluations: int
+    completed: bool
+
+
+@dataclass(frozen=True, slots=True)
 class CountSearchResult:
     status: CountSearchStatus
     reason: str
@@ -68,6 +77,7 @@ class CountSearchResult:
     transitions: tuple[CountTransition, ...] = ()
     objective: CountObjective | None = None
     algorithm_version: str = "analytic-count-dp-1"
+    layer_trace: tuple[CountLayerTrace, ...] = ()
 
 
 def _integer(value: object, minimum: int, maximum: int) -> bool:
@@ -143,9 +153,10 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
     budget = request.budget
     used = 0
     passes = 0
+    trace: list[CountLayerTrace] = []
 
     def failure(status: CountSearchStatus, reason: str) -> CountSearchResult:
-        return CountSearchResult(status, reason, used, passes)
+        return CountSearchResult(status, reason, used, passes, layer_trace=tuple(trace))
 
     if len(request.windows) > budget.max_courses:
         return failure(CountSearchStatus.SEARCH_BUDGET_EXHAUSTED, "budget.courses")
@@ -162,13 +173,19 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
     # Pass 1: bottleneck costs have the monotone recurrence min(max(prefix, node)).
     bottlenecks = {count: residual(0, count) for count in values(0)}
     if len(bottlenecks) > budget.max_dp_states_per_course:
+        trace.append(CountLayerTrace(1, 0, len(bottlenecks), 0, False))
         return failure(CountSearchStatus.SEARCH_BUDGET_EXHAUSTED, "budget.dp_states")
+    trace.append(CountLayerTrace(1, 0, len(bottlenecks), 0, True))
     for layer in range(1, len(request.windows)):
+        before_used = used
         next_bottlenecks: dict[int, Fraction] = {}
         for count in values(layer):
             node_cost = residual(layer, count)
             for before in sorted(bottlenecks):
                 if used == budget.max_transition_evaluations:
+                    trace.append(
+                        CountLayerTrace(1, layer, len(next_bottlenecks), used - before_used, False)
+                    )
                     return failure(CountSearchStatus.SEARCH_BUDGET_EXHAUSTED, "budget.transitions")
                 used += 1
                 if _transition(before, count, request) is None:
@@ -177,9 +194,14 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
                 if count not in next_bottlenecks or cost < next_bottlenecks[count]:
                     next_bottlenecks[count] = cost
             if len(next_bottlenecks) > budget.max_dp_states_per_course:
+                trace.append(
+                    CountLayerTrace(1, layer, len(next_bottlenecks), used - before_used, False)
+                )
                 return failure(CountSearchStatus.SEARCH_BUDGET_EXHAUSTED, "budget.dp_states")
         if not next_bottlenecks:
+            trace.append(CountLayerTrace(1, layer, 0, used - before_used, True))
             return failure(CountSearchStatus.NO_FEASIBLE_CONSTRUCTION, "domain.no_reachable_path")
+        trace.append(CountLayerTrace(1, layer, len(next_bottlenecks), used - before_used, True))
         bottlenecks = next_bottlenecks
     threshold = min(bottlenecks.values())
     passes = 1
@@ -190,7 +212,9 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
         for count in values(0)
         if residual(0, count) <= threshold
     }
+    trace.append(CountLayerTrace(2, 0, len(paths), 0, True))
     for layer in range(1, len(request.windows)):
+        before_used = used
         next_paths: dict[int, tuple[Fraction, int, tuple[int, ...]]] = {}
         for count in values(layer):
             node_cost = residual(layer, count)
@@ -198,6 +222,9 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
                 continue
             for before in sorted(paths):
                 if used == budget.max_transition_evaluations:
+                    trace.append(
+                        CountLayerTrace(2, layer, len(next_paths), used - before_used, False)
+                    )
                     return failure(CountSearchStatus.SEARCH_BUDGET_EXHAUSTED, "budget.transitions")
                 used += 1
                 transition = _transition(before, count, request)
@@ -212,6 +239,7 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
                 if count not in next_paths or candidate < next_paths[count]:
                     next_paths[count] = candidate
         paths = next_paths
+        trace.append(CountLayerTrace(2, layer, len(paths), used - before_used, True))
     cost_sum, shaping, counts = min(paths.values())
     transitions: list[CountTransition] = []
     for before, after in pairwise(counts):
@@ -227,4 +255,5 @@ def search_counts(request: CountSearchInput) -> CountSearchResult:
         counts,
         tuple(transitions),
         CountObjective(threshold, cost_sum, shaping),
+        layer_trace=tuple(trace),
     )
