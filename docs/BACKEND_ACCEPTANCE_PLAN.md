@@ -8,7 +8,11 @@ Each promised capability needs an executable implementation, independent tests,
 documented limits, and a stable versioned interface. Rejecting an unsupported
 domain is safe behavior, not completion of that domain. Real calibration and
 holdout measurements are required for physical claims. Canonical contracts and
-approved goldens remain frozen. Frontend work is out of scope.
+approved goldens remain frozen. Production frontend work is outside backend
+release acceptance. The user separately authorized a bounded local browser
+prototype for human crochet testing on 2026-10-04, with a mobile app deferred;
+see [LOCAL_PROTOTYPE_V1.md](LOCAL_PROTOTYPE_V1.md). This changes delivery sequencing,
+not mandatory verification or physical acceptance.
 
 ## Packages in delivery order
 
@@ -16,10 +20,10 @@ approved goldens remain frozen. Frontend work is out of scope.
 | --- | --- | --- | --- |
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A subset implemented; M1B and V9/V10 remain |
-| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Partial input/material validation, meridional samplers, indexed-mesh decode/topology/exact-geometry/diameter diagnostics, hash-locked profile, exact relative area/coordinate-distance and algebraic six-volume, bounded exact face-pair intersections and nonadjacent near-contact, directed loops and full DesignSpec opening-binding diagnostics; experimental adjacent residual kernel and isolated certified orientation; complete V0 admission and normalization missing |
+| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; flat, lace and non-mesh adapters remain open |
 | B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole SC proposal implemented; full V5 and domains remain |
-| B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free stretch-only prototype, initial surface/intersection/distance diagnostics; shear, bend, contact response, calibrated convergence and V6 missing |
-| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Initial open-surface arithmetic, exact intersection and squared-distance diagnostics only; robust V0-V10 gates missing |
+| B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free experimental stretch, shear and bending terms with bounded combined descent and exact final-coordinate intersection/distance diagnostics; contact response, calibrated convergence and V6 missing |
+| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Supported mesh V0 is integrated; forward geometry remains experimental, and V1-V10 orchestration, V7 metrics and V8 scenarios remain open |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
 | B7 | Durable jobs and artifacts | Atomicity, idempotency, cancellation, resource limits, concurrency and recovery tests | Local SQLite jobs subset implemented; operational gates open |
 | B8 | Security, packaging and operation | Untrusted input limits, path safety, isolation, diagnostics, install and end-to-end tests | Request limits and wheel subset implemented; service hardening open |
@@ -199,6 +203,152 @@ checks. The rebuilt wheel passed dependency checks and isolated installed smoke
 outside the checkout in the clean Python 3.11.9 venv, including byte parity for
 all eight schemas and both numerical records. This is a local installation
 check, not a cross-platform or production deployment acceptance.
+
+The current local checkpoint adds `inspect_v0_mesh_v2`, a mesh V0 admission path
+for closed/open amigurumi and garment surfaces under DesignSpec 1.1 and
+numerical profile 2. The closed-only compatibility operation remains. The
+source-bound adjacent residual now receives an exact profile threshold decision
+for every adjacent pair; the enclosing V0 check also requires complete original
+face-pair coverage, numerical degeneracy and nonadjacent clearance checks,
+stable closed-component volume signs, unique retained-opening assignment where
+applicable, and a hashed normalized mesh with index maps. The runtime keeps
+full-pattern verification `NOT_VERIFIED` and physical status `UNTESTED`. Flat,
+lace and non-mesh V0 profiles remain outside this operation; they cannot
+inherit its `PASS`.
+The integration suite passed 766 Python tests, Ruff, strict mypy on 57 source
+modules, all five independent Node conformance vectors and `git diff --check`.
+The rebuilt wheel passed dependency checks and installed smoke in a clean Python
+3.11.9 venv outside the checkout. These are local software checks only.
+
+The next target-free F0 checkpoint adds an exact self-intersection diagnostic
+for final stretch-prototype coordinates. It checks complete face-pair coverage
+and optimizer provenance, and reports the exact minimum nonadjacent squared
+distance. It has no contact force or calibrated clearance policy. V6 remains
+open; this diagnostic cannot promote an experimental force balance to
+`CONVERGED`.
+The follow-up integration passed 770 Python tests, Ruff and strict mypy on 58
+source modules. This checkpoint does not add a V6 acceptance claim.
+
+The next B4 software increment adds versioned, target-free shear and bending
+energies for the supported plain quad strip, plus bounded combined descent over
+stretch, shear and bending. Shear stiffness/rest cosine and bending stiffness/
+rest dihedral are explicit `HYPOTHESIS` inputs with provenance; none is inferred
+from the heuristic initialization. The combined final coordinates feed the exact
+self-contact diagnostic with all three term identities and provenance checked.
+All outputs remain experimental. Contact response, calibrated convergence and
+the V6 admission gate remain open.
+This integration passed 786 Python tests, Ruff, strict mypy on 60 source
+modules, all five independent Node conformance vectors, and `git diff --check`.
+The rebuilt wheel passed dependency and installed smoke checks outside the
+checkout in a clean Python 3.11.9 venv; the new B4 modules import from that
+wheel. These checks establish software integrity for this experimental slice,
+not complete B4 or backend acceptance.
+
+## Software checkpoint: 2026-10-04
+
+The additive `run_forward_prototype` operation connects physical projection,
+material graph, initialization, stretch/shear/bending optimization and exhaustive
+final-coordinate contact diagnostics through the local API, generic CLI and
+durable queue. The closed recipe enforces server-owned work limits and explicit
+hypothesis parameters. See [FORWARD_PIPELINE_V1.md](FORWARD_PIPELINE_V1.md).
+
+The supported surface is a plain aligned cyclic quad strip with open boundaries.
+A separately identified coordinate restriction connects the optimizer's full
+node domain to the contact diagnostic's surface-only domain. Failed or exhausted
+runs expose no geometry; forbidden final intersections also suppress nested
+optimizer coordinates. All results remain `NOT_VERIFIED`, `UNTESTED` and
+`v6_outcome:NOT_RUN`. Contact response, calibrated convergence, V6/V7/V8,
+broader construction and backend release remain open.
+
+The user-approved live object and crochet-step inspiration is recorded in
+[PRODUCT.md](PRODUCT.md), with source evidence in the Yarnify3D research record.
+This checkpoint provides a bounded backend integration foundation; it does not
+implement either user interface or a live making-session contract.
+
+Integration passed 814 Python tests, Ruff across source/tests/tools, strict mypy
+on 61 source modules, all five independent Node canonical vectors and
+`git diff --check`. The freshly built wheel passed dependency and installation
+smoke checks in the clean Python 3.11.9 venv outside the checkout. A real installed
+CLI forward request returned exactly the same response as source execution,
+including 18 surface vertices, 24 triangles and both six-location boundaries.
+These are software checks for the experimental slice, not physical or release
+acceptance. Agent token/cost measurements were unavailable and remain null in
+the ignored checkpoint record.
+
+## Local browser prototype checkpoint: 2026-10-05
+
+The user selected local browser testing now and a separate mobile app later.
+The additive prototype supports sphere/ellipsoid requests and user-entered
+cyclic SC gauge, producing canonical CrochetIR, controlled Pattern V1 and
+German instructions. The analytic search proposes course counts; the existing
+compiler fixes continuous work order with zero course phases. Independent
+semantic validation and export round trip remain mandatory. Existing solver,
+verifier, schemas and goldens were not changed for this prototype.
+
+The browser connects real generation, schematic stitch selection/orbit,
+incremental construction, current instruction/count, durable revision-checked
+progress, source-bound human feedback and artifact downloads. The preview
+uses construction counts and material pitch; it is not a calibrated forward
+prediction. Full verification remains `NOT_VERIFIED`, physical status `UNTESTED`.
+See [LOCAL_PROTOTYPE_V1.md](LOCAL_PROTOTYPE_V1.md) for the bounded contract and
+[PROTOTYP_TESTEN.md](PROTOTYP_TESTEN.md) for the actual crochet test protocol.
+
+Integration passed 823 Python tests, Ruff across source/tests/tools, strict mypy
+on 66 modules, nine frontend state tests, all five independent Node canonical
+vectors and `git diff --check`. The final wheel passed dependency and installed
+smoke checks outside the checkout, including all seven browser assets and the
+prototype console entry point. Actual source and installed HTTP generation
+produced identical IR and Pattern V1. The default software fixture has 18 courses
+and 339 instructions; changing gauge and size changes the construction.
+
+Live browser checks covered sphere/ellipsoid generation, compound increases,
+forward/back and course navigation, orbit/keyboard/zoom/object selection,
+incremental display, reload/restore, real downloads and feedback persistence.
+The narrow mobile browser layout was checked at 390 px; this does not deliver
+the separately requested mobile app. Test feedback is explicitly a software
+test, not a crocheted specimen. The user server is loopback-only; physical
+calibration, broader construction and full backend release remain open.
+Worker usage/cost measurements were unavailable and are recorded as null in
+`artifacts/agent-costs/local-prototype-20261005.json`.
+
+## Shapes and printable test checkpoint: 2026-10-05
+
+The local prototype now offers closed cylinders, cones, capsules and an organic
+pear alongside sphere/ellipsoid. The new forms reuse the existing hashed
+surface-of-revolution contract, analytic count search, canonical IR compiler
+and independent semantic/round-trip checks. Capsule dimensions are constrained;
+unsupported shapes and exhausted construction budgets fail explicitly. No
+solver, independent verifier, schema or golden was changed for this expansion.
+
+PDF export is local and source-bound. It rebuilds instructions from persisted
+validated IR, checks material/design/request identity and groups only identical
+contiguous instructions without losing their work order or stitch totals.
+Round headers and instructions remain together on printable A4 pages.
+Each PDF includes material values, source identity, status and a worksheet for
+measurements, stuffing state, problem rounds and required changes. Unsupported
+font characters fail explicitly. ReportLab and dependency notices are reviewed
+in [the PDF decision record](research/PROTOTYPE_PDF_REVIEW_2026-10-05.md).
+
+Final integration: 837 Python tests passed, including all four new shape
+candidates and PDF metadata/content/routing/ordering/pagination checks. Ruff,
+strict mypy on 68 modules, ten frontend state tests and five Node canonical
+vectors passed. The rebuilt wheel passed dependency checks and installed smoke
+outside the checkout. Source HTTP and installed rendering produce identical
+PDF bytes for the actual pear project; an earlier saved sphere also exports.
+All five pear PDF pages were rendered and visually reviewed.
+
+Live UI checks covered pear/capsule generation, preserved gauge examples,
+invalid capsule dimensions, persistent step resume and narrow layout without
+horizontal overflow. The PDF button fetched valid content and started a browser
+download; the in-app automation download event was unavailable, so a separate
+PDF from the same endpoint is retained for review. No filesystem completion is
+claimed from the button's status alone. The existing visual design is retained.
+[The human test protocol](PROTOTYP_TESTEN.md) defines sphere/capsule/pear trials
+using the actual tester's measured material. Physical status remains UNTESTED;
+full verification, broader organic/multipart generation and the separate mobile
+app remain open. Two bounded Luna/medium workers were used; runtime token/cost
+measurements are unavailable and recorded as null in
+`artifacts/agent-costs/extended-prototype-20261005.json`.
 
 ## External dependencies and operational authority
 

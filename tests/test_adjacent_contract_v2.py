@@ -16,7 +16,7 @@ import rfc8785
 from crochet_ai.canonical import CanonicalProfile, canonical_hash
 from crochet_ai.models import DesignSpec, MaterialProfile
 from crochet_ai.schema import schema_documents, validate_schema
-from crochet_ai.target_mesh_openings import TargetMeshOpeningError, diagnose_target_mesh_openings
+from crochet_ai.target_mesh_openings import diagnose_target_mesh_openings
 from crochet_ai.v0_adjacent_profile import (
     PROFILE_DOMAIN,
     PROFILE_FILENAME,
@@ -244,40 +244,70 @@ def test_profile_schema_rejects_semantic_mutation_and_thresholds_match_v1() -> N
     assert not validate_schema("numerical_geometry_profile", bad).ok
 
 
-def test_mesh_opening_diagnostic_returns_explicit_unsupported_for_v2() -> None:
+def test_mesh_opening_diagnostic_binds_open_v2_mesh_and_rejects_ambiguous_mapping() -> None:
     mesh = {
         "representation_version": "INDEXED_TRIANGLE_MESH_V1",
         "coordinate_system": {
             "length_unit": "MILLIMETER", "handedness": "RIGHT_HANDED",
             "coordinate_frame_id": "frame_fixture_target",
         },
-        "vertices": [
-            {"position_mm": [0, 0, 0]}, {"position_mm": [1, 0, 0]},
-            {"position_mm": [0, 1, 0]}, {"position_mm": [0, 0, 1]},
-        ],
-        "faces": [
-            {"vertex_indices": [0, 2, 1]}, {"vertex_indices": [0, 1, 3]},
-            {"vertex_indices": [1, 2, 3]}, {"vertex_indices": [2, 0, 3]},
-        ],
+        "vertices": [{"position_mm": list(point)} for point in [
+            (-2., -2., 0.), (2., -2., 0.), (2., 2., 0.), (-2., 2., 0.),
+            (-1., -1., 0.), (1., -1., 0.), (1., 1., 0.), (-1., 1., 0.),
+        ]],
+        "faces": [{"vertex_indices": list(face)} for face in [
+            (0, 1, 5), (0, 5, 4), (1, 2, 6), (1, 6, 5),
+            (2, 3, 7), (2, 7, 6), (3, 0, 4), (3, 4, 7),
+        ]],
     }
     raw = json.dumps(mesh, separators=(",", ":")).encode()
     design = _design(new_profile=True, zone={
         "policy_id": "BARYCENTRIC_PAIR_LOCAL_V1",
         "lambda": {"numerator": "1", "denominator": "2"},
     })
+    design["target_geometry"]["preflight_profile_id"] = (
+        "V0_AMIGURUMI_DECLARED_BOUNDARY_SURFACE_V1"
+    )
+    design["target_geometry"]["topology_expectation"].update({
+        "boundary_policy": "DECLARED_ONLY", "expected_boundary_components": 2,
+    })
+    design["domain_constraints"]["surface_mode"] = "DECLARED_OPENINGS"
+    design["landmarks"] = [
+        {"landmark_id": "landmark_outer", "coordinate_frame_id": "frame_fixture_target",
+         "label": "Outer boundary", "importance": "HIGH",
+         "position_mm": [-2., -2., 0.], "tolerance_mm": 0.},
+        {"landmark_id": "landmark_inner", "coordinate_frame_id": "frame_fixture_target",
+         "label": "Inner boundary", "importance": "HIGH",
+         "position_mm": [-1., -1., 0.], "tolerance_mm": 0.},
+    ]
+    design["construction_constraints"]["intentional_openings"] = [
+        {"opening_requirement_id": "opening_req_outer", "purpose": "NECKLINE",
+         "boundary_landmark_ids": ["landmark_outer"],
+         "closure_expectation": "REMAIN_OPEN"},
+        {"opening_requirement_id": "opening_req_inner", "purpose": "ARMHOLE",
+         "boundary_landmark_ids": ["landmark_inner"],
+         "closure_expectation": "REMAIN_OPEN"},
+    ]
     design["target_geometry"]["artifact"]["sha256"] = hashlib.sha256(raw).hexdigest()
     material_value = json.loads((FIXTURES / "material-profile.minimal.valid.json").read_text())
     design_model = DesignSpec.from_dict(design)
     material_model = MaterialProfile.from_dict(material_value)
-    with pytest.raises(
-        TargetMeshOpeningError,
-        match=r"E_UNSUPPORTED_FEATURE: openings\.numerical_profile",
-    ):
-        diagnose_target_mesh_openings(
-            design_model, raw, material_profile=material_model, max_bytes=20_000,
-            max_vertices=20, max_faces=20, max_openings=4, max_landmark_refs=8,
-            max_landmarks=4, max_vertex_pairs=20, max_landmark_edge_tests=20,
-        )
+    result = diagnose_target_mesh_openings(
+        design_model, raw, material_profile=material_model, max_bytes=20_000,
+        max_vertices=20, max_faces=20, max_openings=4, max_landmark_refs=8,
+        max_landmarks=4, max_vertex_pairs=100, max_landmark_edge_tests=20,
+    )
+    assert result.status == "OPENING_BINDING_DIAGNOSTIC_ONLY"
+    assert result.classification == "UNIQUE"
+    design["landmarks"][0]["position_mm"] = [0., 0., 0.]
+    design["landmarks"][0]["tolerance_mm"] = 3.
+    ambiguous = diagnose_target_mesh_openings(
+        DesignSpec.from_dict(design), raw, material_profile=material_model, max_bytes=20_000,
+        max_vertices=20, max_faces=20, max_openings=4, max_landmark_refs=8,
+        max_landmarks=4, max_vertex_pairs=100, max_landmark_edge_tests=20,
+    )
+    assert ambiguous.classification == "AMBIGUOUS"
+    assert ambiguous.reason == "openings.landmark_ambiguous"
 
 
 def test_zone_fraction_boundaries_include_one_over_largest_supported_denominator() -> None:

@@ -223,10 +223,12 @@ def design_spec_projection(value: dict[str, Any]) -> dict[str, Any]:
         verification["required_geometry_metrics"], key=_enum_key(metric_order)
     )
     domain = projected["domain_constraints"]
-    for field in ("body_measurement_ids", "ease_allowances"):
-        if field in domain:
-            key = "measurement_id"
-            domain[field] = _sort_items(domain[field], itemgetter(key))
+    if "body_measurement_ids" in domain:
+        domain["body_measurement_ids"] = sorted(domain["body_measurement_ids"])
+    if "ease_allowances" in domain:
+        domain["ease_allowances"] = _sort_items(
+            domain["ease_allowances"], itemgetter("measurement_id")
+        )
     for field, order in (
         (
             "allowed_constructions",

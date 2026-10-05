@@ -19,6 +19,12 @@ from crochet_ai.target_mesh_landmarks import (
     BoundaryLandmarkError,
     diagnose_boundary_landmark_eligibility,
 )
+from crochet_ai.v0_adjacent_profile import (
+    PROFILE_ID as ADJACENT_PROFILE_ID,
+)
+from crochet_ai.v0_adjacent_profile import (
+    resolve_v0_adjacent_numeric_profile,
+)
 from crochet_ai.v0_numeric_profile import PROFILE_ID, resolve_v0_numeric_profile
 
 FRAME = "frame_landmark_test"
@@ -65,6 +71,16 @@ def run(raw: bytes, decoded, order, boundaries, landmarks, **budgets):
         raw, decoded, order, boundaries, landmarks,
         profile=resolve_v0_numeric_profile(PROFILE_ID), **LIMITS,
         **limits,
+    )
+
+
+def run_adjacent(raw: bytes, decoded, order, boundaries, landmarks, *, profile=None):
+    limits = {"max_landmarks": 20, "max_vertex_pairs": 100,
+              "max_landmark_edge_tests": 100}
+    return diagnose_boundary_landmark_eligibility(
+        raw, decoded, order, boundaries, landmarks,
+        profile=profile or resolve_v0_adjacent_numeric_profile(ADJACENT_PROFILE_ID),
+        **LIMITS, **limits,
     )
 
 
@@ -172,6 +188,29 @@ def test_tampered_profile_order_boundary_and_source_are_rejected() -> None:
         run(raw, decoded, order, replace(boundaries, diagnostic_sha256="0" * 64), landmark)
     with pytest.raises(BoundaryLandmarkError, match="source_invalid"):
         run(b"bad", decoded, order, boundaries, landmark)
+
+
+def test_v2_profile_uses_same_hash_locked_landmark_slack_as_v1() -> None:
+    raw, decoded, order, boundaries = setup()
+    landmark = (BoundaryLandmark("landmark_p", FRAME, (-2., -2., 0.), 0.),)
+    v1 = run(raw, decoded, order, boundaries, landmark)
+    v2 = run_adjacent(raw, decoded, order, boundaries, landmark)
+    assert v1.results == v2.results
+    assert v2.profile_id == ADJACENT_PROFILE_ID
+    assert v2.profile_sha256 == resolve_v0_adjacent_numeric_profile(
+        ADJACENT_PROFILE_ID,
+    ).record_sha256
+
+
+def test_forged_v2_profile_is_rejected() -> None:
+    from dataclasses import replace
+
+    raw, decoded, order, boundaries = setup()
+    profile = resolve_v0_adjacent_numeric_profile(ADJACENT_PROFILE_ID)
+    landmark = (BoundaryLandmark("landmark_p", FRAME, (-2., -2., 0.), 0.),)
+    with pytest.raises(BoundaryLandmarkError, match="profile_mismatch"):
+        run_adjacent(raw, decoded, order, boundaries, landmark,
+                     profile=replace(profile, record_sha256="0" * 64))
 
 
 def test_budgets_reject_before_pair_or_segment_work(monkeypatch: pytest.MonkeyPatch) -> None:

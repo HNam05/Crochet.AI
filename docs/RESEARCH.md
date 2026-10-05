@@ -30,6 +30,13 @@ Last primary-source review for this bootstrap registry: **2026-08-31**. Reposito
 | `SRC-SHA256` | NIST, [FIPS 180-4 Secure Hash Standard](https://csrc.nist.gov/pubs/fips/180-4/upd1/final) | Immutable standard publication | Defines SHA-256 used for content-addressed artifacts and evidence. | A digest does not define the preimage; project profiles must specify canonical bytes and domain separation. | Standard algorithm; implementation comes from reviewed platform cryptography, not copied source. |
 | `SRC-ROBUST-PREDICATES` | Jonathan Richard Shewchuk, [Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric Predicates](https://doi.org/10.1007/PL00009321), *Discrete & Computational Geometry* 18 (1997) | Not applicable: publication only | Adaptive error bounds and exact-sign escalation establish a primary mathematical basis for filtered orientation/incircle-style predicates on floating inputs. | The paper does not select project mesh tolerances, characteristic scale, contact semantics, or acceptance profiles; those remain explicit project decisions. | Publication mathematics cited only. No external predicate source code was copied or selected by this architecture pass. |
 
+## Product research records
+
+- [Yarnify3D review, 2026-10-04](research/YARNIFY3D_REVIEW_2026-10-04.md):
+  public pattern-editor, preview and follow-along comparison with user-provided
+  screenshots; recommendations only. Editor behavior behind login and physical
+  accuracy remain untested. No external code, patterns or assets adopted.
+
 ## Adopted architecture versus inspiration
 
 The following are project decisions, not claims that an external source proves the complete design:
@@ -41,6 +48,10 @@ The following are project decisions, not claims that an external source proves t
 - **ENGINEERING DECISION:** Structured hashes use project collection registries plus I-JSON/binary64 JCS and profile-domain-separated SHA-256.
 - **HYPOTHESIS:** Heat-style geodesics plus Reeb/Morse-style analysis can support robust course/topology decomposition on project inputs.
 - **HYPOTHESIS:** A calibrated anisotropic graph/spring F0 model is useful enough to reject poor candidates before more expensive physical models.
+
+- [PDF and remote crochet testing, 2026-10-05](research/PROTOTYPE_PDF_REVIEW_2026-10-05.md):
+  scoped PDF dependency/license review, current primary-source comparison and
+  adopted versus future product improvements.
 
 ## Clean-room workflow
 

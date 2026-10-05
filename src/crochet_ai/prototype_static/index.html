@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Crochet.AI · lokaler Versuch</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="/">Crochet.AI <span>lokaler Versuch</span></a>
+    <nav aria-label="Informationen"><a href="/privacy.html">Datenschutz</a><a href="/terms.html">Nutzungsinfo</a></nav>
+  </header>
+  <main>
+    <section class="workbench" aria-labelledby="workbench-title">
+      <aside class="input-rail">
+        <p class="eyebrow">AMIGURUMI · EXPERIMENTELL</p>
+        <h1 id="workbench-title">Ein Versuchsmuster erstellen</h1>
+        <p class="intro">Maße und gemessene Maschenprobe bestimmen den Vorschlag. Deine Werte bleiben bearbeitbar.</p>
+        <form id="generation-form">
+          <label>Form<select name="shape" id="shape"><option value="sphere">Kugel</option><option value="ellipsoid">Ellipsoid</option></select></label>
+          <p id="shape-help" class="small-note">Geschlossene Form in fortlaufenden Runden.</p>
+          <div class="field-row"><label>Durchmesser <span>(mm)</span><input name="diameter_mm" type="number" min="20" max="100" step="1" value="40" required></label><label>Höhe <span>(mm)</span><input name="height_mm" type="number" min="20" max="100" step="1" value="40" required></label></div>
+          <button type="button" id="load-shape-example" disabled>Beispielmaße für diese Form laden</button>
+          <fieldset><legend>Gemessene Maschenprobe <span>pro 100 mm</span></legend><div class="field-row"><label>Maschen<input name="stitches_per_100mm" type="number" min="5" max="60" step="1" value="25" required></label><label>Runden<input name="courses_per_100mm" type="number" min="5" max="60" step="1" value="28" required></label></div><p class="small-note">An entspannter, ungefüllter Rundenprobe messen. Abstände über 100 mm zählen: 26 Maschenmitten ergeben 25 Abstände.</p></fieldset>
+          <div class="field-row"><label>Häkelnadel <span>(mm)</span><input name="hook_diameter_mm" type="number" min="0.5" max="12" step="0.1" value="3" required></label><label>Technische Annahme <span>Unsicherheit (%)</span><input name="uncertainty_percent" type="number" min="1" max="50" step="1" value="10" required></label></div>
+          <label>Garnbezeichnung<input name="yarn_label" maxlength="120" value="Meine Testwolle" required></label>
+          <label>Farbe <span>(sRGB Hex)</span><div class="color-row"><input name="color_hex" type="color" value="#B88757" aria-label="Garnfarbe"><output id="color-value">#B88757</output></div></label>
+          <button class="primary" type="submit" id="generate-button">Muster berechnen</button>
+        </form>
+        <p class="small-note">25 Maschen und 28 Runden sind veränderbare Demo-Werte. Das Ergebnis ist ein ungehäkelter Versuch, keine kalibrierte Vorhersage.</p>
+      </aside>
+      <section class="object-panel" aria-label="Schematische Maschenansicht">
+        <div class="object-heading"><div><p class="eyebrow">ARBEITSFLÄCHE</p><h2 id="project-title">Noch kein Muster</h2></div><span id="verification-state" class="status">Bereit</span></div>
+        <div class="canvas-wrap"><canvas id="object-view" tabindex="0" role="img" aria-label="Schematischer Maschenaufbau. Ziehen zum Drehen, Mausrad oder Zoomtasten zum Vergrößern."></canvas><p class="canvas-label">Schematischer Maschenaufbau</p><div class="orbit-controls"><button type="button" id="reset-view" aria-label="Ansicht zurücksetzen">Ansicht zurücksetzen</button><button type="button" id="zoom-out" aria-label="Ansicht verkleinern">−</button><button type="button" id="zoom-in" aria-label="Ansicht vergrößern">+</button><span>Ziehen zum Drehen · Mausrad oder +/− zum Zoomen</span></div></div>
+        <div class="view-modes" role="group" aria-label="Maschenanzeige"><button id="view-full" type="button" aria-pressed="true">Gesamtes Muster</button><button id="view-progress" type="button" aria-pressed="false">Bisheriger Aufbau</button><button id="making-view" type="button" aria-pressed="false" disabled>Häkelansicht öffnen</button></div>
+        <div class="object-foot"><p id="project-description">Erstelle ein Muster, um Maschen und Arbeitsrunden zu sehen.</p><div class="downloads"><button type="button" id="download-pdf" disabled>Anleitung als PDF</button><button type="button" id="download-readable" disabled>Runden als Text</button><button type="button" id="download-pattern" disabled>Pattern V1</button><button type="button" id="download-project" disabled>Projekt JSON</button></div><p id="pdf-status" class="small-note" role="status" aria-live="polite">Die PDF enthält die Anleitung mit Materialwerten und einen ausfüllbaren Testbericht zum Ausdrucken.</p></div>
+      </section>
+    </section>
+    <section class="making" aria-label="Arbeitsanleitung">
+      <section class="round-panel"><div class="section-heading"><div><p class="eyebrow">ARBEITSFOLGE</p><h2>Runden und Schritte</h2></div><span id="round-count"></span></div><ol id="round-list" class="round-list"><li class="empty">Nach der Berechnung erscheinen hier die Runden.</li></ol></section>
+      <section class="instruction-panel"><p class="eyebrow">JETZT ARBEITEN</p><h2 id="instruction-heading">Bereit für deinen Versuch</h2><p id="instruction-text" aria-live="polite">Erstelle ein Muster. Die Anleitung folgt den validierten Konstruktionsereignissen.</p><p class="instruction-count"><span id="instruction-progress"></span> <span id="stitch-counter" aria-live="polite"></span></p><div class="maker-controls"><button type="button" id="previous-step" disabled>Zurück</button><button type="button" id="next-step" class="primary" disabled>Nächster Schritt</button></div><p class="small-note">Tastatur: Leertaste oder Pfeiltasten, wenn kein Eingabefeld aktiv ist.</p><p id="save-state" class="save-state" role="status" aria-live="polite">Fortschritt wird lokal gespeichert.</p></section>
+    </section>
+    <section class="projects-panel"><div class="section-heading"><div><p class="eyebrow">LOKALE PROJEKTE</p><h2>Deine Versuchsmuster</h2></div><button id="refresh-projects" type="button">Aktualisieren</button></div><ul id="project-list" class="project-list"><li class="empty">Projekte werden geladen.</li></ul></section>
+    <section class="feedback-panel"><div><p class="eyebrow">RÜCKMELDUNG</p><h2>Wie lief dein Versuch?</h2><p>Dein Bericht wird dem gewählten Muster lokal zugeordnet. Er ist selbstberichtet und ungeprüft.</p></div><form id="feedback-form"><label>Ergebnis<select name="outcome"><option value="NOT_FINISHED">Noch nicht fertig</option><option value="WORKED">Hat funktioniert</option><option value="NEEDS_CHANGES">Braucht Änderungen</option></select></label><div class="field-row"><label>Gemessener Durchmesser <span>(mm, optional)</span><input name="actual_diameter_mm" type="number" min="0.01" max="1000" step="any"></label><label>Gemessene Höhe <span>(mm, optional)</span><input name="actual_height_mm" type="number" min="0.01" max="1000" step="any"></label></div><label>Notizen <span>(max. 4000 Zeichen)</span><textarea name="notes" maxlength="4000" rows="4"></textarea></label><button type="submit" id="feedback-button" disabled>Rückmeldung lokal speichern</button><button type="button" id="download-feedback" disabled>Bericht als JSON</button></form></section>
+  </main>
+  <footer><span>Crochet.AI · Prototyp 1.0.0</span><span>Nur lokal · experimentell · UNTESTED</span></footer>
+  <div id="live-message" class="visually-hidden" role="status" aria-live="polite"></div>
+</body>
+</html>

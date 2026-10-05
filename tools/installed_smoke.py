@@ -18,12 +18,14 @@ from pathlib import Path
 import attrs
 import jsonschema
 import referencing
+import reportlab
 import rfc8785
 import rpds
 
 import crochet_ai
 from crochet_ai.adjacent_triangle_residual import adjacent_triangle_residual_squared
 from crochet_ai.certified_orientation import orientation2d, orientation3d
+from crochet_ai.forward_pipeline import PROFILE as FORWARD_PIPELINE_PROFILE
 from crochet_ai.schema import SCHEMA_FILENAMES, schema_documents
 from crochet_ai.target_mesh_adjacent_residual import (
     diagnose_indexed_triangle_mesh_adjacent_residual,
@@ -58,7 +60,7 @@ def main() -> int:
         config.get("include-system-site-packages") == "false",
         "smoke.system_site_packages_enabled",
     )
-    for module in (crochet_ai, attrs, jsonschema, referencing, rfc8785, rpds):
+    for module in (crochet_ai, attrs, jsonschema, referencing, reportlab, rfc8785, rpds):
         _require(module.__file__ is not None, "smoke.module_location_missing")
         location = Path(str(module.__file__)).resolve()
         _require(location.is_relative_to(prefix), f"smoke.external_import:{module.__name__}")
@@ -77,6 +79,15 @@ def main() -> int:
             package.joinpath("profiles", profile_filename).read_bytes()
             == (repository / "profiles" / profile_filename).read_bytes(),
             "smoke.profile_bytes_mismatch",
+        )
+    for asset in (
+        "index.html", "styles.css", "app.mjs", "viewer.mjs", "state.mjs",
+        "privacy.html", "terms.html",
+    ):
+        _require(
+            package.joinpath("prototype_static", asset).read_bytes()
+            == (repository / "src/crochet_ai/prototype_static" / asset).read_bytes(),
+            f"smoke.prototype_asset_bytes_mismatch:{asset}",
         )
     _require(set(schema_documents(include_additive_versions=True)) == set(SCHEMA_FILENAMES),
              "smoke.schema_registry_mismatch")
@@ -140,10 +151,29 @@ def main() -> int:
         },
     )
     capabilities = json.loads(completed.stdout)
+    prototype_console = console.with_name("crochet-ai-prototype.exe" if sys.platform == "win32"
+                                         else "crochet-ai-prototype")
+    prototype_help = subprocess.run(
+        [str(prototype_console), "--help"], check=True,
+        capture_output=True, text=True, timeout=20,
+    )
+    _require("--data-dir" in prototype_help.stdout, "smoke.prototype_console_missing")
     _require(capabilities["ok"] is True, "smoke.capabilities_failed")
     _require(
         "inspect_mesh_openings" in capabilities["data"]["operations"],
         "smoke.inspection_operation_missing",
+    )
+    _require(
+        "inspect_v0_mesh_v2" in capabilities["data"]["operations"],
+        "smoke.v0_mesh_operation_missing",
+    )
+    _require(
+        "run_forward_prototype" in capabilities["data"]["operations"],
+        "smoke.forward_pipeline_operation_missing",
+    )
+    _require(
+        FORWARD_PIPELINE_PROFILE == "FORWARD_STRETCH_SHEAR_BENDING_PIPELINE_V1",
+        "smoke.forward_pipeline_profile_mismatch",
     )
     _require(
         capabilities["data"]["physical_verification_available"] is False,
@@ -156,7 +186,8 @@ def main() -> int:
         "schema_count": len(SCHEMA_FILENAMES), "profile_sha256": profile.record_sha256,
         "dependencies": {name: metadata.version(name) for name in (
             "jsonschema", "rfc8785", "attrs", "referencing", "rpds-py",
-            "jsonschema-specifications", "typing-extensions",
+            "jsonschema-specifications", "typing-extensions", "reportlab", "pillow",
+            "charset-normalizer",
         )},
     }, sort_keys=True))
     return 0

@@ -10,10 +10,12 @@ requires-python = ">=3.11"
 dependencies = [
   "jsonschema>=4.23,<5",
   "rfc8785>=0.1.4,<1",
+  "reportlab>=4.4.9,<5",
 ]
 
 [project.scripts]
 crochet-ai = "crochet_ai.cli:main"
+crochet-ai-prototype = "crochet_ai.prototype_server:main"
 
 [project.optional-dependencies]
 test = [
@@ -22,6 +24,8 @@ test = [
   "pytest>=8,<9",
   "ruff>=0.6,<1",
   "types-jsonschema>=4.23,<5",
+  "types-reportlab>=4.4.2.20250315,<5",
+  "pypdf>=5,<7",
 ]
 
 [tool.setuptools]
@@ -31,7 +35,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-crochet_ai = ["py.typed"]
+crochet_ai = ["py.typed", "prototype_static/*"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"

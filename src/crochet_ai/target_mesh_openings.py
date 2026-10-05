@@ -22,7 +22,20 @@ from .target_mesh_landmarks import (
     BoundaryLandmark,
     diagnose_boundary_landmark_eligibility,
 )
-from .v0_numeric_profile import resolve_v0_numeric_profile
+from .v0_adjacent_profile import (
+    PROFILE_ID as ADJACENT_PROFILE_ID,
+)
+from .v0_adjacent_profile import (
+    V0AdjacentNumericProfile,
+    resolve_v0_adjacent_numeric_profile,
+)
+from .v0_numeric_profile import (
+    PROFILE_ID as LEGACY_PROFILE_ID,
+)
+from .v0_numeric_profile import (
+    V0NumericProfile,
+    resolve_v0_numeric_profile,
+)
 from .validation import SemanticValidator
 
 STATUS = "OPENING_BINDING_DIAGNOSTIC_ONLY"
@@ -64,6 +77,9 @@ class TargetMeshOpeningDiagnostic:
     bindings: tuple[OpeningLoopBinding, ...]
     landmark_classifications: tuple[tuple[str, str, tuple[int, ...]], ...]
     diagnostic_sha256: str
+    numerical_profile_id: str | None = None
+    numerical_profile_version: str | None = None
+    numerical_profile_sha256: str | None = None
 
 
 def diagnose_target_mesh_openings(
@@ -191,9 +207,14 @@ def diagnose_target_mesh_openings(
                      float(landmark_values[identifier]["position_mm"][2])),
         tolerance_mm=float(landmark_values[identifier]["tolerance_mm"]),
     ) for identifier in referenced_ids)
-    if target["preflight_numerical_profile_id"] != "v0_num_mesh_binary64_v1":
+    numerical_profile_id = target["preflight_numerical_profile_id"]
+    numeric_profile: V0NumericProfile | V0AdjacentNumericProfile
+    if numerical_profile_id == LEGACY_PROFILE_ID:
+        numeric_profile = resolve_v0_numeric_profile(numerical_profile_id)
+    elif numerical_profile_id == ADJACENT_PROFILE_ID:
+        numeric_profile = resolve_v0_adjacent_numeric_profile(numerical_profile_id)
+    else:
         raise TargetMeshOpeningError("E_UNSUPPORTED_FEATURE: openings.numerical_profile")
-    numeric_profile = resolve_v0_numeric_profile(target["preflight_numerical_profile_id"])
     try:
         landmark_report = diagnose_boundary_landmark_eligibility(
             raw_bytes, decoded, ordering, boundaries, landmarks,
@@ -255,7 +276,7 @@ def diagnose_target_mesh_openings(
     landmark_classes = tuple((
         result.landmark_id, result.classification, result.candidate_loop_indices
     ) for result in landmark_report.results)
-    evidence: JSONValue = {
+    evidence: dict[str, JSONValue] = {
         "status": STATUS, "algorithm_version": VERSION,
         "classification": classification, "reason": reason,
         "source_sha256": source_hash, "design_spec_sha256": design_hash,
@@ -275,6 +296,12 @@ def diagnose_target_mesh_openings(
                    "expected_components": expected_components},
         "budgets": {name: budget for name, budget in limits},
     }
+    if isinstance(numeric_profile, V0AdjacentNumericProfile):
+        evidence["numerical_profile"] = {
+            "id": numeric_profile.profile_id,
+            "version": numeric_profile.profile_version,
+            "sha256": numeric_profile.record_sha256,
+        }
     digest = sha256(_DOMAIN + jcs_bytes(evidence)).hexdigest()
     return TargetMeshOpeningDiagnostic(
         STATUS, VERSION, classification, reason, source_hash, design_hash,
@@ -282,4 +309,6 @@ def diagnose_target_mesh_openings(
         ordering.diagnostic_sha256, boundaries.diagnostic_sha256,
         landmark_report.diagnostic_sha256, len(boundaries.boundary_loops),
         expected_components, bindings, landmark_classes, digest,
+        numeric_profile.profile_id, numeric_profile.profile_version,
+        numeric_profile.record_sha256,
     )

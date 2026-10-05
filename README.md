@@ -5,8 +5,9 @@ Crochet.AI is a research-grade foundation for a deterministic crochet CAD/compil
 Milestone 0 is implemented: strict `DesignSpec`, `MaterialProfile`, and
 `CrochetIR` runtime models; deterministic canonicalization and hashing; an
 independent V1 semantic validator; and execution-normalized semantic
-equivalence. The repository intentionally contains no production solver, UI,
-LLM integration, forward simulation, or claim of physical verification.
+equivalence. The repository also contains a local human-test prototype and
+bounded experimental forward-model components. Production solver acceptance,
+LLM integration and physical verification remain open.
 
 The working backend now also includes the non-branching
 [Pattern V1 parser/exporter](docs/PATTERN_FORMAT_V1.md), the separately versioned
@@ -17,6 +18,21 @@ SQLite jobs, and a target-free physical-semantic projection. Read
 [backend runtime usage and limits](docs/BACKEND_RUNTIME.md). These are research
 components, not a production solver or physical simulator. See the
 [backend acceptance plan](docs/BACKEND_ACCEPTANCE_PLAN.md) for remaining packages.
+
+## Local crochet test
+
+Open `Start-CrochetPrototype.cmd` (prefers the existing `.venv`) or run
+`.\.venv\Scripts\python.exe tools/run_prototype.py`, then
+visit <http://127.0.0.1:8765>. The local browser prototype generates single-color
+sphere/ellipsoid/cylinder/cone/capsule/pear trial patterns from editable dimensions
+and cyclic gauge, shows a schematic stitch layout, saves progress and records
+test feedback. PDF export includes print instructions and a report worksheet
+for a crocheter away from this computer; it requires no server at the recipient.
+Results remain **NOT_VERIFIED / UNTESTED** until the required independent and
+physical checks exist. Replace the demonstration gauge with your measurements.
+See [the German testing guide](docs/PROTOTYP_TESTEN.md) and
+[the prototype contract](docs/LOCAL_PROTOTYPE_V1.md). A separate mobile app is
+deferred until after this browser test.
 
 ## Architectural contract
 

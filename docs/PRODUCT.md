@@ -59,6 +59,29 @@ Outputs expose separate evidence lanes rather than opaque confidence percentages
 
 `VERIFIED` requires all mandatory computational gates. It does not imply `PHYSICALLY_VERIFIED`.
 
+## Future live workflows
+
+The user endorsed inspiration from Yarnify3D on 2026-10-04, specifically live
+object construction while authoring and step-by-step crochet guidance. See the
+[source-based product review](research/YARNIFY3D_REVIEW_2026-10-04.md).
+
+- An authoring view should update a clearly scoped digital object from supported,
+  validated construction changes.
+- A making view should synchronize the current instruction, stitch, insertion
+  location and construction progress, with reversible version-bound sessions.
+- Both consume the same canonical construction. Interactive layout, progress
+  and display state cannot alter independent verification or physical evidence.
+- Unsupported or stale construction must remain visible as such. Illustrative
+  geometry must not be presented as calibrated predicted geometry.
+
+The user subsequently requested a directly testable local browser prototype,
+with a separate mobile app later. Its bounded scope, source-bound making
+sessions, feedback and schematic display are recorded in
+[LOCAL_PROTOTYPE_V1.md](LOCAL_PROTOTYPE_V1.md). The complete backend acceptance
+gates remain open. The [experimental forward pipeline](FORWARD_PIPELINE_V1.md)
+has a narrower plain-strip scope and does not provide physical shaping
+predictions for these prototype patterns.
+
 ## Non-goals for bootstrap
 
 - production 3D geodesic or frontier solvers;
@@ -88,4 +111,3 @@ Outputs expose separate evidence lanes rather than opaque confidence percentages
 - seamless branching operations remain physically workable at predicted dimensions.
 
 These are versioned engineering hypotheses, not established physical facts.
-

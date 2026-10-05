@@ -14,6 +14,7 @@ from crochet_ai.target_mesh_openings import (
     TargetMeshOpeningError,
     diagnose_target_mesh_openings,
 )
+from crochet_ai.v0_adjacent_profile import PROFILE_ID as ADJACENT_PROFILE_ID
 
 FRAME = "frame_fixture_target"
 LIMITS = {
@@ -99,6 +100,50 @@ def test_two_openings_have_unique_landmark_supported_bijection() -> None:
     assert [(item.opening_requirement_id, item.purpose) for item in result.bindings] == [
         ("opening_req_inner", "ARMHOLE"), ("opening_req_outer", "NECKLINE")]
     assert {item.loop_index for item in result.bindings} == {0, 1}
+
+
+def test_v2_profile_binds_open_mesh_with_hash_locked_slack_evidence() -> None:
+    raw = mesh_bytes()
+    _, _, value = documents(raw)
+    value["schema_version"] = "1.1.0"
+    value["target_geometry"]["preflight_numerical_profile_id"] = ADJACENT_PROFILE_ID
+    value["target_geometry"]["adjacent_exclusion_zone"] = {
+        "policy_id": "BARYCENTRIC_PAIR_LOCAL_V1",
+        "lambda": {"numerator": "1", "denominator": "2"},
+    }
+    result = run(raw, DesignSpec.from_dict(value))
+    assert result.status == "OPENING_BINDING_DIAGNOSTIC_ONLY"
+    assert result.classification == "UNIQUE"
+    assert result.numerical_profile_id == ADJACENT_PROFILE_ID
+    assert result.numerical_profile_sha256
+    assert result.landmark_diagnostic_sha256
+    assert len(result.bindings) == 2
+
+
+def test_v2_opening_binding_rejects_unreduced_zone_and_ambiguous_landmark() -> None:
+    raw = mesh_bytes()
+    _, _, value = documents(raw)
+    value["schema_version"] = "1.1.0"
+    value["target_geometry"]["preflight_numerical_profile_id"] = ADJACENT_PROFILE_ID
+    value["target_geometry"]["adjacent_exclusion_zone"] = {
+        "policy_id": "BARYCENTRIC_PAIR_LOCAL_V1",
+        "lambda": {"numerator": "2", "denominator": "4"},
+    }
+    with pytest.raises(TargetMeshOpeningError, match="design_spec_semantically_invalid"):
+        run(raw, DesignSpec.from_dict(value))
+
+    _, _, value = documents(raw)
+    value["schema_version"] = "1.1.0"
+    value["target_geometry"]["preflight_numerical_profile_id"] = ADJACENT_PROFILE_ID
+    value["target_geometry"]["adjacent_exclusion_zone"] = {
+        "policy_id": "BARYCENTRIC_PAIR_LOCAL_V1",
+        "lambda": {"numerator": "1", "denominator": "2"},
+    }
+    value["landmarks"][0]["position_mm"] = [0., 0., 0.]
+    value["landmarks"][0]["tolerance_mm"] = 3.
+    result = run(raw, DesignSpec.from_dict(value))
+    assert result.classification == "AMBIGUOUS"
+    assert result.reason == "openings.landmark_ambiguous"
 
 
 def test_opening_and_landmark_order_do_not_change_evidence() -> None:

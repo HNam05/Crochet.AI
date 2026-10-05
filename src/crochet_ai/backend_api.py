@@ -22,11 +22,28 @@ from .canonical import (
     validate_ijson,
 )
 from .diagnostics import ArtifactValidationError
+from .forward_pipeline import (
+    ForwardPipelineError,
+    admit_forward_pipeline_recipe,
+    run_forward_pipeline,
+)
 from .models import DesignSpec, MaterialProfile
 from .pattern import TerminologyProfile, export_pattern
+from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
 from .schema import validate_schema
 from .solver_types import GenerationError
-from .target_mesh_openings import TargetMeshOpeningError, diagnose_target_mesh_openings
+from .target_mesh_openings import (
+    TargetMeshOpeningDiagnostic,
+    TargetMeshOpeningError,
+    diagnose_target_mesh_openings,
+)
+from .v0_mesh_preflight import (
+    V0MeshBudgets,
+    V0MeshPreflightError,
+    V0MeshResult,
+    inspect_v0_closed_mesh_v2,
+    inspect_v0_mesh_v2,
+)
 from .validation import SemanticValidator
 
 API_VERSION = "1.0.0"
@@ -130,12 +147,17 @@ class BackendAPI:
                     "operations": [
                         "capabilities", "generate_analytic", "validate_ir", "export_ir",
                         "inspect_mesh_openings",
+                        "inspect_v0_closed_mesh_v2",
+                        "inspect_v0_mesh_v2",
+                        "run_forward_prototype",
                     ],
                     "candidate_domains": ["CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC"],
                     "physical_verification_available": False,
                     "deployment_scope": "LOCAL_SINGLE_USER",
                 }
-            elif operation == "inspect_mesh_openings":
+            elif operation in {
+                "inspect_mesh_openings", "inspect_v0_closed_mesh_v2", "inspect_v0_mesh_v2"
+            }:
                 _object(request, {
                     "api_version", "operation", "design_spec", "material_profile", "mesh_json",
                 }, "request")
@@ -143,18 +165,86 @@ class BackendAPI:
                     raise ApiInputError("request.mesh_json")
                 # Bytes, not reserialized JSON, must match the declared source digest.
                 raw_mesh = request["mesh_json"].encode("utf-8")
-                result = diagnose_target_mesh_openings(
-                    DesignSpec.from_dict(request["design_spec"]), raw_mesh,
-                    material_profile=MaterialProfile.from_dict(request["material_profile"]),
-                    max_bytes=262_144, max_vertices=128, max_faces=256,
-                    max_openings=16, max_landmark_refs=64, max_landmarks=32,
-                    max_vertex_pairs=8_128, max_landmark_edge_tests=16_384,
-                )
+                design_model = DesignSpec.from_dict(request["design_spec"])
+                material_model = MaterialProfile.from_dict(request["material_profile"])
+                result: TargetMeshOpeningDiagnostic | V0MeshResult
+                if operation == "inspect_mesh_openings":
+                    result = diagnose_target_mesh_openings(
+                        design_model, raw_mesh, material_profile=material_model,
+                        max_bytes=262_144, max_vertices=128, max_faces=256,
+                        max_openings=16, max_landmark_refs=64, max_landmarks=32,
+                        max_vertex_pairs=8_128, max_landmark_edge_tests=16_384,
+                    )
+                    preflight_state = "INDETERMINATE"
+                else:
+                    inspector = (
+                        inspect_v0_closed_mesh_v2
+                        if operation == "inspect_v0_closed_mesh_v2"
+                        else inspect_v0_mesh_v2
+                    )
+                    result = inspector(
+                        design_model, raw_mesh, material_profile=material_model,
+                        budgets=V0MeshBudgets(
+                            max_bytes=262_144, max_vertices=128, max_faces=256,
+                            max_vertex_pairs=8_128, max_face_pairs=32_640,
+                            max_distance_piece_pairs=130_560, max_lambda_bits=512,
+                            max_orientation_tests=800_000,
+                            max_openings=16, max_landmark_refs=64, max_landmarks=32,
+                            max_landmark_edge_tests=16_384,
+                        ),
+                    )
+                    preflight_state = result.outcome
                 data = {
                     "diagnostic": parse_json(rfc8785.dumps(asdict(result))),
                     "verification_state": "NOT_VERIFIED",
-                    "mesh_preflight_state": "INDETERMINATE",
+                    "mesh_preflight_state": preflight_state,
                     "physical_status": "UNTESTED",
+                }
+            elif operation == "run_forward_prototype":
+                _object(request, {
+                    "api_version", "operation", "design_spec", "material_profile",
+                    "crochet_ir", "forward_run",
+                }, "request")
+                design, material, value = (
+                    request["design_spec"], request["material_profile"], request["crochet_ir"]
+                )
+                if not isinstance(design, dict) or not isinstance(material, dict):
+                    raise ApiInputError("request.artifacts")
+                if not isinstance(value, dict):
+                    raise ApiInputError("request.crochet_ir")
+                for kind, artifact in (("design_spec", design), ("material_profile", material)):
+                    report = validate_schema(kind, artifact)
+                    if not report.ok:
+                        raise ArtifactValidationError(report)
+                source_validator = SemanticValidator(
+                    material_profiles={material.get("profile_id", ""): material},
+                    design_specs={design.get("design_spec_id", ""): design},
+                )
+                report = source_validator.validate_crochet_ir(value)
+                if not report.ok:
+                    raise ArtifactValidationError(report)
+                source_sha256 = canonical_hash(
+                    value, CanonicalProfile.CROCHET_IR, validator=source_validator
+                )
+                try:
+                    projection = PhysicalSemanticProjection(
+                        value, material, validator=source_validator
+                    )
+                except PhysicalProjectionError as error:
+                    raise ForwardPipelineError("E_UNSUPPORTED_FEATURE", str(error)) from error
+                recipe = admit_forward_pipeline_recipe(request["forward_run"])
+                execution_validator = SemanticValidator(
+                    material_profiles={material.get("profile_id", ""): material}
+                )
+                bundle = run_forward_pipeline(
+                    projection, material, recipe, validator=execution_validator
+                )
+                data = {
+                    "source_crochet_ir_sha256": source_sha256,
+                    "experimental_forward_bundle": bundle,
+                    "verification_state": "NOT_VERIFIED",
+                    "physical_status": "UNTESTED",
+                    "v6_outcome": "NOT_RUN",
                 }
             elif operation in {"generate_analytic", "validate_ir", "export_ir"}:
                 keys = {"api_version", "operation", "design_spec", "material_profile"}
@@ -255,6 +345,15 @@ class BackendAPI:
             if str(error).startswith("E_UNSUPPORTED_FEATURE:"):
                 return error_response("E_UNSUPPORTED_FEATURE", str(error))
             return error_response("E_INPUT", str(error))
+        except V0MeshPreflightError as error:
+            return {
+                "api_version": API_VERSION,
+                "ok": False,
+                "error": {"code": error.code, "reason": error.reason, "outcome": error.outcome,
+                          "gate": "V0"},
+            }
+        except ForwardPipelineError as error:
+            return error_response(error.code, error.reason)
         except (
             ApiInputError,
             CanonicalizationError,

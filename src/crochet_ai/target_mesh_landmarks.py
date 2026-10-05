@@ -30,6 +30,14 @@ from .target_mesh_diameter import (
     MeshDiameterError,
     diagnose_indexed_triangle_mesh_diameter,
 )
+from .v0_adjacent_profile import (
+    PROFILE_ID as ADJACENT_PROFILE_ID,
+)
+from .v0_adjacent_profile import (
+    AdjacentProfileError,
+    V0AdjacentNumericProfile,
+    resolve_v0_adjacent_numeric_profile,
+)
 from .v0_numeric_profile import (
     PROFILE_ID,
     NumericalGeometryProfileError,
@@ -40,7 +48,6 @@ from .v0_numeric_profile import (
 STATUS = "BOUNDARY_LANDMARK_ELIGIBILITY_DIAGNOSTIC_ONLY"
 VERSION = "1.0.0"
 _HASH_DOMAIN = b"TARGET_MESH_BOUNDARY_LANDMARK_ELIGIBILITY_V1\0"
-_SLACK = Fraction(1, 1 << 40)
 
 
 class BoundaryLandmarkError(ValueError):
@@ -125,9 +132,11 @@ def _point_segment_distance_squared(
     return sum(((point[i] - closest[i]) ** 2 for i in range(3)), Fraction(0))
 
 
-def _within_threshold(q: Fraction, tolerance: Fraction, diameter2: Fraction) -> bool:
+def _within_threshold(
+    q: Fraction, tolerance: Fraction, diameter2: Fraction, slack: Fraction,
+) -> bool:
     # Compare q <= (t + s*sqrt(D))^2 without evaluating or rounding sqrt(D).
-    s2d = _SLACK * _SLACK * diameter2
+    s2d = slack * slack * diameter2
     a = q - tolerance * tolerance - s2d
     return a <= 0 or a * a <= 4 * tolerance * tolerance * s2d
 
@@ -139,7 +148,7 @@ def diagnose_boundary_landmark_eligibility(
     boundaries: DirectedBoundaryDiagnostic,
     landmarks: Sequence[BoundaryLandmark],
     *,
-    profile: V0NumericProfile,
+    profile: V0NumericProfile | V0AdjacentNumericProfile,
     media_type: str,
     expected_coordinate_frame_id: str,
     max_bytes: int,
@@ -180,14 +189,23 @@ def diagnose_boundary_landmark_eligibility(
         raise BoundaryLandmarkError("landmarks.boundary_invalid") from error
     if fresh_boundaries != boundaries:
         raise BoundaryLandmarkError("landmarks.boundary_mismatch")
-    if not isinstance(profile, V0NumericProfile):
+    if isinstance(profile, V0NumericProfile):
+        try:
+            builtin: V0NumericProfile | V0AdjacentNumericProfile = resolve_v0_numeric_profile(
+                PROFILE_ID,
+            )
+        except NumericalGeometryProfileError as error:
+            raise BoundaryLandmarkError("landmarks.profile_unresolved") from error
+    elif isinstance(profile, V0AdjacentNumericProfile):
+        try:
+            builtin = resolve_v0_adjacent_numeric_profile(ADJACENT_PROFILE_ID)
+        except AdjacentProfileError as error:
+            raise BoundaryLandmarkError("landmarks.profile_unresolved") from error
+    else:
         raise BoundaryLandmarkError("landmarks.profile_invalid")
-    try:
-        builtin = resolve_v0_numeric_profile(PROFILE_ID)
-    except NumericalGeometryProfileError as error:
-        raise BoundaryLandmarkError("landmarks.profile_unresolved") from error
     if profile != builtin:
         raise BoundaryLandmarkError("landmarks.profile_mismatch")
+    slack = Fraction.from_float(builtin.thresholds.landmark_numeric_slack_normalized_max)
 
     for name, budget in (("max_landmarks", max_landmarks),
                          ("max_vertex_pairs", max_vertex_pairs),
@@ -264,7 +282,7 @@ def diagnose_boundary_landmark_eligibility(
                     point, positions[loop[i]], positions[loop[(i + 1) % len(loop)]]
                 ) for i in range(len(loop))
             )
-            eligible = _within_threshold(distance, tolerance, diameter2)
+            eligible = _within_threshold(distance, tolerance, diameter2, slack)
             loop_distances.append(LandmarkLoopDistance(
                 loop_index, str(distance.numerator), str(distance.denominator), eligible,
             ))
@@ -297,7 +315,8 @@ def diagnose_boundary_landmark_eligibility(
         "request": request_payload,
         "profile": {"id": profile.profile_id, "version": profile.profile_version,
                     "sha256": profile.record_sha256,
-                    "slack": {"numerator": "1", "denominator": str(1 << 40)}},
+                    "slack": {"numerator": str(slack.numerator),
+                              "denominator": str(slack.denominator)}},
         "ordering_diagnostic_sha256": fresh_order.diagnostic_sha256,
         "boundary_diagnostic_sha256": fresh_boundaries.diagnostic_sha256,
         "diameter_squared_mm2": {"numerator": str(diameter2.numerator),

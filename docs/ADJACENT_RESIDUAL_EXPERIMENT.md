@@ -37,8 +37,11 @@ included domain attained.
 Lambda is dimensionless and face-relative. The result is not a millimetre tube,
 physical clearance, thickness model, or retessellation-invariant surface
 distance. Changing face shape or triangulation changes the retained region.
-This kernel has no V0 integration, acceptance threshold, physical calibration,
-or claim of suitability for manufactured or textile contact decisions.
+This standalone kernel has no acceptance threshold, physical calibration, or
+claim of suitability for manufactured or textile contact decisions. The
+versioned `inspect_v0_mesh_v2` operation consumes it through a source-bound
+wrapper and applies numerical profile 2's immutable threshold; the kernel's
+own result remains experimental.
 The edge fixture's independent exact oracle is `4 * lambda^2`; an asymmetric
 face-height regression distinguishes a mixed-pair result of `1` from a
 retained-retained-only result of `5`. A bounded property test checks the edge

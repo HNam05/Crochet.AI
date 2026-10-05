@@ -29,10 +29,26 @@ metric interpretation is permitted. The exact retained pair domain and
 original-contact rejection rule are in
 [`ADJACENT_RESIDUAL_EXPERIMENT.md`](ADJACENT_RESIDUAL_EXPERIMENT.md).
 
-Schema admission and experimental residual computation do not establish full
-V0 acceptance. Complete version-specific pipeline integration, clearance
-classification, normalization and independent verification remain gates.
-Retessellation invariance and physical calibration are not claimed.
+Schema admission and the standalone residual diagnostic do not establish V0
+acceptance. The integrated operation below performs the supported mesh V0
+checks. Retessellation invariance, independent physical holdouts and physical
+calibration are not claimed.
+
+The `inspect_v0_mesh_v2` runtime operation now admits the closed and declared
+opening amigurumi profiles and the garment surface mesh profile under
+DesignSpec 1.1. The compatibility operation `inspect_v0_closed_mesh_v2`
+remains restricted to closed amigurumi meshes. The V0 admission binds
+the exact source and immutable profile, checks all unordered original face
+relations, applies the pair-local residual threshold to every adjacent pair,
+checks nonadjacent contact and numerical degeneracy against the same certified
+mesh diameter, evaluates each closed component's signed volume, and records
+the normalized mesh bytes, maps and event hashes. Open boundaries require a
+unique landmark-supported assignment to `REMAIN_OPEN` requirements. Filtered
+orientation signs are cross-checked against exact binary64-rational signs for
+source vertex/plane and coplanar edge tests. A V0 `PASS` is a computational
+result for the selected supported mesh domain profile only. Flat and lace V0
+profiles, and non-mesh input profiles, still require their own admission paths.
+V1-V10 and physical status remain separate.
 
 The schema loader validates both versions. `schema_documents()` preserves its
 legacy six-schema compatibility view; `include_additive_versions=True` returns

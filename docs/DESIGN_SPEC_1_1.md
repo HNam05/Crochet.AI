@@ -46,6 +46,7 @@ original-face contact beyond an intended shared entity is always forbidden,
 even inside the local zones.
 
 Individual runtime operations must explicitly declare support for the new
-profile. An old diagnostic rejects it as unsupported instead of substituting
-the legacy profile or claiming V0 acceptance. Admission, normalization, complete
-geometry verification and physical evidence remain separate release gates.
+profile. Legacy-only diagnostics reject it rather than substituting the old
+profile. `inspect_v0_mesh_v2` now performs V0 admission and normalization for
+supported amigurumi and garment mesh profiles. Later verification gates and
+physical evidence remain separate.

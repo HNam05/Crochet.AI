@@ -42,6 +42,7 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | generate_analytic | design_spec, material_profile, run_config |
 | validate_ir | design_spec, material_profile, crochet_ir |
 | export_ir | design_spec, material_profile, crochet_ir, terminology |
+| run_forward_prototype | design_spec, material_profile, crochet_ir, forward_run |
 | inspect_mesh_openings | design_spec, material_profile, mesh_json |
 
 `inspect_mesh_openings` is an additive diagnostic capability within the 1.0
@@ -82,6 +83,26 @@ The supplied commit is a caller assertion, not independently authenticated Git
 provenance. The CLI separately hashes its installed Python sources and schemas
 and records runtime versions. It marks checkout status `UNCONFIRMED`. Missing
 commit identity prevents generation before search. This is not V10 certification.
+
+## Experimental forward execution
+
+`run_forward_prototype` connects existing target-free forward components under
+`FORWARD_STRETCH_SHEAR_BENDING_PIPELINE_V1`. The closed request, explicit
+hypothesis parameters, operational work limits and result rules are specified
+in [FORWARD_PIPELINE_V1.md](FORWARD_PIPELINE_V1.md). It is available through the
+generic `request --request-file` command and the existing durable local queue.
+
+The supported construction is narrower than the analytic generator: only the
+admitted plain aligned cyclic quad strip can enter this experimental surface
+path. Unsupported shaping, phases or construction are rejected. The wrapper
+does not synthesize ring/closure caps, seams, pressure or contact forces.
+
+Only a balanced combined optimizer result with no forbidden final triangle
+intersections may expose coordinates, with role `EXPERIMENTAL_DEBUG_ONLY`.
+Failure or exhaustion exposes no geometry. The full result remains
+`verification_state:NOT_VERIFIED`, `physical_status:UNTESTED`, and
+`v6_outcome:NOT_RUN`. Handling a request or returning illustrative coordinates
+does not establish converged F0, V6, calibrated shape accuracy or release.
 
 ## Analytic proposal policy
 
@@ -188,8 +209,10 @@ and `max_line_search_trials` as separate positive work limits. Unknown fields
 and target/embedding payloads fail. Its domain-separated hash
 binds the admitted loading, model and config content, but no cache or V6 outcome
 uses it yet. The model version is `F0_STRETCH_PROTOTYPE`, deliberately not a claim
-of complete F0: shear, bending, contact, pressure and boundary mechanics remain
-unimplemented, and neither coefficients nor thresholds are physically calibrated.
+of complete F0: the core profile remains stretch-only, while the separately
+versioned shear and bending hypotheses below are experimental. Contact,
+pressure and boundary mechanics remain unimplemented, and neither coefficients nor
+thresholds are physically calibrated.
 
 `prepare_stretch_terms` uses the admitted graph and hypothesis inputs to build
 only experiment-labelled COURSE springs and unambiguous plain 1:1 TOP_LOOP-to-
@@ -240,6 +263,34 @@ inputs. Only force balance of the admitted stretch terms can produce
 `EXPERIMENTAL_FORCE_BALANCED`; exhausted, failed or numerically invalid runs
 publish no final coordinates. This status does not check the full F0 energy,
 topology geometry, collisions or physical accuracy and cannot pass V6.
+
+`admit_shear_parameters` accepts an explicit `HYPOTHESIS` stiffness in N mm,
+rest-angle cosine and provenance. `prepare_shear_terms` first rechecks the
+complete supported plain 1:1 open-strip topology, then binds one term to each
+canonical quad cell with hashes for the cells, parameters, material, projection
+and run inputs. `evaluate_shear_terms` evaluates the cosine-angle energy and
+analytic negative-gradient forces; singular edges and non-finite arithmetic
+fail explicitly. The separate `optimize_stretch_shear_prototype` combines this
+energy with the existing stretch terms under global iteration and evaluation
+limits, records both term identities and the numerical step rule, and can only
+return an experimental force-balance status. Its result can feed the exact
+final-coordinate contact diagnostic, which still does not grant V6 or physical
+clearance. Rest angle, shear stiffness and contact behavior need external
+calibration before physical claims.
+
+`admit_bending_parameters` requires an explicit `HYPOTHESIS` rest dihedral in
+radians, bending stiffness in N mm and source provenance. The initializer does
+not supply a physical rest angle. `prepare_bending_terms` binds these parameters
+to canonical quad diagonals, topology, initialization, material and inputs.
+`evaluate_bending_terms` evaluates a wrapped dihedral energy and its
+negative-gradient nodal forces. Degenerate or excessively skinny faces and
+ambiguous angle branches fail explicitly. The scale-aware quality limit and
+arithmetic guards are versioned prototype numerical policy, not calibrated
+crochet tolerances. `optimize_stretch_shear_bending_prototype` combines all
+three terms with bounded Armijo descent, recording each term identity and
+the numerical rule. A force-balanced result can feed the exact final-coordinate
+contact diagnostic, but does not establish physical clearance or V6. Rest
+dihedral, stiffness and contact response need external calibration.
 
 `build_forward_surface_cells` derives a target-free, coordinate-free open quad
 strip only between consecutive plain 1:1 cyclic SC courses. It checks exact
@@ -313,6 +364,19 @@ the source, initialization and forward-input hashes. This is a
 `DISTANCE_DIAGNOSTIC_ONLY` measurement of initial coordinates: it supplies no
 calibrated contact threshold, fabric thickness, force, clearance certificate,
 convergence or V6 outcome. The V0 near-contact profile is a separate contract.
+
+`diagnose_final_exact_self_contact` repeats the exhaustive exact-intersection
+classification on the coordinates of a provenance-bound
+`EXPERIMENTAL_FORCE_BALANCED` optimizer artifact. It revalidates the source
+triangulation, optimizer bytes and hash, coordinate domain, and the complete
+unordered face-pair budget before testing contact beyond shared vertices or
+edges. It also records the exact minimum squared distance in mm² among faces
+without shared attachment locations, with every minimizing pair. Its result is
+`FINAL_COORDINATE_SELF_CONTACT_DIAGNOSTIC_ONLY`, including when no forbidden
+intersection is found. Without a calibrated thickness or contact policy, the
+distance cannot establish near-contact clearance. The diagnostic does not
+measure penetration, provide contact response, or establish F0/V6 convergence
+or physical clearance.
 
 ## Target mesh decode-only boundary
 
@@ -464,7 +528,41 @@ sorting. The result remains a source-bound diagnostic proposal with unresolved
 admission gates, not a canonical mesh or V0 pass. See
 [`MESH_WINDING_PROPOSAL.md`](MESH_WINDING_PROPOSAL.md).
 
+`inspect_v0_mesh_v2` runs the versioned DesignSpec 1.1 barycentric
+adjacent-zone policy through a complete V0 decision for supported amigurumi and
+garment triangle meshes. `inspect_v0_closed_mesh_v2` retains its closed-only
+scope. The check rebinds the source hash, profile hash and material reference;
+checks exact topology, component and boundary counts, area and coordinate
+thresholds, original face-pair relations, nonadjacent and adjacent clearance,
+closed-component signed-volume orientation, and a unique declared opening
+assignment when boundaries exist; then emits canonical mesh JSON, its hash,
+source index maps and normalization events. Pair work and exact fallback work
+are bounded. The API reports V0 `PASS` only for this admitted profile and keeps
+overall verification `NOT_VERIFIED` and physical status `UNTESTED`. Flat, lace
+and non-mesh V0 profiles remain outside this operation.
+
 ## Executable checks
+
+The separately authorized local browser trial is started with
+`.\.venv\Scripts\python.exe tools/run_prototype.py` or
+`Start-CrochetPrototype.cmd` in the checkout. The launcher prefers the existing
+project `.venv`; install the declared dependencies there for PDF export.
+It listens only on <http://127.0.0.1:8765> and stores its own projects in
+`artifacts/local-prototype/prototype.sqlite3`. The installed wheel also supplies
+`crochet-ai-prototype --software-commit <actual-git-head>`; when started outside
+a checkout, the commit must be supplied explicitly. It packages all seven
+static assets and uses the same deterministic source-bound generation.
+See [LOCAL_PROTOTYPE_V1.md](LOCAL_PROTOTYPE_V1.md) and
+[PROTOTYP_TESTEN.md](PROTOTYP_TESTEN.md) for supported forms and honest evidence
+limits. The shaped schematic display is separate from the narrow experimental
+plain-strip forward pipeline.
+
+The PDF route serves a complete printable document for a saved source-bound
+artifact; no client-supplied instructions, external images or cloud renderer
+are used. It includes material values, rounds and a physical-test worksheet.
+ReportLab is the reviewed pagination dependency. The recipient can read/print
+the exported file without this server. An unsupported font character is an
+explicit export error; no missing glyph is silently substituted.
 
 ```powershell
 python -B -m pytest -q
