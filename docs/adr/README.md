@@ -16,4 +16,6 @@ Accepted foundational decisions:
 12. [`0012-canonical-indexed-triangle-mesh.md`](0012-canonical-indexed-triangle-mesh.md): canonical triangle-surface identity, units, indexing, and no-repair boundary
 13. [`0013-versioned-v0-numerical-geometry.md`](0013-versioned-v0-numerical-geometry.md): scale-normalized certified numerical predicates and immutable V0 policy
 
+17. [`0017-explicit-analytic-meridian-coordinates.md`](0017-explicit-analytic-meridian-coordinates.md): additive DesignSpec coordinate profiles, bounded ideal-target admission and explicit solver boundary
+
 New decisions that alter public schemas, verification gates, trust boundaries, reproducibility, or physical claims require a new ADR. Accepted ADRs are superseded rather than rewritten to conceal history.

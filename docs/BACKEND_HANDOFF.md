@@ -28,8 +28,9 @@ This is a working implementation checkpoint, not full backend acceptance.
 - Calibration campaign/store, printable measurement packet and draft material
   derivation. Physical measurements are not invented or accepted as calibrated
   merely because their software records validate.
-- V0 mesh admission and ideal sphere/ellipsoid target subset. Generic signed
-  radial targets and native cylinder/cone interface semantics remain partial.
+- V0 mesh admission, ideal sphere/ellipsoid targets and additive DesignSpec 1.2
+  simple explicit-coordinate revolution targets. Arbitrary axes/open coordinate
+  targets, coordinate generation and native cylinder/cone interfaces remain partial.
 - Target-free shaped-cell construction, independent surface manifold/Euler/Betti
   audit and independent raw-IR-to-cell conformance. V4 can PASS only in the
   documented closed single-component/branch/yarn SC subset.
@@ -126,6 +127,39 @@ intermediate frontier rotation must fail raw replay. Canonical schedule strings
 reject padded numbers such as "06". Additional boundary tests require complexity
 limits before hashing and reject client reports or budget overrides.
 
+## Explicit coordinate target checkpoint
+
+DesignSpec 1.2 adds ordered radius_mm/axial_mm meridian knots under
+SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1. Its AXIAL_LENGTH is
+exactly the finite binary64 full axial extent, not endpoint displacement.
+Old schemas, profiles, goldens and saved projects are not upgraded or backfilled.
+See [ANALYTIC_COORDINATE_TARGET_V1.md](ANALYTIC_COORDINATE_TARGET_V1.md) and
+[ADR 0017](adr/0017-explicit-analytic-meridian-coordinates.md).
+
+The immutable ANALYTIC_COORDINATE_TARGET_V1 adapter supports simple CLOSED,
+pole-ended AMIGURUMI_3D meridians and signed cardinal axes matching frame up.
+Exact dyadic-rational predicates reject all segment crossings/touches/overlaps;
+adjacent straight continuation remains valid. A fixed 129-knot/8,128-pair ceiling
+bounds work. Explicit caps and simple nonmonotone axial movement are supported.
+Finite distinct pole/cardinal witnesses guard representability at those points;
+no universal binary64 sampling certificate is claimed. Ideal topology is genus
+zero, distinct from candidate/mesh topology or physical stitchability.
+
+API/CLI/isolated durable jobs expose existing inspect_analytic_target. V0 has a
+separate coordinate scope, version, budgets and linked target hash: valid ideal
+targets PASS, proved coordinate contradictions FAIL/E_INPUT, unsupported scopes
+stay INDETERMINATE. New coordinates do not enter the independent forward model.
+The only generator-side change is an explicit NOT_APPLICABLE admission guard;
+count/phase search, compilation, independent candidate replay and CrochetIR are
+unchanged. New-coordinate generation, sampling/V7 and physical acceptance remain
+open, overall NOT_VERIFIED and physical UNTESTED.
+
+One bounded Luna/medium worker implemented the input/target/admission package.
+A read-only Luna mathematical reviewer checked the ideal embedding proof and
+exact predicate implementation; no concrete bug was found in that limited scope.
+Primary independently reviewed schemas, API/V0 evidence, hashes and counterexamples.
+This review does not cover baseline physical-model or full release correctness.
+
 ## Validation and runtime
 
 Previous accepted V5 claims checkpoint: 1,050 Python tests, Ruff, strict mypy on
@@ -197,6 +231,31 @@ retained separately. Only the complete rerun establishes the full-suite result.
 No controlled speedup is claimed. Worker token/cost measurements remain null
 in `artifacts/agent-costs/2026-10-06-final-relation.json`.
 
+Explicit-coordinate checkpoint: all 1,217 full-suite tests passed in 534.76 s.
+The first full run was stopped after an obsolete dispatch test treated the newly
+supported 1.2 version as unknown; that ordinary registry test now asserts 1.2
+acceptance and unknown 1.3 rejection. Frozen schemas/goldens remain unchanged.
+Only the complete rerun establishes the full-suite result.
+55 new focused tests and the adjacent-contract
+regressions passed together (81 tests, 8.77 s). Full Ruff and strict mypy on
+87 source modules passed. Five frozen Node canonical vectors, six additional
+Python/Node coordinate/design hash comparisons and ten frontend tests passed.
+Wheel build, clean isolated installation, dependency check and out-of-checkout
+smoke passed; all nine registered schemas are bundled byte-for-byte. Six source
+and installed CLI envelopes match exactly, including valid capped/nonmonotone
+targets, crossing rejection, V0 evidence and structured generation NOT_APPLICABLE.
+The old sphere target metadata and digest are unchanged.
+
+After loading the new code locally, all ten saved projects and sessions matched
+their pre-task captures exactly. The saved sphere retains V0 PASS, independent
+search/final-relation PASS, V5 INDETERMINATE with exactly the same two missing
+physical/selection checks, overall NOT_VERIFIED and physical UNTESTED. The legacy
+hash-only sphere remains incomplete; PDF download passed. Comparisons use UTF-8
+captures directly and do not edit storage. Evidence is under
+`artifacts/backend-coordinate-target/`. Worker token/cost measurements remain
+null in `artifacts/agent-costs/2026-10-06-coordinate-target.json`; no measured
+speedup or physical acceptance is claimed.
+
 Start from repository root: `.venv/Scripts/python.exe -u tools/run_prototype.py --port 8765`.
 Persistent private projects/feedback: `artifacts/local-prototype/` (ignored).
 Nine historical projects existed before the complete snapshot task; their sessions
@@ -207,8 +266,11 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Version complete generic analytic target coordinates before V7. Current r(s)
-   does not determine axial movement signs for general profiles.
+1. Add producer support for the explicit coordinate profile, with a versioned
+   bounded arclength calculation and recorded numerical policy; update generic
+   six-shape pilot authorship without rewriting old projects. Keep count/phase
+   replay changes in a separate verification package. Target sampling/V7 must
+   later bind their own coverage/error policy. Older r(s) profiles remain ambiguous.
 2. Complete physical rest/shaping/loading/contact model for actual generated
    INC/DEC cells and open calibration fixtures; retain target-free simulation.
 3. Implement independent V6 convergence, V7 geometry comparison, V8 material
@@ -222,6 +284,7 @@ Do not infer installed runtime or remote branch state from this note; check live
 ## Reading and commands
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
+`ANALYTIC_COORDINATE_TARGET_V1.md`, `DESIGN_SPEC.md`,
 `ANALYTIC_SEARCH_TRACE_V1.md`, `ANALYTIC_CANDIDATE_CLAIMS_V1.md`,
 `PROTOTYPE_PROPOSAL_BUNDLE_V1.md`, `PROTOTYPE_FINAL_RELATION_AUDIT_V1.md`,
 `VERIFICATION_PIPELINE.md`, then the affected
@@ -233,6 +296,10 @@ Quality: `.venv/Scripts/python.exe -m pytest -q`,
 Node: `tools/canonical_reference.mjs tests/conformance/canonical-vectors.json`
 and `tools/prototype_frontend_tests.mjs`.
 CLI: `python -m crochet_ai.cli --json request --request-file <request.json>`.
+Generation requests additionally need the global `--software-commit` argument
+set to the actual checkout revision, and run limits within DesignSpec limits.
+Unsupported generation returns structured NOT_APPLICABLE with CLI exit code 3;
+target inspection errors use exit code 2. Do not weaken admission to test delivery.
 Build/install evidence and cost notes live under ignored `artifacts/`; missing
 worker token/cost measurements remain null. Never report software tests as
 physical proof or call the complete backend finished from this checkpoint.

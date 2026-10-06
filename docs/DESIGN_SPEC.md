@@ -22,6 +22,10 @@ Normative schema: [`schemas/design-spec.schema.json`](../schemas/design-spec.sch
 
 **ENGINEERING DECISION:** IDs provide reference identity; hashes provide content identity. A resolver must reject an ID whose resolved bytes do not match the declared hash.
 
+The base version above remains frozen. Additive `1.1.0` admits the separately
+versioned mesh numerical profile. Additive `1.2.0` also admits the explicit
+meridian-coordinate representation below; neither version rewrites older inputs.
+
 ## Required sections
 
 | Field | Contract |
@@ -79,6 +83,21 @@ Semantic validation checks the sequence, hash, endpoint classification, unit/ran
 **PROVEN / FORMAL:** Every measurement, landmark, frame, source artifact, and opening requirement reference must resolve uniquely to the declared type. JSON Schema cannot prove this graph-wide property; semantic validation must.
 
 **ENGINEERING DECISION:** Target assets carry both a URI and hash. The URI is a retrieval hint; the hash is authoritative. Mesh preflight and normalization do not mutate the DesignSpec.
+
+### Additive explicit coordinates (DesignSpec 1.2)
+
+[`design-spec-1.2.schema.json`](../schemas/design-spec-1.2.schema.json) additionally
+allows `SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1` in the existing
+`radial_profile` field. Ordered samples have `sample_index`, `radius_mm` and
+signed `axial_mm`, with no `s_mm`. Their complete coordinates determine the
+piecewise-linear meridian without inferring axial signs or caps. Its sole
+parameter is `AXIAL_LENGTH`, bound exactly to the finite binary64 full axial
+extent. The profile uses a separate domain-separated hash and 129-knot ceiling.
+See [the complete coordinate contract](ANALYTIC_COORDINATE_TARGET_V1.md) for input
+validation, signed frames, exact intersection admission and failure policy.
+Older profiles still use `MERIDIONAL_LENGTH` and retain their existing hashes.
+Admitting a target does not establish generator support, candidate fidelity or
+physical acceptance; generation from this new profile remains unsupported here.
 
 ### Domain-specific V0 profile
 

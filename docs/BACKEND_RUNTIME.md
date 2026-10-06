@@ -44,11 +44,23 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | export_ir | design_spec, material_profile, crochet_ir, terminology |
 | run_forward_prototype | design_spec, material_profile, crochet_ir, forward_run |
 | inspect_mesh_openings | design_spec, material_profile, mesh_json |
+| inspect_analytic_target | design_spec, material_profile |
 | inspect_closed_surface_topology | design_spec, material_profile, crochet_ir |
 | inspect_closed_cell_conformance | design_spec, material_profile, crochet_ir |
 | inspect_analytic_candidate_claims | design_spec, material_profile, crochet_ir |
 | inspect_analytic_search_trace | design_spec, material_profile, run_config, search_trace, candidate_proposals |
 | inspect_prototype_final_relation | design_spec, material_profile, original_proposal, crochet_ir |
+
+`inspect_analytic_target` also accepts DesignSpec 1.2 explicit radius/axial
+profiles through [ANALYTIC_COORDINATE_TARGET_V1](ANALYTIC_COORDINATE_TARGET_V1.md).
+It returns source-bound immutable ideal-surface metadata after bounded exact
+meridian admission. Existing sphere/ellipsoid metadata is unchanged; ambiguous
+older radial profiles remain unsupported. Closed explicit caps and simple
+nonmonotone meridians are supported with cardinal axes; unsupported frames and
+boundaries return structured errors. Generation from this new representation,
+target sampling and V7 comparison remain follow-on packages. Inspection alone
+retains NOT_VERIFIED/UNTESTED. CLI request and isolated durable jobs use the same
+operation; no client-supplied proof or work-budget override is accepted.
 
 `inspect_closed_surface_topology` constructs the server-owned target-free closed
 SC cells, then independently audits their combinatorial topology and checks the
@@ -635,7 +647,7 @@ Packaging additionally requires building/installing a wheel in a clean venv
 without `--system-site-packages`, running `python -m pip check` and checking the
 installed artifact outside the checkout. Invoke that venv's Python with `-I`
 and the absolute path to `tools/installed_smoke.py`. The script refuses global,
-user-site or source imports, compares all six bundled schema files and the
+user-site or source imports, compares every registered bundled schema file and the
 immutable profile byte-for-byte with their authoritative sources, exercises
 orientation and mesh residual diagnostics, and runs the installed console
 entrypoint. It emits dependency versions in a machine-readable report.

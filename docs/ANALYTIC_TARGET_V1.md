@@ -6,6 +6,11 @@
 
 `CYLINDER` and `CONE` are inapplicable because V1 does not define their construction-interface or cap semantics. `SURFACE_OF_REVOLUTION` is inapplicable because an ordered nonnegative `r(s)` profile does not encode axial signs. For example, the symmetric profile `(s,r) = (0,0),(5,3),(10,0)` admits axial increments `(+,+),(+,-),(-,+),(-,-)` with magnitude four; the target schema does not select one. The adapter never guesses a positive axis or disk caps. Sphere and ellipsoid admission also requires `surface_mode = CLOSED` and rejects a target opening declared `REMAIN_OPEN`.
 
+DesignSpec 1.2 explicit coordinate profiles are dispatched to the separate
+[coordinate target adapter](ANALYTIC_COORDINATE_TARGET_V1.md). They do not change
+this V1 sphere/ellipsoid metadata or its hashes. Older radius/arclength profiles
+remain inapplicable; no axial coordinates are backfilled.
+
 ## Canonical metadata
 
 Metadata records the full validated DesignSpec hash using `DESIGN_SPEC_CANONICAL_JSON_V1`, target primitive, center in millimetres, signed orthonormal frame basis, semiaxes, ideal topology, and the largest full extent. The target metadata digest is SHA-256 over:

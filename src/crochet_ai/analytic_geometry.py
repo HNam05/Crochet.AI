@@ -119,6 +119,15 @@ def decode_meridian(
     }
     parameters = {p["parameter"]: measurements[p["measurement_id"]] for p in target["parameters"]}
     primitive = target["primitive"]
+    if (
+        primitive == "SURFACE_OF_REVOLUTION"
+        and target.get("radial_profile", {}).get("canonicalization_profile")
+        == "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
+    ):
+        raise GenerationError(
+            GenerationStatus.NOT_APPLICABLE,
+            "meridian.explicit_coordinate_profile_not_supported",
+        )
     prefix: tuple[float, ...] = ()
     profile_s: tuple[float, ...] = ()
     profile_r: tuple[float, ...] = ()

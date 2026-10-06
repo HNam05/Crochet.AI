@@ -25,7 +25,7 @@ not mandatory verification or physical acceptance.
 | --- | --- | --- | --- |
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A subset implemented; M1B and V9/V10 remain |
-| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; flat, lace and non-mesh adapters remain open |
+| B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; closed sphere/ellipsoid and DesignSpec 1.2 simple explicit-coordinate revolution targets have ideal-target V0 admission; arbitrary-axis/open, flat and lace adapters remain open |
 | B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole SC proposal implemented; full V5 and domains remain |
 | B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free experimental stretch, shear and bending terms with bounded combined descent and exact final-coordinate intersection/distance diagnostics; contact response, calibrated convergence and V6 missing |
 | B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered V0-V10 checkpoint, supported mesh V0, core V1-V3 and single-yarn M1A V9 are integrated; full V4/V5-V8/V10 and calibrated forward/metric evidence remain open |
@@ -36,6 +36,15 @@ not mandatory verification or physical acceptance.
 | B10 | Garment, flat and lace solvers | Separate domain contracts, semantics, fixtures and acceptance | Missing; research required |
 | B11 | Empirical material and acceptance profiles | Real calibration samples, frozen thresholds, separate holdouts, human review | Frozen pilot campaigns, append-only measurements, baseline Type-A drafts and PDF measurement sheets implemented; full uncertainty, open-tube instructions, physical evidence and accepted profiles remain open |
 | B12 | Backend release | Every promised package accepted; compatibility and operational evidence documented | Not ready |
+
+Latest additive input checkpoint (2026-10-06): DesignSpec 1.2 and
+[explicit coordinate target admission](ANALYTIC_COORDINATE_TARGET_V1.md) are
+implemented through API/CLI/jobs and scoped V0 evidence. Full regression:
+1,217 tests, Ruff, strict typing (87 modules), unchanged Node vectors, new
+cross-runtime hashes, isolated wheel installation and saved-project/PDF checks
+passed. This closes the stated input/admission slice only. Coordinate generation,
+sampling/V7, calibrated physics and every remaining package above remain open;
+see [BACKEND_HANDOFF.md](BACKEND_HANDOFF.md) for the next bounded work.
 
 ## First checkpoint (historical)
 

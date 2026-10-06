@@ -9,6 +9,12 @@ from hashlib import sha256
 from typing import Any
 
 from .analytic_claims import AnalyticClaimsInputError, inspect_analytic_candidate_claims
+from .analytic_coordinate_target import (
+    VERSION as ANALYTIC_COORDINATE_TARGET_VERSION,
+)
+from .analytic_coordinate_target import (
+    AnalyticCoordinateTarget,
+)
 from .analytic_target import VERSION as ANALYTIC_TARGET_VERSION
 from .analytic_target import AnalyticTargetError, admit_analytic_target
 from .analytic_trace_audit import bound_analytic_search_evidence, inspect_analytic_search_trace
@@ -549,6 +555,13 @@ def verify_artifacts(
         design_model = DesignSpec.from_dict(design)
     if material_report.ok:
         material_model = MaterialProfile.from_dict(material)
+    design_schema = validate_schema("design_spec", design)
+    coordinate_target_scope = (
+        design_schema.ok
+        and design.get("target_geometry", {}).get("radial_profile", {}).get(
+            "canonicalization_profile"
+        ) == "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
+    )
 
     runners: dict[str, Runner] = {}
     if (
@@ -607,8 +620,8 @@ def verify_artifacts(
         runners["V0"] = run_v0
     elif (
         mesh_json is None
-        and design_model is not None
         and material_model is not None
+        and (design_model is not None or coordinate_target_scope)
         and design["target_geometry"]["geometry_type"] == "ANALYTIC_SHAPE"
     ):
 
@@ -616,8 +629,15 @@ def verify_artifacts(
             try:
                 target = admit_analytic_target(design, validator)
             except AnalyticTargetError as error:
+                outcome = (
+                    GateOutcome.INDETERMINATE
+                    if error.status == "NOT_APPLICABLE"
+                    else GateOutcome.FAIL
+                    if coordinate_target_scope
+                    else GateOutcome.INDETERMINATE
+                )
                 return GateResult(
-                    GateOutcome.INDETERMINATE,
+                    outcome,
                     diagnostics=(
                         Diagnostic(
                             FailureCode.UNSUPPORTED_FEATURE
@@ -627,11 +647,54 @@ def verify_artifacts(
                             "analytic_target.admission_unavailable",
                             error.reason,
                             hashes["design_spec"],
-                            implementation_version="analytic-target-adapter/1.0.0",
+                            implementation_version=(
+                                "analytic-coordinate-target-adapter/1.0.0"
+                                if coordinate_target_scope
+                                else "analytic-target-adapter/1.0.0"
+                            ),
                         ),
                     ),
                     missing_checks=(error.reason,),
                     scope="Analytic target admission did not establish V0",
+                )
+            if isinstance(target, AnalyticCoordinateTarget):
+                return GateResult(
+                    GateOutcome.PASS,
+                    assertions=(
+                        ("simple_exact_meridian_polyline", True),
+                        ("closed_distinct_pole_ended_surface", True),
+                        ("finite_distinct_cardinal_knot_witnesses", True),
+                    ),
+                    scope=(
+                        "Ideal closed explicit-coordinate surface of revolution; "
+                        "no sampled mesh or V7 certificate"
+                    ),
+                    produced_artifact_hashes=(("analytic_coordinate_target", target.sha256),),
+                    threshold_profile_id=ANALYTIC_COORDINATE_TARGET_VERSION,
+                    parameters_json=jcs_bytes(
+                        {
+                            "representation_version": ANALYTIC_COORDINATE_TARGET_VERSION,
+                            "domain_profile_id": "V0_ANALYTIC_COORDINATE_TARGET_V1",
+                        }
+                    ).decode(),
+                    work_budget_json=jcs_bytes(
+                        {
+                            "max_knots": 129,
+                            "maximum_segment_pairs": 8_128,
+                            "segment_pair_limit": target.segment_pair_limit,
+                            "segment_pair_checks": target.segment_pair_checks,
+                            "finite_distinct_cardinal_witness_count": 2
+                            + 4 * (len(target.coordinates_mm) - 2),
+                        }
+                    ).decode(),
+                    metric_vector_json=jcs_bytes(
+                        [
+                            ["ideal_component_count", 1],
+                            ["ideal_boundary_count", 0],
+                            ["ideal_genus", 0],
+                        ]
+                    ).decode(),
+                    linked_evidence_json=jcs_bytes(target.to_dict()).decode(),
                 )
             return GateResult(
                 GateOutcome.PASS,
@@ -667,7 +730,6 @@ def verify_artifacts(
             scope="No analytic geometry preflight is inferred",
         )
 
-    design_schema = validate_schema("design_spec", design)
     runners["V1"] = lambda: _report_result(
         (*design_schema.diagnostics, *design_report.diagnostics, *material_report.diagnostics),
         scope="DesignSpec schema and SemanticValidator V1 constraints",
@@ -1073,7 +1135,11 @@ def verify_artifacts(
         profile=profile,
         diagnostic_mode=diagnostic_mode,
         implementation_versions={
-            gate: "target-adapter/1.1.0"
+            gate: (
+                "analytic-coordinate-target-adapter/1.0.0"
+                if coordinate_target_scope
+                else "target-adapter/1.1.0"
+            )
             if gate == "V0"
             else (
                 "closed-cell-source-adapter/1.0.0"

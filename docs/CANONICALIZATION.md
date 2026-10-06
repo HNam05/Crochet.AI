@@ -58,6 +58,7 @@ Higher-precision future data must use a separately typed canonical string or rat
 | --- | --- | --- |
 | `DESIGN_SPEC_CANONICAL_JSON_V1` | Complete DesignSpec, recursively including an inline canonical material projection | [`DESIGN_SPEC.md`](DESIGN_SPEC.md) collection registry plus `CANONICAL_MATERIAL_PROFILE_PROJECTION_V1` |
 | `SURFACE_OF_REVOLUTION_PROFILE_CANONICAL_JSON_V1` | Radial-profile payload excluding its own hash | [`DESIGN_SPEC.md`](DESIGN_SPEC.md) ordered sample contract |
+| `SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1` | DesignSpec 1.2 explicit radius/axial-coordinate profile excluding its own hash | [`ANALYTIC_COORDINATE_TARGET_V1.md`](ANALYTIC_COORDINATE_TARGET_V1.md); samples remain ordered |
 | `CROCHET_IR_CANONICAL_JSON_V1` | Complete canonical CrochetIR | [`CROCHET_IR.md`](CROCHET_IR.md) collection registry |
 | `MATERIAL_PROFILE_CANONICAL_JSON_V1` | Complete MaterialProfile | [`MATERIAL_MODEL.md`](MATERIAL_MODEL.md) authoritative material projection |
 | `FORWARD_PHYSICAL_SEMANTICS_V1` | Target-free physical-semantic projection | [`FORWARD_MODEL.md`](FORWARD_MODEL.md) projection registry |

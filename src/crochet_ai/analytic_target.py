@@ -5,13 +5,16 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from hashlib import sha256
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import rfc8785
 
 from .canonical import CanonicalProfile, canonical_hash
 from .json_types import JSONValue
 from .validation import SemanticValidator
+
+if TYPE_CHECKING:
+    from .analytic_coordinate_target import AnalyticCoordinateTarget
 
 VERSION = "ANALYTIC_TARGET_V1"
 SAMPLING_ALGORITHM = "ANALYTIC_TARGET_LATITUDE_AZIMUTH_GRID_V1"
@@ -161,12 +164,20 @@ class AnalyticTarget:
 
 def admit_analytic_target(
     design: dict[str, Any], validator: SemanticValidator
-) -> AnalyticTarget:
+) -> AnalyticTarget | AnalyticCoordinateTarget:
     """Semantically validate and decode a supported AMIGURUMI_3D primitive."""
     report = validator.validate_design_spec(design)
     if not report.ok:
         raise AnalyticTargetError("DesignSpec semantic validation failed")
     target = design["target_geometry"]
+    if (
+        target.get("primitive") == "SURFACE_OF_REVOLUTION"
+        and target.get("radial_profile", {}).get("canonicalization_profile")
+        == "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
+    ):
+        from .analytic_coordinate_target import admit_analytic_coordinate_target
+
+        return admit_analytic_coordinate_target(design, validator)
     if target["geometry_type"] != "ANALYTIC_SHAPE":
         raise AnalyticTargetError("target is not an analytic shape", "NOT_APPLICABLE")
     primitive = target["primitive"]

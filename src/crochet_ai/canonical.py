@@ -25,6 +25,7 @@ SAFE_INTEGER = 9_007_199_254_740_991
 class CanonicalProfile(StrEnum):
     DESIGN_SPEC = "DESIGN_SPEC_CANONICAL_JSON_V1"
     SURFACE_OF_REVOLUTION = "SURFACE_OF_REVOLUTION_PROFILE_CANONICAL_JSON_V1"
+    SURFACE_OF_REVOLUTION_COORDINATES = "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
     CROCHET_IR = "CROCHET_IR_CANONICAL_JSON_V1"
     MATERIAL_PROFILE = "MATERIAL_PROFILE_CANONICAL_JSON_V1"
     SEMANTIC_EQUIVALENCE = "CROCHET_SEMANTIC_EQUIVALENCE_V1"
@@ -332,7 +333,11 @@ def canonical_projection(
             _require_semantic_validity(value, "crochet_ir", validator)
             return crochet_ir_projection(value)
         return deepcopy(value)
-    if profile in {CanonicalProfile.SURFACE_OF_REVOLUTION, CanonicalProfile.SEMANTIC_EQUIVALENCE}:
+    if profile in {
+        CanonicalProfile.SURFACE_OF_REVOLUTION,
+        CanonicalProfile.SURFACE_OF_REVOLUTION_COORDINATES,
+        CanonicalProfile.SEMANTIC_EQUIVALENCE,
+    }:
         return deepcopy(value)
     raise CanonicalizationError(f"unsupported profile: {profile}")
 

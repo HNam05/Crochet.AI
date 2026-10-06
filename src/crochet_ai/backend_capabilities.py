@@ -23,8 +23,8 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B2",
             "IMPLEMENTED_SUBSET",
-            "Bounded mesh V0 and explicit sphere/ellipsoid analytic targets",
-            "Signed generic analytic targets, flat and lace adapters",
+            "Mesh V0, sphere/ellipsoid targets, cardinal closed coordinate admission",
+            "Other coordinate scopes, coordinate generation/V7, flat and lace adapters",
         ),
         (
             "B3",

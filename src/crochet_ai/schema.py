@@ -19,6 +19,7 @@ from .json_types import JSONValue
 SCHEMA_FILENAMES = {
     "design_spec": "design-spec.schema.json",
     "design_spec_1_1": "design-spec-1.1.schema.json",
+    "design_spec_1_2": "design-spec-1.2.schema.json",
     "material_profile": "material-profile.schema.json",
     "crochet_ir": "crochet-ir.schema.json",
     "crochet_ir_1_1": "crochet-ir-1.1.schema.json",
@@ -84,8 +85,11 @@ def _json_pointer(parts: list[object]) -> str:
 
 
 def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
-    if kind == "design_spec" and isinstance(value, dict) and value.get("schema_version") == "1.1.0":
-        kind = "design_spec_1_1"
+    if kind == "design_spec" and isinstance(value, dict):
+        if value.get("schema_version") == "1.1.0":
+            kind = "design_spec_1_1"
+        elif value.get("schema_version") == "1.2.0":
+            kind = "design_spec_1_2"
     if (
         kind == "numerical_geometry_profile"
         and isinstance(value, dict)
@@ -104,13 +108,15 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
                     code=FailureCode.INPUT,
                     gate=(
                         "V0"
-                        if kind in {
+                        if kind
+                        in {
                             "indexed_triangle_mesh",
                             "numerical_geometry_profile",
                             "numerical_geometry_profile_1_1",
                         }
                         else "V1"
-                        if kind in {"design_spec", "design_spec_1_1", "material_profile"}
+                        if kind
+                        in {"design_spec", "design_spec_1_1", "design_spec_1_2", "material_profile"}
                         else "V2"
                     ),
                     message_key="input.not_ijson",
@@ -132,13 +138,14 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
     )
     gate = (
         "V0"
-        if kind in {
+        if kind
+        in {
             "indexed_triangle_mesh",
             "numerical_geometry_profile",
             "numerical_geometry_profile_1_1",
         }
         else "V1"
-        if kind in {"design_spec", "design_spec_1_1", "material_profile"}
+        if kind in {"design_spec", "design_spec_1_1", "design_spec_1_2", "material_profile"}
         else "V2"
     )
     for error in errors:
@@ -159,7 +166,8 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
 
 
 def schema_documents(
-    *, include_additive_versions: bool = False,
+    *,
+    include_additive_versions: bool = False,
 ) -> Mapping[str, Mapping[str, Any]]:
     """Return schema documents; additive versions are opt-in for tooling compatibility."""
     if include_additive_versions:

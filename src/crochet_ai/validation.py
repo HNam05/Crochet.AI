@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -451,7 +452,13 @@ class SemanticValidator:
             "CYLINDER": {"RADIUS", "AXIAL_LENGTH"},
             "CONE": {"BASE_RADIUS", "AXIAL_LENGTH"},
             "ELLIPSOID": {"EQUATORIAL_RADIUS", "POLAR_RADIUS"},
-            "SURFACE_OF_REVOLUTION": {"MERIDIONAL_LENGTH"},
+            "SURFACE_OF_REVOLUTION": (
+                {"AXIAL_LENGTH"}
+                if value.get("schema_version") == "1.2.0"
+                and target.get("radial_profile", {}).get("canonicalization_profile")
+                == "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
+                else {"MERIDIONAL_LENGTH"}
+            ),
         }[target["primitive"]]
         observed_parameters = [item["parameter"] for item in target["parameters"]]
         if set(observed_parameters) != required_parameters or len(observed_parameters) != len(
@@ -478,6 +485,72 @@ class SemanticValidator:
             )
         profile = target["radial_profile"]
         samples = profile["samples"]
+        coordinate_profile = (
+            profile["canonicalization_profile"]
+            == "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
+        )
+        if coordinate_profile:
+            from .canonical import CanonicalProfile, canonical_hash
+
+            indexes = [sample["sample_index"] for sample in samples]
+            radii = [float(sample["radius_mm"]) for sample in samples]
+            axial = [float(sample["axial_mm"]) for sample in samples]
+            invalid = indexes != list(range(len(samples))) or any(
+                not math.isfinite(radius) or radius < 0 for radius in radii
+            ) or any(not math.isfinite(coordinate) for coordinate in axial)
+            if invalid:
+                collector.add(
+                    FailureCode.INPUT, "V1", "design.coordinate_profile_values",
+                    "Coordinate profile requires contiguous indexes and finite nonnegative radii",
+                    pointers=("/target_geometry/radial_profile/samples",),
+                )
+            parameter = next(
+                (item for item in target["parameters"] if item["parameter"] == "AXIAL_LENGTH"),
+                None,
+            )
+            measurement = next(
+                (
+                    item
+                    for item in value["dimensions"]["measurements"]
+                    if parameter is not None
+                    and item["measurement_id"] == parameter["measurement_id"]
+                ),
+                None,
+            )
+            extent = max(axial) - min(axial)
+            if (
+                not math.isfinite(extent)
+                or extent <= 0
+                or (measurement is not None and float(measurement["value_mm"]) != extent)
+            ):
+                collector.add(
+                    FailureCode.INPUT, "V1", "design.coordinate_profile_extent",
+                    "AXIAL_LENGTH must equal the finite binary64 axial extent",
+                    expected=(extent if math.isfinite(extent) else "finite positive axial extent"),
+                    observed=None if measurement is None else measurement["value_mm"], units="mm",
+                )
+            boundary_ids = {opening["opening_requirement_id"] for opening in openings}
+            for endpoint in (profile["start_boundary"], profile["end_boundary"]):
+                if endpoint["boundary_type"] == "INTENTIONAL_OPENING" and endpoint.get(
+                    "opening_requirement_id"
+                ) not in boundary_ids:
+                    collector.add(
+                        FailureCode.REFERENCE, "V1", "design.coordinate_profile_unknown_opening",
+                        "Coordinate profile opening must resolve to DesignSpec",
+                        refs=(endpoint.get("opening_requirement_id", ""),),
+                    )
+            payload = dict(profile)
+            observed_hash = payload.pop("sha256")
+            expected_hash = canonical_hash(
+                payload, CanonicalProfile.SURFACE_OF_REVOLUTION_COORDINATES
+            )
+            if observed_hash != expected_hash:
+                collector.add(
+                    FailureCode.DETERMINISM, "V1", "design.coordinate_profile_hash_mismatch",
+                    "Coordinate profile hash must match its ordered canonical payload",
+                    expected=expected_hash, observed=observed_hash,
+                )
+            return
         indexes = [sample["sample_index"] for sample in samples]
         positions = [sample["s_mm"] for sample in samples]
         if (

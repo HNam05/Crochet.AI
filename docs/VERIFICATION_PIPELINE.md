@@ -36,6 +36,14 @@ resolution, positive finite semiaxes/extent, finite distinct cardinal positions 
 the regular ideal primitive topology. Its profile is `V0_ANALYTIC_SHAPE_V1`; the
 cardinal predicate count is six, not a complete validation/hash work budget.
 The API JSON limits and job watchdog still bound transport and operational work.
+DesignSpec 1.2 explicit coordinate profiles use the separate
+[coordinate target adapter](ANALYTIC_COORDINATE_TARGET_V1.md) and V0 scope.
+Its exact represented-coordinate pair predicates reject crossing, touching and
+overlapping meridian segments, and its cardinal-frame checks reject arithmetic
+overflow/collapse. Admitted simple closed sweeps have ideal genus-zero topology.
+These target checks do not accept a candidate IR, produce a sampled mesh, or
+establish V6/V7 or physical validity. Unsupported boundaries/axes remain
+INDETERMINATE; proved coordinate contradictions FAIL with E_INPUT.
 It does not infer geometry from schema success or a sampled point cloud.
 For admitted closed SC constructions, V4 now builds target-free cells and runs
 the independent [surface topology auditor](SURFACE_TOPOLOGY_AUDIT_V1.md).
@@ -88,7 +96,9 @@ complete linked preflight evidence (including numerical profile, normalization,
 predicates, thresholds, measurements and work budget). No source URI is fetched.
 Failed V0 diagnostics remain structured. Native cylinder/cone interface/cap semantics
 and generic radial-profile axial signs remain unsupported for this admission;
-their V0 is INDETERMINATE. The six existing prototype forms still have their
+their V0 is INDETERMINATE for older radius/arclength inputs. The additive explicit
+coordinate profile does not infer those missing coordinates from saved projects.
+The six existing prototype forms still have their
 separate exploratory generation contract. Ideal target topology does not prove
 the candidate IR topology or any physical/geometric fidelity gate.
 

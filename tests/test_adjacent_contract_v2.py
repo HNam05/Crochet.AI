@@ -127,6 +127,8 @@ def test_new_schema_dispatch_keeps_design_v1_and_profile_v0_gate_assignments() -
         "lambda": {"numerator": "1", "denominator": "2"},
     })
     design["schema_version"] = "1.2.0"
+    assert validate_schema("design_spec", design).ok
+    design["schema_version"] = "1.3.0"
     assert validate_schema("design_spec", design).diagnostics[0].gate == "V1"
     profile = json.loads(PROFILE_PATH.read_text())
     profile["profile_version"] = "2.1.0"
@@ -136,7 +138,7 @@ def test_new_schema_dispatch_keeps_design_v1_and_profile_v0_gate_assignments() -
         "indexed_triangle_mesh", "numerical_geometry_profile",
     }
     assert set(schema_documents(include_additive_versions=True)) == {
-        "design_spec", "design_spec_1_1", "material_profile", "crochet_ir",
+        "design_spec", "design_spec_1_1", "design_spec_1_2", "material_profile", "crochet_ir",
         "crochet_ir_1_1", "indexed_triangle_mesh", "numerical_geometry_profile",
         "numerical_geometry_profile_1_1",
     }

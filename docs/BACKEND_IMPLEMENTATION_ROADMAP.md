@@ -658,3 +658,26 @@ Nächster größerer Umsetzungsschritt: eindeutige versionierte Zielkoordinaten 
 die allgemeinen analytischen Profile, damit die spätere V7-Prüfung eine vollständig
 bestimmte Zieloberfläche erhält. Danach das vollständige zielunabhängige physische
 Modell für Zu-/Abnahmen, Belastung und Kontakt sowie dessen unabhängige Abnahme.
+
+### Fortschreibung 2026-10-06: eindeutige analytische Zielkoordinaten
+
+DesignSpec 1.2 ergänzt ein versioniertes Profil mit Radius und signierter axialer
+Position. Der [Zieladapter](ANALYTIC_COORDINATE_TARGET_V1.md) lässt einfache,
+geschlossene Rotationsflächen mit zwei Polen und kardinaler Achse zu. Exakte
+Segmentprüfungen erkennen Kreuzungen, Berührungen und Überlappungen unter einer
+festen Arbeitsgrenze. Explizite Kappen und einfache axial rückläufige Abschnitte
+werden unterstützt. API, CLI, isolierte Jobs und V0 liefern gebundene Metadaten.
+Alte Eingaben, Hashes und gespeicherte Projekte werden nicht umgeschrieben.
+
+Damit ist dieser Teil von P03 umgesetzt. Die neue Darstellung ist noch kein
+Sampler, Generator oder V7-Nachweis; ihre ideale Topologie bestätigt keine
+physische Häkelbarkeit. Der bisherige Generator weist sie ausdrücklich als
+NOT_APPLICABLE zurück. Vorhandene Solver-/Suchprüfungen und das unabhängige
+physische Modell erhalten keine neuen Zielabhängigkeiten.
+
+Nächster begrenzter Abschnitt: Generatorzulassung, versionierte Bogenlängen-
+Berechnung mit Fehler-/Arbeitsgrenzen und gebundener Trace für diese Koordinaten,
+einschließlich API und Pilotanbindung. Danach separater unabhängiger Replay und
+Geometrievergleich; weiterhin das zielunabhängige physische Shaping-, Belastungs-
+und Kontaktmodell samt echten Messungen. Der [Handoff](BACKEND_HANDOFF.md) hält
+die konkreten Prüfungen und offenen Abnahmen fest; R1-R4 bleiben unabgenommen.
