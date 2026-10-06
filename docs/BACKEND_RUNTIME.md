@@ -47,6 +47,7 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | inspect_closed_surface_topology | design_spec, material_profile, crochet_ir |
 | inspect_closed_cell_conformance | design_spec, material_profile, crochet_ir |
 | inspect_analytic_candidate_claims | design_spec, material_profile, crochet_ir |
+| inspect_analytic_search_trace | design_spec, material_profile, run_config, search_trace, candidate_proposals |
 
 `inspect_closed_surface_topology` constructs the server-owned target-free closed
 SC cells, then independently audits their combinatorial topology and checks the
@@ -67,13 +68,25 @@ known false claims yield FAIL and REJECTED. Clients cannot submit claimed proof,
 external traces or budgets. See [ANALYTIC_CANDIDATE_CLAIMS_V1.md](ANALYTIC_CANDIDATE_CLAIMS_V1.md).
 The generic CLI request and durable job paths expose the same operation.
 
+`inspect_analytic_search_trace` independently replays the complete bounded staged
+sphere/equal-axis-ellipsoid search, exact count windows, DP objectives/ties,
+interrupted layers and global work/prefix accounting. Complete original proposal
+IR artifacts bind the raw schedules and declared provenance. Its immutable
+domain-hashed report is retained by V5 when supplied through optional
+`search_evidence={run_config,search_trace,candidate_proposals}` on `verify_candidate`.
+The standalone operation returns the report payload. No client proof-budget
+override is accepted. Missing proposal artifacts or unsupported samplers retain
+INDETERMINATE; contradictions FAIL. Source authentication, physical selection and
+full backend acceptance remain open. See [ANALYTIC_TRACE_AUDIT_V1.md](ANALYTIC_TRACE_AUDIT_V1.md).
+
 `generate_analytic` additionally returns `search_trace` and `search_trace_sha256`
 under [ANALYTIC_SEARCH_TRACE_V1.md](ANALYTIC_SEARCH_TRACE_V1.md). They are null for
 unadmitted runs and present for admitted terminal outcomes, including partial
 batch exhaustion. The trace binds inputs and records actual producer execution;
 it is not independent verification. New prototype projects persist this trace
 and a hashed `PROTOTYPE_GENERATION_LINK_V1` proposal-to-final phase-policy link.
-Legacy stored projects remain unchanged. V5 does not yet consume external traces.
+Legacy stored projects remain unchanged. V5 can now independently replay these
+untrusted traces through the optional search_evidence extension above.
 
 `inspect_mesh_openings` is an additive diagnostic capability within the 1.0
 envelope, not generation or mesh acceptance. `mesh_json` contains the exact UTF-8

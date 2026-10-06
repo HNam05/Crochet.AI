@@ -59,10 +59,16 @@ input-bound search work/completion, count-window admission and deterministic
 selection evidence are unavailable. Work-counter range checks are not an audit
 of actual search execution. The adapter is `analytic-claims-adapter/1.0.0`.
 V6-V8 and V10 have no adapter runners and remain `NOT_RUN`.
-The separate producer [search trace](ANALYTIC_SEARCH_TRACE_V1.md) is now emitted
-on new admitted runs. This V5 adapter deliberately does not accept or replay it
-yet; its presence never upgrades an incomplete gate. Legacy project records
-remain unchanged and no search execution evidence is synthesized for them.
+The separate producer [search trace](ANALYTIC_SEARCH_TRACE_V1.md) is emitted
+on new admitted runs. Optional search_evidence now invokes the independent
+[trace audit](ANALYTIC_TRACE_AUDIT_V1.md), replaying count windows, count/phase
+objectives and exact ties, work, ascending prefix and terminal causes for sphere
+and equal-axis-ellipsoid samplers. Original raw proposal IRs bind complete emitted
+hashes and schedules. Its own PASS establishes the bounded computational scope;
+V5 remains INDETERMINATE pending physical feasible-selection evidence. False
+trace claims FAIL V5. Stored prototype hash-only original proposals remain
+explicitly incomplete. Legacy untraced requests retain their prior behavior;
+no source proposal or search execution evidence is synthesized for them.
 V9 performs real single-yarn M1A DE/US/UK text export, parsing, binding from frozen
 external metadata and canonical semantic comparison. It retains text hashes.
 Multi-yarn V9 and broader M1B/PDF acceptance are still open. A schema failure
@@ -79,6 +85,8 @@ the candidate IR topology or any physical/geometric fidelity gate.
 
 API 1.0 `verify_candidate` requires DesignSpec, MaterialProfile, CrochetIR,
 `mesh_json` (null or exact source text), and boolean `diagnostic_mode`.
+Optional `search_evidence` has exactly run_config, search_trace and
+candidate_proposals. This input is bound into the verification bundle hash.
 It always uses `BACKEND_SEMANTIC_CHECKPOINT_V1`. CLI `request` and local durable
 jobs expose the same operation. A job's `SUCCEEDED` means the operation completed;
 the result can still be NOT_VERIFIED or REJECTED. The prototype adds CSRF-protected

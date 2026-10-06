@@ -11,6 +11,7 @@ from typing import Any
 from .analytic_claims import AnalyticClaimsInputError, inspect_analytic_candidate_claims
 from .analytic_target import VERSION as ANALYTIC_TARGET_VERSION
 from .analytic_target import AnalyticTargetError, admit_analytic_target
+from .analytic_trace_audit import bound_analytic_search_evidence, inspect_analytic_search_trace
 from .backend_provenance import implementation_identity_hash
 from .canonical import CanonicalProfile, canonical_hash, jcs_bytes, parse_json, validate_ijson
 from .cell_conformance import CellConformanceInputError, inspect_closed_cell_conformance
@@ -23,6 +24,7 @@ from .pattern_context import PatternParseContext, PatternYarnBinding
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
 from .schema import validate_schema
 from .surface_topology import SurfaceTopologyInputError, audit_surface_topology
+from .trace_verification_types import TraceAuditInputError
 from .v0_mesh_preflight import (
     V0MeshBudgets,
     V0MeshPreflightError,
@@ -504,6 +506,7 @@ def verify_artifacts(
     mesh_json: bytes | None = None,
     mesh_budgets: V0MeshBudgets | None = None,
     diagnostic_mode: bool = False,
+    search_evidence: Mapping[str, Any] | None = None,
     profile: VerificationProfile = BACKEND_SEMANTIC_CHECKPOINT_V1,
 ) -> VerificationResult:
     """Adapt existing V0/V1/V2-V4 validators; future gates remain explicitly unavailable."""
@@ -524,6 +527,11 @@ def verify_artifacts(
         "material_profile": _artifact_hash(material, CanonicalProfile.MATERIAL_PROFILE, validator),
         "crochet_ir": _artifact_hash(ir, CanonicalProfile.CROCHET_IR, validator),
     }
+    if search_evidence is not None:
+        search_evidence = bound_analytic_search_evidence(search_evidence)
+        hashes["analytic_search_evidence"] = _digest(
+            b"Crochet.AI\0ANALYTIC_SEARCH_EVIDENCE_V1\0", dict(search_evidence)
+        )
     if mesh_json is not None:
         hashes["raw_mesh"] = sha256(mesh_json).hexdigest()
     if mesh_budgets is not None:
@@ -870,16 +878,80 @@ def verify_artifacts(
             FailureCode(code), "V5", reason, "Independent candidate claim check failed",
             hashes["crochet_ir"], implementation_version="analytic-claims-adapter/1.0.0",
         ) for code, reason in claims.diagnostics)
+        assertions = claims.assertions
+        missing_checks = claims.missing_checks
+        produced_hashes: tuple[tuple[str, str], ...] = (
+            ("analytic_candidate_claims", claims.sha256),
+        )
+        evidence_data: dict[str, Any] = claims_data
+        trace_failed = False
+        if search_evidence is not None:
+            try:
+                trace_audit = inspect_analytic_search_trace(
+                    design, material, search_evidence["run_config"],
+                    search_evidence["search_trace"],
+                    search_evidence["candidate_proposals"], validator=validator,
+                )
+            except (TraceAuditInputError, AnalyticClaimsInputError) as error:
+                return GateResult(
+                    GateOutcome.FAIL, diagnostics=(Diagnostic(
+                        FailureCode.INPUT, "V5", "search_trace.invalid_input", str(error),
+                        hashes["crochet_ir"], implementation_version="analytic-trace-adapter/1.0.0",
+                    ),),
+                )
+            evidence_data = {"candidate_claims": claims_data, "search_audit": trace_audit.to_dict()}
+            assertions += tuple(("search." + key, value) for key, value in trace_audit.assertions)
+            produced_hashes += (("analytic_search_audit", trace_audit.sha256),)
+            diagnostics += tuple(Diagnostic(
+                FailureCode(code), "V5", reason, "Independent search trace check failed",
+                hashes["crochet_ir"], implementation_version="analytic-trace-adapter/1.0.0",
+            ) for code, reason in trace_audit.diagnostics)
+            trace_failed = trace_audit.status == "FAIL"
+            missing_checks += trace_audit.missing_checks
+            if trace_audit.status == "PASS":
+                confirmed = {
+                    "input_bound_search_trace",
+                    "independently_confirmed_search_work_and_completion",
+                    "count_window_admission", "global_phase_optimality",
+                }
+                missing_checks = tuple(item for item in missing_checks if item not in confirmed)
+                proposal_hashes = search_evidence["search_trace"]["terminal"]["proposal_ir_sha256"]
+                native = not any(
+                    row["name"].startswith("prototype.")
+                    for row in ir["provenance"]["solver_parameters"]
+                )
+                if native:
+                    member = hashes["crochet_ir"] in proposal_hashes
+                    assertions += (("search.candidate_is_emitted_proposal", member),)
+                    if not member:
+                        trace_failed = True
+                        diagnostics += (Diagnostic(
+                            FailureCode.DETERMINISM, "V5", "search_trace.candidate_not_emitted",
+                            "Candidate is absent from the independently audited proposal batch",
+                            hashes["crochet_ir"],
+                            implementation_version="analytic-trace-adapter/1.0.0",
+                        ),)
+                else:
+                    missing_checks += ("final_candidate_to_original_proposal_relation",)
         return GateResult(
-            GateOutcome.FAIL if claims.status == "FAIL" else GateOutcome.INDETERMINATE,
-            assertions=claims.assertions, diagnostics=diagnostics,
-            missing_checks=claims.missing_checks,
-            scope="Independent analytic schedule and bounds; complete search trace unavailable",
-            produced_artifact_hashes=(("analytic_candidate_claims", claims.sha256),),
-            threshold_profile_id="EXACT_ANALYTIC_SCHEDULE_CLAIMS_V1",
-            work_budget_json=jcs_bytes(claims_data["budgets"]).decode(),
+            GateOutcome.FAIL
+            if claims.status == "FAIL" or trace_failed else GateOutcome.INDETERMINATE,
+            assertions=assertions, diagnostics=diagnostics,
+            missing_checks=missing_checks,
+            scope=("Independent analytic schedule and bounded staged search; "
+                   "physical selection remains open") if search_evidence is not None else
+                  "Independent analytic schedule and bounds; complete search trace unavailable",
+            produced_artifact_hashes=produced_hashes,
+            threshold_profile_id=("EXACT_ANALYTIC_SCHEDULE_CLAIMS_V1"
+                                  if search_evidence is None else "EXACT_ANALYTIC_TRACE_AUDIT_V1"),
+            work_budget_json=jcs_bytes(
+                claims_data["budgets"] if search_evidence is None else {
+                    "candidate_claims": claims_data["budgets"],
+                    "search_audit": evidence_data["search_audit"]["budgets"],
+                }
+            ).decode(),
             parameters_json=jcs_bytes(claims_data["checked_parameters"]).decode(),
-            linked_evidence_json=jcs_bytes(claims_data).decode(),
+            linked_evidence_json=jcs_bytes(evidence_data).decode(),
         )
 
     runners["V5"] = v5_runner
@@ -931,7 +1003,8 @@ def verify_artifacts(
             if gate == "V0"
             else (
                 "closed-cell-source-adapter/1.0.0" if gate == "V4" else (
-                    "analytic-claims-adapter/1.0.0" if gate == "V5" else "adapter/1.0.0"
+                    ("analytic-claims-adapter/1.0.0" if search_evidence is None
+                     else "analytic-trace-adapter/1.0.0") if gate == "V5" else "adapter/1.0.0"
                 )
             )
             for gate in GATES

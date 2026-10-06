@@ -16,6 +16,7 @@ from .analytic_geometry import MeridianNumerics
 from .analytic_placement import PlacementBudget
 from .analytic_solver import AnalyticRunConfig, generate_analytic
 from .analytic_target import AnalyticTargetError, admit_analytic_target
+from .analytic_trace_audit import inspect_analytic_search_trace
 from .backend_capabilities import backend_capability_matrix
 from .calibration_campaign import (
     CalibrationCampaign,
@@ -50,6 +51,7 @@ from .target_mesh_openings import (
     TargetMeshOpeningError,
     diagnose_target_mesh_openings,
 )
+from .trace_verification_types import TraceAuditInputError
 from .v0_mesh_preflight import (
     V0MeshBudgets,
     V0MeshPreflightError,
@@ -171,6 +173,7 @@ class BackendAPI:
                         "inspect_v0_mesh_v2",
                         "run_forward_prototype",
                         "verify_candidate",
+                        "inspect_analytic_search_trace",
                         "calibration_protocol",
                         "inspect_calibration_campaign",
                         "derive_calibration_material",
@@ -345,6 +348,29 @@ class BackendAPI:
                     response_id=request["response_id"],
                     created_at=request["created_at"],
                 )
+            elif operation == "inspect_analytic_search_trace":
+                _object(request, {"api_version", "operation", "design_spec", "material_profile",
+                                  "run_config", "search_trace", "candidate_proposals"}, "request")
+                for key in ("design_spec", "material_profile"):
+                    if not isinstance(request[key], dict):
+                        raise ApiInputError("request." + key)
+                for key, identity in (("design_spec", "design_spec_id"),
+                                      ("material_profile", "profile_id")):
+                    if not isinstance(request[key].get(identity), str):
+                        raise ApiInputError("request." + key + "." + identity)
+                validator = SemanticValidator(
+                    design_specs={
+                        request["design_spec"].get("design_spec_id", ""): request["design_spec"]
+                    },
+                    material_profiles={
+                        request["material_profile"].get("profile_id", ""):
+                        request["material_profile"]
+                    },
+                )
+                data = inspect_analytic_search_trace(
+                    request["design_spec"], request["material_profile"], request["run_config"],
+                    request["search_trace"], request["candidate_proposals"], validator=validator,
+                ).to_dict()
             elif operation == "verify_candidate":
                 _object(
                     request,
@@ -356,7 +382,7 @@ class BackendAPI:
                         "crochet_ir",
                         "mesh_json",
                         "diagnostic_mode",
-                    },
+                    } | ({"search_evidence"} if "search_evidence" in request else set()),
                     "request",
                 )
                 if type(request["diagnostic_mode"]) is not bool:
@@ -366,6 +392,12 @@ class BackendAPI:
                 for key in ("design_spec", "material_profile", "crochet_ir"):
                     if not isinstance(request[key], dict):
                         raise ApiInputError(f"request.{key}")
+                evidence = None
+                if "search_evidence" in request:
+                    evidence = _object(
+                        request["search_evidence"],
+                        {"run_config", "search_trace", "candidate_proposals"}, "search_evidence",
+                    )
                 raw_mesh = (
                     None if request["mesh_json"] is None else request["mesh_json"].encode("utf-8")
                 )
@@ -391,6 +423,7 @@ class BackendAPI:
                     if raw_mesh is not None
                     else None,
                     diagnostic_mode=request["diagnostic_mode"],
+                    search_evidence=evidence,
                 )
                 data = checkpoint.to_dict()
             elif operation in {
@@ -620,6 +653,7 @@ class BackendAPI:
             }
         except (
             SurfaceTopologyInputError, CellConformanceInputError, AnalyticClaimsInputError,
+            TraceAuditInputError,
         ) as error:
             return error_response("E_INPUT", str(error))
         except (ClosedCellsError, PhysicalProjectionError) as error:

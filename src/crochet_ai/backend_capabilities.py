@@ -41,8 +41,8 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B5",
             "IMPLEMENTED_SUBSET",
-            "V0-V10 orchestration, closed SC topology proofs and partial candidate-claims audit",
-            "Broader V4 scopes, complete V5 search proof, V6-V10 evidence and calibration",
+            "V0-V10 orchestration, closed SC topology and independent sphere search replay",
+            "Broader V4/target scopes, proposal-final relation, physical selection and V6-V10",
         ),
         (
             "B6",

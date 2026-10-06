@@ -595,3 +595,23 @@ werden dabei ergänzt. Alle verbleibenden Paket-Abnahmen oben bleiben verbindlic
 
 Der bestehende Pilot bleibt für Häkelrückmeldungen nutzbar. Die vollständige
 Backend-Abnahme bleibt offen und der physische Status bleibt UNTESTED.
+
+### Fortschreibung 2026-10-06: unabhängige Suchprüfung
+
+Der [Trace-Prüfer](ANALYTIC_TRACE_AUDIT_V1.md) prüft nun Kugeln und Ellipsoide
+mit gleichen Achsen vollständig innerhalb seines rechnerischen Bereichs:
+Eingabebindung, Samples, Zählfenster, beide DP-Pässe, Phasenoptimum und exakte
+Tie-Breaks, Schichtarbeit/Abbrüche, Hypothesenpräfix und globale Budgets. Originale
+CrochetIR-Vorschläge binden Rundenzahlen, Phasen, Parameter und Vorschlagshashes.
+API, CLI, Jobs und optionales V5-Suchevidence sind integriert. Falsche Nachweise
+führen zu FAIL, fehlende Artefakte oder nicht unterstützte Sampler bleiben offen.
+Gespeicherte Pilotprojekte besitzen bisher nur den ursprünglichen Vorschlagshash;
+vollständige Artefaktpersistenz und finale Zuordnung folgen als separate Aufgabe.
+Physikalische Kandidatenauswahl, Quellenauthentisierung und V6-V8/V10 sind dadurch
+nicht abgenommen. Die gesamte R1-R4- und B0-B12-Abnahme bleibt verbindlich.
+
+Für schnelleres Vorankommen werden zusammenhängende Umsetzungspakete bis zur
+API gebündelt, unabhängige Teilaufgaben parallel bearbeitet und die gesamte
+Testsuite einmal am Integrationspunkt ausgeführt. Laufzeitmessungen ersetzen
+Vermutungen über langsame Tests. Nächste größere Pakete bleiben eindeutige
+Zielkoordinaten und das vollständige zielunabhängige physikalische Shaping-Modell.

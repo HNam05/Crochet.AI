@@ -284,17 +284,27 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     if verification_project is None:
                         self._error(404, "E_NOT_FOUND", "project.not_found")
                         return
-                    response = backend.handle(
-                        {
-                            "api_version": "1.0.0",
-                            "operation": "verify_candidate",
-                            "design_spec": verification_project["design_spec"],
-                            "material_profile": verification_project["material_profile"],
-                            "crochet_ir": verification_project["crochet_ir"],
-                            "mesh_json": None,
-                            "diagnostic_mode": False,
+                    verification_request = {
+                        "api_version": "1.0.0",
+                        "operation": "verify_candidate",
+                        "design_spec": verification_project["design_spec"],
+                        "material_profile": verification_project["material_profile"],
+                        "crochet_ir": verification_project["crochet_ir"],
+                        "mesh_json": None,
+                        "diagnostic_mode": False,
+                    }
+                    generation = verification_project.get("generation", {})
+                    if generation.get("search_trace") is not None:
+                        verification_request["search_evidence"] = {
+                            "run_config": {
+                                key: value
+                                for key, value in verification_project["run_config"].items()
+                                if key != "phase_policy"
+                            },
+                            "search_trace": generation["search_trace"],
+                            "candidate_proposals": [],
                         }
-                    )
+                    response = backend.handle(verification_request)
                     self._send(200 if response["ok"] else 422, response)
                 elif path == "/api/session":
                     required = {"prototype_version", "project_id", "expected_revision", "cursor"}

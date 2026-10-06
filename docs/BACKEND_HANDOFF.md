@@ -1,6 +1,6 @@
 # Backend handoff
 
-Latest checkpoint: 2026-10-05. Read this file before continuing backend work.
+Latest checkpoint: 2026-10-06. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
 ## Repository and product
@@ -39,7 +39,7 @@ This is a working implementation checkpoint, not full backend acceptance.
 - Experimental target-free stretch/shear/bending and contact diagnostics are
   computational slices, not complete physical F0/V6 acceptance.
 
-## Current implementation task
+## Previous producer checkpoint
 
 Producer-only `ANALYTIC_SEARCH_TRACE_V1`: input/config/target/source bindings;
 ascending hypothesis prefix; exact circumference/window inputs; per-pass/layer
@@ -53,6 +53,34 @@ are not rewritten or given invented traces. Trace reservation is bounded at
 The independent V5 checker is deliberately unchanged in this producer task.
 Trace integrity/availability does not establish independently verified search.
 Full verification remains NOT_VERIFIED and physical status UNTESTED.
+
+## Independent replay checkpoint
+
+`ANALYTIC_TRACE_AUDIT_V1` now independently replays the complete staged bounded
+sphere/equal-axis-ellipsoid search. It recomputes input/config/material/target
+bindings, samples, integer windows, both count-DP passes, phase-DP objectives and
+exact ties, all layer work/interruptions, ascending hypothesis prefix, remaining
+global budgets, terminal cause and original proposal hash order. Every supplied
+raw proposal is independently checked for actual count/phase schedule, bounds,
+declared source/config consistency and work claims. Proof work is capped at
+6,000,000 units. Neither replay kernel imports producer generation code.
+
+API/CLI/jobs expose `inspect_analytic_search_trace`. Optional `search_evidence`
+on `verify_candidate` binds the audit into V5 evidence. False trace claims FAIL;
+missing original proposals, proof exhaustion or unsupported samplers remain
+INDETERMINATE. Native candidate membership is checked before confirming trace
+checks. V5 still awaits physical feasible-selection evidence. Audit PASS does
+not authenticate source execution or pass V6-V8/V10; the report explicitly says
+source_authentication=NOT_VERIFIED and physical_status=UNTESTED.
+
+The prototype verification route now replays stored traces diagnostically.
+Current stored projects contain only the original proposal hash, so their exact
+original-proposal binding remains incomplete. Legacy requests are unchanged.
+Do not regenerate missing proposals or silently rewrite existing projects.
+
+Independent small exhaustive/hand oracles caught and repaired a DEC-center
+arity error in the new verifier before integration acceptance. Count/phase
+producer implementations, authoritative schemas and goldens are unchanged.
 
 ## Validation and runtime
 
@@ -69,6 +97,16 @@ Code and this handoff are versioned together on `main`. For exact publication
 revision, compare `git rev-parse HEAD` with `git ls-remote origin refs/heads/main`;
 never treat an old note as confirmation of current GitHub or runtime state.
 
+Independent replay checkpoint: 1,114 full-suite tests passed in 550.37 seconds.
+After the final direct-call evidence-size guard, 90 count/phase/audit/API/pipeline
+tests passed in 17.09 seconds. Ruff and strict mypy (84 source modules), five Node
+canonical vectors and ten frontend tests passed. Final wheel build/install,
+dependency check and isolated smoke passed. Source and installed CLI return
+identical PASS reports for the historical native sphere proposal (44,289 proof
+units); source CLI and live HTTP return identical INDETERMINATE stored-project
+reports with only original_proposal_artifacts missing. Nine projects are retained.
+The focused independent review found no additional fail-open computational claim.
+
 Local browser: `http://127.0.0.1:8765/`.
 Start from repository root: `.venv/Scripts/python.exe -u tools/run_prototype.py --port 8765`.
 Persistent private projects/feedback: `artifacts/local-prototype/` (ignored).
@@ -79,11 +117,11 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Separate independent trace-admission/replay task. Bind untrusted producer trace
-   to actual DesignSpec, material, run config and proposal IR; independently check
-   windows, prefix/work/completion, staged count/phase objective and exact ties.
-   Add exhaustive small-domain positive/negative oracles, interruption cases and
-   tampered refreshed hashes. Do not import the producer solver as the verifier.
+1. Separate producer/persistence task: retain complete original proposal artifacts
+   for new projects with bounded storage/transport and versioned final relation.
+   Existing historical hash-only projects remain incomplete. The independent
+   sphere trace-replay package above is implemented; broader target samplers,
+   proposal-to-final verification and physical feasible selection remain open.
 2. Version complete generic analytic target coordinates before V7. Current r(s)
    does not determine axial movement signs for general profiles.
 3. Complete physical rest/shaping/loading/contact model for actual generated
@@ -111,3 +149,32 @@ CLI: `python -m crochet_ai.cli --json request --request-file <request.json>`.
 Build/install evidence and cost notes live under ignored `artifacts/`; missing
 worker token/cost measurements remain null. Never report software tests as
 physical proof or call the complete backend finished from this checkpoint.
+
+## Faster continuation without reducing acceptance
+
+Prioritize R1 end-to-end completion; R2/R3 remain promised later scopes. Bundle
+one coherent acceptance package per checkpoint, including API/persistence/status
+integration, rather than serial small producer-only changes. Independent count
+and phase replay implementations were developed concurrently; primary owned
+the envelope, API integration and critical review. Use at most the documented
+bounded worker count and keep generation/independent verification separate.
+
+Run each worker's targeted oracle tests, then one complete suite at integration.
+Run Ruff/mypy/Node independently in parallel; installed-wheel checks verify the
+delivered package. Full-suite `--durations=15` evidence is retained under ignored
+`artifacts/backend-trace-audit/pytest-full.log`. Optimize measured hotspots next;
+do not add test parallelism or cross-module shared mutable fixtures without
+evidence. Physical measurement work can proceed alongside software completion,
+but must use real specimens and cannot be inferred from software checks.
+
+Measured suite hotspots include prototype trace/legacy persistence (37.87 s),
+V5 proof-budget routing (26.70-27.45 s) and shape generation (up to 26.30 s).
+These remain required checks. Investigate repeated generation/validation before
+sharing fixtures or adding parallel pytest execution. The initial local pip
+installer continued consuming CPU after its successful-install message; that
+owned helper was stopped after installed-package verification. A local-only
+wheel invocation with --no-index/--no-deps and --disable-pip-version-check plus
+dependency check finished in 4.04 s. This is a per-command release-check choice,
+not a global pip, cache, credential or security configuration change. The full
+suite timing is not a controlled before/after speed comparison. Worker token and
+cost measurements were unavailable and remain null in ignored agent-cost notes.
