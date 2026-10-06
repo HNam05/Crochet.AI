@@ -10,10 +10,11 @@ from math import pi, sqrt
 from typing import Any
 
 from .analytic_counts import CountSearchBudget
-from .analytic_geometry import MeridianNumerics
+from .analytic_geometry import MeridianNumerics, decode_meridian
 from .analytic_placement import PlacementBudget
 from .analytic_solver import AnalyticRunConfig
-from .prototype_shapes import SHAPE_IDS, radial_profile
+from .prototype_shapes import SHAPE_IDS, coordinate_profile
+from .validation import SemanticValidator
 
 PROTOTYPE_VERSION = "1.0.0"
 REQUEST_FIELDS = {
@@ -132,7 +133,7 @@ def assemble_request(
         primitive = "SPHERE" if shape == "sphere" else "ELLIPSOID"
     else:
         primitive = "SURFACE_OF_REVOLUTION"
-        profile, profile_provenance = radial_profile(shape, diameter, height)
+        profile, profile_provenance = coordinate_profile(shape, diameter, height)
     measurements = [
         {
             "measurement_id": "dim_radius",
@@ -162,16 +163,16 @@ def assemble_request(
     elif profile is not None:
         measurements.append(
             {
-                "measurement_id": "dim_meridional_length",
+                "measurement_id": "dim_axial_length",
                 "semantic": "LENGTH",
-                "label": "Meridional profile length",
-                "value_mm": profile["samples"][-1]["s_mm"],
+                "label": "Axial extent",
+                "value_mm": height,
                 "tolerance_mm": 0,
             }
         )
-        parameters = [{"parameter": "MERIDIONAL_LENGTH", "measurement_id": "dim_meridional_length"}]
+        parameters = [{"parameter": "AXIAL_LENGTH", "measurement_id": "dim_axial_length"}]
     design: dict[str, Any] = {
-        "schema_version": "1.0.0",
+        "schema_version": "1.2.0" if profile is not None else "1.0.0",
         "design_spec_id": "ds_local_prototype",
         "project_type": "AMIGURUMI_3D",
         "dimensions": {"length_unit": "MILLIMETER", "measurements": measurements},
@@ -267,10 +268,8 @@ def assemble_request(
                     f"{profile_provenance['profile_resolution_sample_count']} samples, "
                     f"axial extent {profile_provenance['profile_axial_extent_mm']} mm, "
                     f"and maximum radius {profile_provenance['profile_max_radius_mm']} mm. "
-                    "Resolution records sample "
-                    "density only; it is not a certified geometric approximation bound. "
-                    "Arc construction allowance: "
-                    f"{profile_provenance['profile_arc_rounding_allowance']}"
+                    "Resolution records sample density only; it is not a certified geometric "
+                    "approximation bound."
                 ),
                 "disposition": "EXPLICIT_PROFILE_DEFAULT",
             }
@@ -280,7 +279,15 @@ def assemble_request(
     # One deterministic meridian/course-pitch proposal avoids publishing a partial
     # candidate batch. It is a construction hypothesis, not target acceptance.
     if profile is not None:
-        meridian_length = float(profile["samples"][-1]["s_mm"])
+        meridian = decode_meridian(
+            design,
+            run.numerics,
+            validator=SemanticValidator(
+                material_profiles={(material["profile_id"], material["revision"]): material},
+                design_specs={design["design_spec_id"]: design},
+            ),
+        )
+        meridian_length = meridian.length_mm
     else:
         mean_radius = (r + polar) / 2
         meridian_length = (

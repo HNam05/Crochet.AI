@@ -6,11 +6,14 @@ from bisect import bisect_right
 from dataclasses import dataclass
 from fractions import Fraction
 from math import ceil, cos, hypot, isfinite, pi, sin
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .diagnostics import ArtifactValidationError
 from .solver_types import GenerationError, GenerationStatus
 from .validation import SemanticValidator
+
+if TYPE_CHECKING:
+    from .analytic_coordinate_meridian import CoordinateAnalyticMeridian
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +45,7 @@ class MeridianNumerics:
 class MeridianPoint:
     s_mm: float
     radius_mm: float
+    axial_mm: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,7 +110,7 @@ class AnalyticMeridian:
 
 def decode_meridian(
     design: dict[str, Any], numerics: MeridianNumerics, *, validator: SemanticValidator
-) -> AnalyticMeridian:
+) -> AnalyticMeridian | CoordinateAnalyticMeridian:
     numerics.validate()
     report = validator.validate_design_spec(design)
     if not report.ok:
@@ -124,10 +128,29 @@ def decode_meridian(
         and target.get("radial_profile", {}).get("canonicalization_profile")
         == "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
     ):
-        raise GenerationError(
-            GenerationStatus.NOT_APPLICABLE,
-            "meridian.explicit_coordinate_profile_not_supported",
-        )
+        profile = target["radial_profile"]
+        segment_count = len(profile["samples"]) - 1
+        if segment_count > numerics.max_arc_panels:
+            raise GenerationError(GenerationStatus.SEARCH_BUDGET_EXHAUSTED, "meridian.arc_panels")
+        from .analytic_coordinate_meridian import CoordinateAnalyticMeridian
+        from .analytic_coordinate_target import admit_analytic_coordinate_target
+        from .analytic_target import AnalyticTargetError
+
+        try:
+            admitted = admit_analytic_coordinate_target(design, validator)
+        except AnalyticTargetError as error:
+            status = (
+                GenerationStatus.NOT_APPLICABLE
+                if error.status == "NOT_APPLICABLE"
+                else GenerationStatus.INVALID_SOLVER_INPUT
+            )
+            raise GenerationError(status, "meridian.coordinate_target_admission") from error
+        if any(
+            radius <= numerics.radius_zero_tolerance_mm
+            for radius, _ in admitted.coordinates_mm[1:-1]
+        ):
+            raise GenerationError(GenerationStatus.NOT_APPLICABLE, "meridian.interior_thin_neck")
+        return CoordinateAnalyticMeridian.from_target(admitted, numerics)
     prefix: tuple[float, ...] = ()
     profile_s: tuple[float, ...] = ()
     profile_r: tuple[float, ...] = ()

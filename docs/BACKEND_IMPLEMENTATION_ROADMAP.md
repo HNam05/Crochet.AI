@@ -681,3 +681,21 @@ einschließlich API und Pilotanbindung. Danach separater unabhängiger Replay un
 Geometrievergleich; weiterhin das zielunabhängige physische Shaping-, Belastungs-
 und Kontaktmodell samt echten Messungen. Der [Handoff](BACKEND_HANDOFF.md) hält
 die konkreten Prüfungen und offenen Abnahmen fest; R1-R4 bleiben unabgenommen.
+
+### Fortschreibung 2026-10-06: Generator für explizite Formkoordinaten
+
+Der [separate Erzeuger](ANALYTIC_COORDINATE_GENERATION_V1.md) verwendet nun die
+zugelassenen Radius-/Axialkoordinaten. Begrenzte, exakt geprüfte Längenintervalle
+und rationale Präfixe erhalten Kappen und Einbuchtungen; Fehler und ausgeschöpfte
+Arbeitsgrenzen führen zu ausdrücklicher Ablehnung. Die gemeinsame globale
+Zählsuche, Phasensuche und vollständige CrochetIR-Kompilierung bleiben unverändert.
+Neue allgemeine Pilotformen verwenden die neue Darstellung, bestehende Projekte
+und native Kugel-/Ellipsoid-Eingaben bleiben erhalten. API, CLI und Jobs nutzen
+den vorhandenen Generierungsweg; Trace und Originalvorschläge binden die Eingaben.
+
+Damit ist die Producer-Anbindung aus P03 umgesetzt. Der unabhängige Kugel-Prüfer
+unterstützt diesen Sampler weiterhin nicht; seine Unvollständigkeit ist sichtbar.
+Nächster Abschnitt ist dessen separate unabhängige numerische und Suchprüfung,
+danach Geometrievergleich, vollständige zielunabhängige Physik und Kalibrierung.
+Die übrigen R1-R4-/B0-B12-Abnahmen bleiben offen; konkrete Softwareprüfungen
+werden im Handoff dokumentiert.

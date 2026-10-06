@@ -10,7 +10,12 @@ import pytest
 from crochet_ai.canonical import CanonicalProfile, canonical_hash
 from crochet_ai.prototype_backend import LocalPrototype
 from crochet_ai.prototype_input import PROTOTYPE_VERSION, assemble_request
-from crochet_ai.prototype_shapes import SHAPE_CATALOG, radial_profile, shape_label
+from crochet_ai.prototype_shapes import (
+    SHAPE_CATALOG,
+    coordinate_profile,
+    radial_profile,
+    shape_label,
+)
 from crochet_ai.prototype_storage import PrototypeStore
 from crochet_ai.schema import validate_schema
 
@@ -50,20 +55,20 @@ def test_each_added_shape_builds_a_valid_deterministic_closed_candidate(
     profile = target["radial_profile"]
     payload = {key: value for key, value in profile.items() if key != "sha256"}
     assert validate_schema("design_spec", design).ok
+    assert design["schema_version"] == "1.2.0"
     assert target["primitive"] == "SURFACE_OF_REVOLUTION"
-    assert profile["sha256"] == canonical_hash(payload, CanonicalProfile.SURFACE_OF_REVOLUTION)
+    assert profile["sha256"] == canonical_hash(
+        payload, CanonicalProfile.SURFACE_OF_REVOLUTION_COORDINATES
+    )
     samples = profile["samples"]
     assert len(samples) <= 129
-    assert samples[0]["s_mm"] == 0 and samples[0]["radius_mm"] == 0
+    assert samples[0]["axial_mm"] == 0 and samples[0]["radius_mm"] == 0
     assert samples[-1]["radius_mm"] == 0
+    assert samples[-1]["axial_mm"] == height
     assert max(sample["radius_mm"] for sample in samples) == diameter / 2
     for index, sample in enumerate(samples):
         assert sample["sample_index"] == index
-        if index:
-            previous = samples[index - 1]
-            ds = Fraction(sample["s_mm"]) - Fraction(previous["s_mm"])
-            dr = Fraction(sample["radius_mm"]) - Fraction(previous["radius_mm"])
-            assert ds > 0 and abs(dr) <= ds
+        assert set(sample) == {"sample_index", "radius_mm", "axial_mm"}
     again, _, _ = assemble_request(request, software_commit=_commit(), working_tree_dirty=True)
     assert again["target_geometry"] == target
 
@@ -105,6 +110,16 @@ def test_versioned_catalog_and_capsule_constraints_and_scale() -> None:
         shape_label("torus")
     with pytest.raises(ValueError, match=r"request\.capsule_height"):
         radial_profile("capsule", 40, 39)
+
+    coordinate, provenance = coordinate_profile("cylinder", 40, 40)
+    assert coordinate["canonicalization_profile"] == (
+        CanonicalProfile.SURFACE_OF_REVOLUTION_COORDINATES.value
+    )
+    assert provenance["profile_design_id"] == "prototype_cylinder_coordinate_silhouette_v1"
+    # The historical radial_profile writer remains callable with its old contract.
+    legacy, _ = radial_profile("cylinder", 40, 40)
+    assert legacy["canonicalization_profile"] == CanonicalProfile.SURFACE_OF_REVOLUTION.value
+    assert set(legacy["samples"][0]) == {"sample_index", "s_mm", "radius_mm"}
 
     base, _ = radial_profile("pear", 40, 55)
     scaled, _ = radial_profile("pear", 80, 110)

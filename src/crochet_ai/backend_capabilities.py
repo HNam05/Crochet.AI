@@ -24,13 +24,13 @@ def backend_capability_matrix() -> dict[str, object]:
             "B2",
             "IMPLEMENTED_SUBSET",
             "Mesh V0, sphere/ellipsoid targets, cardinal closed coordinate admission",
-            "Other coordinate scopes, coordinate generation/V7, flat and lace adapters",
+            "Other coordinate scopes, coordinate V7, flat and lace adapters",
         ),
         (
             "B3",
             "IMPLEMENTED_SUBSET",
-            "Closed-pole SC proposals, bounded traces, independent final-relation audit",
-            "Full independent V5 and full domain acceptance",
+            "Closed-pole SC and explicit-coordinate proposals with bounded producer traces",
+            "Coordinate replay, full independent V5 and full domain acceptance",
         ),
         (
             "B4",

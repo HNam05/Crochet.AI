@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from fractions import Fraction
 from hashlib import sha256
 
 import pytest
@@ -14,7 +15,6 @@ from crochet_ai.analytic_geometry import MeridianNumerics, decode_meridian
 from crochet_ai.analytic_target import AnalyticTargetError, admit_analytic_target
 from crochet_ai.canonical import CanonicalProfile, canonical_hash
 from crochet_ai.schema import validate_schema
-from crochet_ai.solver_types import GenerationError, GenerationStatus
 from crochet_ai.validation import SemanticValidator
 
 PROFILE_ID = "SURFACE_OF_REVOLUTION_COORDINATE_PROFILE_CANONICAL_JSON_V1"
@@ -142,19 +142,20 @@ def test_schema_1_1_does_not_admit_the_additive_coordinate_profile() -> None:
     assert not validate_schema("design_spec", design).ok
 
 
-def test_coordinate_profile_is_explicitly_not_applicable_to_existing_generator() -> None:
+def test_coordinate_profile_has_a_bounded_meridian_sampler() -> None:
     design, material = _design([(0, 0), (4, 0), (4, 4), (0, 4)])
     validator = SemanticValidator(
         material_profiles={(material["profile_id"], material["revision"]): material}
     )
-    with pytest.raises(GenerationError) as error:
-        decode_meridian(
-            design,
-            MeridianNumerics(0.05, 1e-8, 10000, 1e-9),
-            validator=validator,
-        )
-    assert error.value.status is GenerationStatus.NOT_APPLICABLE
-    assert error.value.reason == "meridian.explicit_coordinate_profile_not_supported"
+    meridian = decode_meridian(
+        design,
+        MeridianNumerics(0.05, 1e-8, 10000, 1e-9),
+        validator=validator,
+    )
+    assert meridian.length_mm == 12
+    point = meridian.sample(Fraction(1, 2))
+    assert point.radius_mm == 4
+    assert point.axial_mm == 2
 
 
 def test_axial_extent_overflow_is_reported_as_structured_semantic_error() -> None:

@@ -20,6 +20,14 @@ Exact rational values are encoded as reduced `numerator/denominator` strings.
 Circumferences use the exact rational representation of the binary64 calculation,
 not decimal rounding. These are solver inputs, not certified geometry bounds.
 
+The separate [coordinate producer](ANALYTIC_COORDINATE_GENERATION_V1.md) uses this
+same outer search/count/phase envelope. Coordinate-only samples additionally
+record local signed axial_mm; the retained original proposal records the
+EXPLICIT_COORDINATE_MERIDIAN_V1 sampler identity and numerical diagnostics.
+DesignSpec/target hashes bind its complete authoritative knots. Older paths do
+not acquire new fields or parameters. The independent sphere auditor remains
+unchanged and reports unsupported_target_sampler for coordinate targets.
+
 The immutable trace retains JCS bytes and a separate SHA-256 using
 `Crochet.AI\0ANALYTIC_SEARCH_TRACE_V1\0`. `to_dict()` returns a fresh value.
 API generation and durable jobs expose payload plus hash. Invalid admission

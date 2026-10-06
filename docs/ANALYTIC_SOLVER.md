@@ -35,6 +35,14 @@ The solver accepts an analytic target only after V1 semantic validation. It cons
 
 For a `SURFACE_OF_REVOLUTION`, the profile hash covers the profile payload excluding the hash field, serialized with `SURFACE_OF_REVOLUTION_PROFILE_CANONICAL_JSON_V1`. Sample `j` must have `sample_index = j`; `s_0 = 0`; `s_(j+1) > s_j`; all radii are non-negative; and the final `s` equals the resolved `MERIDIONAL_LENGTH` within the versioned `arc_length_abs_tolerance_mm`. A `CLOSED_POLE` end must be within `radius_zero_tolerance_mm` of zero. An `INTENTIONAL_OPENING` must resolve to the corresponding DesignSpec opening requirement. Failure is `INVALID_SOLVER_INPUT`, not interpolation or endpoint repair.
 
+DesignSpec 1.2 additionally supports authoritative radius/axial coordinates via
+[ANALYTIC_COORDINATE_GENERATION_V1](ANALYTIC_COORDINATE_GENERATION_V1.md).
+For its admitted simple closed pole-ended subset, derive meridional sample
+positions using the separately versioned bounded numerical policy; preserve
+axial signs and explicit caps. AXIAL_LENGTH binds full extent, not arclength.
+Older radial-profile decoding remains unchanged and does not establish axial
+embedding. Independent coordinate replay and geometry/physical gates remain open.
+
 The profile is design intent and must never encode final stitch quantities, per-course counts, or shaping placement. The solver's course samples, integer counts, fitted mesh profile, and interpolator cache are solver-private diagnostics, not part of `DesignSpec` or canonical CrochetIR.
 
 ## Inputs and outputs

@@ -30,7 +30,8 @@ This is a working implementation checkpoint, not full backend acceptance.
   merely because their software records validate.
 - V0 mesh admission, ideal sphere/ellipsoid targets and additive DesignSpec 1.2
   simple explicit-coordinate revolution targets. Arbitrary axes/open coordinate
-  targets, coordinate generation and native cylinder/cone interfaces remain partial.
+  targets and native cylinder/cone interfaces remain partial. The closed-coordinate
+  producer now samples authoritative knots and emits unverified SC proposals.
 - Target-free shaped-cell construction, independent surface manifold/Euler/Betti
   audit and independent raw-IR-to-cell conformance. V4 can PASS only in the
   documented closed single-component/branch/yarn SC subset.
@@ -149,16 +150,49 @@ API/CLI/isolated durable jobs expose existing inspect_analytic_target. V0 has a
 separate coordinate scope, version, budgets and linked target hash: valid ideal
 targets PASS, proved coordinate contradictions FAIL/E_INPUT, unsupported scopes
 stay INDETERMINATE. New coordinates do not enter the independent forward model.
-The only generator-side change is an explicit NOT_APPLICABLE admission guard;
+At this admission checkpoint, the only generator-side change was an explicit
+NOT_APPLICABLE admission guard;
 count/phase search, compilation, independent candidate replay and CrochetIR are
-unchanged. New-coordinate generation, sampling/V7 and physical acceptance remain
-open, overall NOT_VERIFIED and physical UNTESTED.
+unchanged. Coordinate generation was still open at that checkpoint; the producer
+extension below now implements it. Independent sampling/V7 and physical acceptance
+remain open, overall NOT_VERIFIED and physical UNTESTED.
 
 One bounded Luna/medium worker implemented the input/target/admission package.
 A read-only Luna mathematical reviewer checked the ideal embedding proof and
 exact predicate implementation; no concrete bug was found in that limited scope.
 Primary independently reviewed schemas, API/V0 evidence, hashes and counterexamples.
 This review does not cover baseline physical-model or full release correctness.
+
+## Explicit coordinate producer checkpoint
+
+EXPLICIT_COORDINATE_MERIDIAN_V1 derives segment lengths from admitted authoritative
+radius/axial knots. Exact rational squared-distance checks certify bounded hypot
+enclosures, and rational cumulative lengths preserve short segments. Total length
+error and every returned s/radius/axial conversion must meet the caller's numerical
+policy. Failed enclosures, overflow and excess rounding fail explicitly; segment
+work obeys max_arc_panels. Length tolerance is not physical or V7 acceptance.
+See [ANALYTIC_COORDINATE_GENERATION_V1.md](ANALYTIC_COORDINATE_GENERATION_V1.md)
+and [ADR 0018](adr/0018-bounded-coordinate-meridian-generation.md).
+
+Generation reuses unchanged count/phase DP and the complete CrochetIR compiler.
+Coordinate-only solver provenance records sampler version, target hash and work;
+the existing trace also retains signed axial samples. Old input paths do not gain
+these fields or parameters. API/CLI/jobs use existing generation dispatch.
+New cylinder/cone/capsule/pear pilot requests author DesignSpec 1.2 coordinates,
+with AXIAL_LENGTH binding full extent. Legacy authoring and saved projects remain
+unchanged. Sphere/ellipsoid authorship is unchanged.
+
+The independent sphere auditor, candidate/final-relation checkers, V0 pipeline,
+forward model, schemas and goldens are unchanged in this producer package.
+Coordinate traces remain INDETERMINATE with unsupported_target_sampler; extra
+coordinate provenance also remains explicitly unsupported by the narrower claims
+checker. No producer analysis is promoted to independent evidence. Overall
+NOT_VERIFIED and physical UNTESTED remain; coordinate replay/V7 and physics are open.
+
+One bounded Luna/medium worker owns implementation with targeted tests; primary
+owns numerical policy, independent adversarial tests, integration and publication.
+A Luna/low mathematical reviewer checked the enclosure/2E displacement proof
+and implementation. Token and cost measurements are unavailable, not estimates.
 
 ## Validation and runtime
 
@@ -256,21 +290,61 @@ captures directly and do not edit storage. Evidence is under
 null in `artifacts/agent-costs/2026-10-06-coordinate-target.json`; no measured
 speedup or physical acceptance is claimed.
 
+Coordinate producer checkpoint: all 1,248 Python tests passed in 563.41 s.
+The worker's 70 focused tests and the primary's 27 independent adversarial/property
+tests passed. Full Ruff, strict mypy on 88 modules, five unchanged independent Node
+canonical vectors and ten frontend tests passed. Wheel build, clean isolated
+installation, dependency check and out-of-checkout smoke passed; all nine schemas
+are bundled byte-for-byte. Three complete source/installed CLI generation envelopes
+match: capped and nonmonotone targets emit proposals, while a crossing is rejected
+without candidates or trace. Entire native-sphere and historical capped-cylinder
+proposal/trace payloads match their pre-edit captures under fixed provenance.
+These checks establish the documented producer subset, not independent coordinate
+replay, V7 or physical pattern validity. Evidence is under
+`artifacts/backend-coordinate-generation/`; worker usage measurements remain null
+in `artifacts/agent-costs/2026-10-06-coordinate-generation.json`.
+
+The restarted live source server preserved all ten original project snapshots
+exactly. The complete-bundle sphere retains V0 PASS, search/final-relation PASS,
+and V5 INDETERMINATE with the same two physical/selection checks missing. Its
+PDF download passed; the historical hash-only sphere stays incomplete.
+New explicit-coordinate pear (40 x 55 mm, hypothetical 25 stitches/28 rounds per
+100 mm) generated 20 rounds and 354 stitches, with semantic validation and text
+round trip PASS, ideal-target V0 PASS, coordinate search audit/V5 INDETERMINATE,
+overall NOT_VERIFIED and physical UNTESTED. Its complete bundle was retrieved
+unchanged, and the English PDF downloaded successfully (5,508 bytes):
+`6e098e81d5559506896b3ed2f38399f0248c8ee43478a87ca922d3d23061e200`.
+This project records the source snapshot before checkpoint publication; do not
+rewrite its historical commit/dirty-source provenance after committing.
+
+The first live attempt reached an old Windows background process and its schema
+assertion failed. After stopping the verified owned process pairs and checking
+listener ownership, the complete live checks passed against new source. The
+extra legacy pear created during that diagnostic is retained unchanged, alongside
+the ten original projects and new coordinate pear (12 saved projects total).
+Failure diagnostics and both PDFs remain in the ignored evidence folder.
+
 Start from repository root: `.venv/Scripts/python.exe -u tools/run_prototype.py --port 8765`.
+On Windows, stopping the terminal session alone may leave its Python child alive.
+Before restart, identify only this checkout's prototype launcher/child process
+pair, stop that owned pair and confirm port 8765 has no listener. After restart,
+confirm exactly one listener belongs to the new process. A printed listening
+message alone does not prove that browser requests reach the new source.
 Persistent private projects/feedback: `artifacts/local-prototype/` (ignored).
 Nine historical projects existed before the complete snapshot task; their sessions
 are preserved (eight untraced projects and one hash-only traced sphere).
-Ten projects are now saved, including the complete-bundle sphere above.
+Ten projects were saved after the complete-bundle sphere checkpoint; the current
+coordinate producer checkpoint has 12, as described above.
 Generated PDFs under `output/pdf/` are local exports, not authoritative fixtures.
 Do not infer installed runtime or remote branch state from this note; check live.
 
 ## Next work in order
 
-1. Add producer support for the explicit coordinate profile, with a versioned
-   bounded arclength calculation and recorded numerical policy; update generic
-   six-shape pilot authorship without rewriting old projects. Keep count/phase
-   replay changes in a separate verification package. Target sampling/V7 must
-   later bind their own coverage/error policy. Older r(s) profiles remain ambiguous.
+1. Independently admit/replay the explicit coordinate producer's numerical policy,
+   samples and retained count/phase search traces. Keep this verifier package
+   separate from generation; do not import the producer sampler as its oracle.
+   Later target sampling/V7 must bind its own coverage/error policy. Older r(s)
+   profiles remain ambiguous and saved projects must not be upgraded or rewritten.
 2. Complete physical rest/shaping/loading/contact model for actual generated
    INC/DEC cells and open calibration fixtures; retain target-free simulation.
 3. Implement independent V6 convergence, V7 geometry comparison, V8 material
@@ -285,6 +359,7 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
 `ANALYTIC_COORDINATE_TARGET_V1.md`, `DESIGN_SPEC.md`,
+`ANALYTIC_COORDINATE_GENERATION_V1.md`,
 `ANALYTIC_SEARCH_TRACE_V1.md`, `ANALYTIC_CANDIDATE_CLAIMS_V1.md`,
 `PROTOTYPE_PROPOSAL_BUNDLE_V1.md`, `PROTOTYPE_FINAL_RELATION_AUDIT_V1.md`,
 `VERIFICATION_PIPELINE.md`, then the affected

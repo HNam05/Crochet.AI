@@ -11,7 +11,10 @@ Support SPHERE, ELLIPSOID and versioned closed revolution profiles for cylinder,
 cone, capsule and pear, one yarn/color, continuous cyclic single crochet,
 binary increases/decreases, magic ring and closure. Reuse the existing bounded
 analytic generator, semantic validator and Pattern V1 exporter/round trip.
-No solver/verifier/schema/golden edits. No fixture files imported at runtime.
+The initial prototype package made no solver/verifier/schema/golden edits.
+The later coordinate producer package follows its separately reviewed contract;
+independent verifier and canonical schemas/goldens remain unchanged.
+No fixture files imported at runtime.
 All results remain NOT_VERIFIED and UNTESTED. Human testing is authorized;
 feedback is self-reported, unreviewed evidence, never automatic calibration.
 
@@ -74,7 +77,7 @@ straight middle; height equal to diameter has no duplicate equator point.
 Pear uses 129 normalized silhouette samples with a wider lower belly and narrow
 upper region. It is a single rotational body, not arbitrary organic topology.
 
-All new targets use the existing content-addressed SURFACE_OF_REVOLUTION
+The initial targets used the existing content-addressed SURFACE_OF_REVOLUTION
 contract. Ordered axial/radial silhouette samples are converted to cumulative
 meridional arc lengths in mm. End radii are zero and interior radii positive.
 Sampled maximum radius equals requested diameter/2. The samples themselves
@@ -91,6 +94,16 @@ rounding allowance, not physical accuracy. MERIDIONAL_LENGTH equals the final
 serialized s exactly and its authoring tolerance is zero. Profiles are bounded
 to 129 samples. Course proposal uses the profile's meridional length; existing
 integer search budgets, admission limits and zero-phase compilation still apply.
+
+Newly authored generic forms now use `prototype_{shape}_coordinate_silhouette_v1`
+and DesignSpec 1.2's explicit radius/axial profile. The same declared silhouettes
+retain their disk caps, endpoint positions and resolution. No cumulative s is
+stored as authoritative target input; AXIAL_LENGTH binds full extent. The
+[coordinate producer](ANALYTIC_COORDINATE_GENERATION_V1.md) derives bounded
+meridional length and samples for the existing course/count search. The legacy
+radial writer and saved projects remain untouched; native sphere/ellipsoid inputs
+remain unchanged. Coordinate targets can pass scoped ideal-target V0, while their
+independent search replay remains INDETERMINATE. Neither is physical acceptance.
 
 ### Printable export
 

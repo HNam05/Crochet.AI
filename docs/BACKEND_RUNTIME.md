@@ -57,8 +57,9 @@ It returns source-bound immutable ideal-surface metadata after bounded exact
 meridian admission. Existing sphere/ellipsoid metadata is unchanged; ambiguous
 older radial profiles remain unsupported. Closed explicit caps and simple
 nonmonotone meridians are supported with cardinal axes; unsupported frames and
-boundaries return structured errors. Generation from this new representation,
-target sampling and V7 comparison remain follow-on packages. Inspection alone
+boundaries return structured errors. Generation from this representation follows
+[EXPLICIT_COORDINATE_MERIDIAN_V1](ANALYTIC_COORDINATE_GENERATION_V1.md);
+independent coordinate replay, target sampling and V7 comparison remain open. Inspection alone
 retains NOT_VERIFIED/UNTESTED. CLI request and isolated durable jobs use the same
 operation; no client-supplied proof or work-budget override is accepted.
 
@@ -179,7 +180,8 @@ does not establish converged F0, V6, calibrated shape accuracy or release.
 
 `analytic-closed-sc/1` supports a single yarn/color, non-branching closed-pole
 cyclic SC construction starting in a magic ring and ending in CLOSE. Sphere,
-ellipsoid and eligible explicit radial profiles are decoded. Cylinder/cone
+ellipsoid and eligible radial profiles, including admitted DesignSpec 1.2
+radius/axial meridians, are decoded. Cylinder/cone
 meridional samplers exist, but their open/interface construction is not emitted.
 Mesh fitting, branching, garments, flat work and lace remain separate packages.
 
@@ -205,6 +207,16 @@ profile, requiring convergence/scale studies before a production claim. Radial
 profiles with `abs(dr) > ds`, nonzero closed poles, or interior zero-radius poles
 fail instead of being repaired. `r(s)` does not determine the sign of axial
 motion; this runtime does not invent an axial embedding from it.
+
+Explicit coordinate generation uses exact rational cumulative approximate lengths
+and normalized interpolation. Each segment has a bounded square-root enclosure
+checked against the exact squared input distance; total length and per-output
+roundoff must meet the caller's numerical policy. max_arc_panels counts segments
+for this algorithm. Finite overflow, failed enclosures or excessive rounding yield
+NUMERICAL_FAILURE, while insufficient segment budget yields SEARCH_BUDGET_EXHAUSTED.
+Sampler version and diagnostics are recorded in coordinate-only proposal
+provenance and bound by retained source/target/trace hashes. These producer
+calculations do not extend the untouched independent sphere replay or V7.
 
 ## Durable local jobs
 

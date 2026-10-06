@@ -7,10 +7,12 @@ DesignSpec `1.2.0` adds an explicit coordinate profile for
 primitive target adapters remain unchanged. Existing radius-versus-arclength
 profiles do not determine axial movement signs and are never backfilled.
 
-This package admits an ideal closed piecewise-linear surface of revolution for
+The initial admission package admits an ideal closed piecewise-linear surface of revolution for
 target inspection and V0. It does not generate CrochetIR from this new profile,
 provide a sampled mesh or V7 distance certificate, or establish physical validity.
-The existing analytic generator must return structured `NOT_APPLICABLE` for it.
+That checkpoint deliberately rejected generation. The separate producer contract
+[ANALYTIC_COORDINATE_GENERATION_V1](ANALYTIC_COORDINATE_GENERATION_V1.md) now
+extends generation; the target admission and independent V7 boundaries stay intact.
 Forward simulation remains target-free.
 
 ## Authoritative input
@@ -90,8 +92,9 @@ coordinate contradictions yield FAIL/E_INPUT; unsupported scope yields
 INDETERMINATE/E_UNSUPPORTED_FEATURE. Existing primitive V0 scope is unchanged.
 Overall verification remains NOT_VERIFIED and physical testing UNTESTED.
 
-Solver admission receives only an explicit unsupported-profile guard in this
-package. No solver search, count/phase replay, CrochetIR semantics, forward model,
+The initial admission package added only an unsupported-profile generator guard.
+Its subsequent replacement is governed by the separate producer contract above.
+No count/phase replay, CrochetIR semantics, forward model,
 golden fixture or existing target primitive proof is changed. Target-side V0
 admission and the generator guard require separate review and adversarial tests;
 target admission must never imply generative or physical acceptance.
@@ -105,6 +108,6 @@ collapse. Exercise signed axes and source mutation; old ambiguous profiles remai
 unsupported. Verify schema routing, API/V0 delivery, installed schema inclusion,
 and structured generator rejection without modifying old canonical vectors.
 
-Next packages must independently implement explicit-coordinate generator support
-and bounded geometry comparison. Numerical arclength calculations will need their
-own recorded algorithm and error policy; coordinate admission introduces none.
+The separate generator package records its own numerical arclength policy;
+coordinate target admission introduces none. Independent coordinate search replay
+and bounded geometry comparison remain required before wider verification.

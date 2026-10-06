@@ -151,3 +151,40 @@ def radial_profile(
         ),
     }
     return profile, provenance
+
+
+def coordinate_profile(
+    shape: str, diameter: float, height: float
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build an explicit ordered (radius, axial) silhouette target profile."""
+    if shape not in {"cylinder", "cone", "capsule", "pear"}:
+        raise ValueError("request.shape")
+    if shape == "capsule" and height < diameter:
+        raise ValueError("request.capsule_height")
+    points = _silhouette(shape, diameter / 2, height)
+    if len(points) > _MAX_PROFILE_SAMPLES:
+        raise ValueError("request.profile_budget")
+    payload: dict[str, Any] = {
+        "canonicalization_profile": CanonicalProfile.SURFACE_OF_REVOLUTION_COORDINATES.value,
+        "samples": [
+            {"sample_index": index, "radius_mm": radius, "axial_mm": axial}
+            for index, (radius, axial) in enumerate(points)
+        ],
+        "start_boundary": {"boundary_type": "CLOSED_POLE"},
+        "end_boundary": {"boundary_type": "CLOSED_POLE"},
+    }
+    profile = {
+        **payload,
+        "sha256": canonical_hash(payload, CanonicalProfile.SURFACE_OF_REVOLUTION_COORDINATES),
+    }
+    provenance = {
+        "profile_design_id": f"prototype_{shape}_coordinate_silhouette_v1",
+        "profile_resolution_sample_count": len(points),
+        "profile_resolution_error_meaning": (
+            "Ordered explicit coordinates define target identity exactly; sample count records "
+            "resolution, not a certified geometric approximation bound."
+        ),
+        "profile_axial_extent_mm": height,
+        "profile_max_radius_mm": diameter / 2,
+    }
+    return profile, provenance

@@ -15,6 +15,7 @@ from typing import Any
 import rfc8785
 
 from .analytic_compile import CompileProvenance, compile_closed_schedule
+from .analytic_coordinate_meridian import CoordinateAnalyticMeridian
 from .analytic_counts import (
     CountLayerTrace,
     CountSearchBudget,
@@ -351,6 +352,11 @@ def generate_analytic(
                 {
                     "s_mm": _rational(Fraction(p.s_mm)),
                     "radius_mm": _rational(Fraction(p.radius_mm)),
+                    **(
+                        {"axial_mm": _rational(Fraction(p.axial_mm))}
+                        if p.axial_mm is not None
+                        else {}
+                    ),
                 }
                 for p in samples
             ]
@@ -467,6 +473,13 @@ def generate_analytic(
                 "stacking_pairs": placement.stacking_pairs,
                 "proximity_penalty_turns": _rational(placement.proximity_penalty_turns),
             }
+            coordinate_parameters: tuple[tuple[str, str | int | float | bool], ...] = ()
+            if isinstance(meridian, CoordinateAnalyticMeridian):
+                coordinate_parameters = (
+                    ("solver.coordinate_sampler_version", "EXPLICIT_COORDINATE_MERIDIAN_V1"),
+                    ("solver.coordinate_target_sha256", meridian.target_sha256),
+                    ("solver.coordinate_sqrt_bracket_max_steps", 2),
+                )
             candidate_provenance = replace(
                 recorded,
                 parameters=(
@@ -478,6 +491,7 @@ def generate_analytic(
                     ("solver.arc_panels", meridian.arc_panels),
                     ("solver.arc_error_bound_mm", meridian.exact_arithmetic_arc_error_bound_mm),
                     ("solver.material_response_id", response["response_id"]),
+                    *coordinate_parameters,
                 ),
             )
             record["stage"] = "compile"
