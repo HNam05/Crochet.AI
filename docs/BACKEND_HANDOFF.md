@@ -102,6 +102,30 @@ are unchanged; oversized verification fails explicitly rather than truncating.
 Solver/compiler, independent auditor and verification-pipeline source are
 unchanged in this producer/persistence package.
 
+## Independent final-relation checkpoint
+
+`PROTOTYPE_FINAL_RELATION_AUDIT_V1` independently binds a retained native analytic
+proposal to the fixed-zero-phase prototype IR. It checks exact source parameters
+and provenance, each parameter digest, actual round counts and phases, balanced
+shaping, both raw ordered stitch/frontier chains and every required anchor update.
+Only after these checks may phase-dependent connections be omitted from the
+canonical semantic comparison. Solver/compiler, proposal persistence, schemas
+and goldens are unchanged.
+
+API/CLI/durable jobs expose `inspect_prototype_final_relation`. V5 invokes it only
+after independent search audit PASS and a unique provenance match from the same
+audited raw proposal batch. Relation PASS removes exactly
+final_candidate_to_original_proposal_relation. Native proposal verification keeps
+its existing behavior; missing or ambiguous originals cannot establish proof.
+Physical feasible selection and physical_verification remain open; V5 stays
+INDETERMINATE, overall NOT_VERIFIED and physical UNTESTED.
+
+Hand-authored adversarial fixtures demonstrate why schema acceptance, correct
+counts and a phase-stripped comparison alone are insufficient: a valid hidden
+intermediate frontier rotation must fail raw replay. Canonical schedule strings
+reject padded numbers such as "06". Additional boundary tests require complexity
+limits before hashing and reject client reports or budget overrides.
+
 ## Validation and runtime
 
 Previous accepted V5 claims checkpoint: 1,050 Python tests, Ruff, strict mypy on
@@ -139,8 +163,10 @@ confirmed nine explicit 422 E_PROVENANCE rejections across project/PDF/verify fo
 deleted trace, missing design identity and malformed original IR. Quota rollback
 and the assembled verification request's 2 MB limit are covered by targeted tests.
 
-Live 40 mm sphere: `057803daeb6335dad900570d00693ad08bdd4f44c59b5a4208b9868596e3dc45`.
-GET restores the complete bundle; PDF export passed. Its V5 missing checks are
+Proposal snapshot checkpoint's live 40 mm sphere:
+`057803daeb6335dad900570d00693ad08bdd4f44c59b5a4208b9868596e3dc45`.
+GET restored the complete bundle; PDF export passed. At that checkpoint V5 had
+these missing checks:
 deterministic_candidate_selection_and_tie_break,
 final_candidate_to_original_proposal_relation and physical_verification.
 V5 INDETERMINATE, overall NOT_VERIFIED and UNTESTED are intentional. The nine
@@ -149,6 +175,28 @@ from the final source snapshot before publication; its recorded historical commi
 and snapshot are retained, not silently rewritten after publication.
 
 Local browser: `http://127.0.0.1:8765/`.
+Final-relation checkpoint: 1,162 full-suite tests passed in 482.70 s;
+37 new targeted tests passed in 18.45 s. Full Ruff,
+strict mypy on 86 source modules, five independent Node canonical vectors and
+ten frontend tests passed. Wheel build/install, dependency check and isolated
+out-of-checkout smoke passed. Source CLI, installed CLI and live HTTP return
+identical whole verification envelopes and relation reports for the saved sphere;
+all 12 relation assertions PASS, with digest
+`38696d19aa220e844372305e2892c13ab5027bb8ffc0efcf060d0a01c333096a`.
+Its V5 now has exactly deterministic_candidate_selection_and_tie_break and
+physical_verification missing. Ten projects and sessions remain intact; English
+PDF download passed. A Windows-1252-decoded prior HTTP capture was corrected
+only for the read-only comparison; database and live UTF-8 steps were unchanged.
+The historical hash-only sphere still returns search audit INDETERMINATE with
+original_proposal_artifacts missing, no relation report and unchanged project.
+Focused independent review found no concrete issue in the new auditor/API/V5
+scope; it did not audit the baseline physical model or full release acceptance.
+Logs and delivery comparisons are under `artifacts/backend-final-relation/`.
+The first full-suite run was interrupted by new user input; its partial log is
+retained separately. Only the complete rerun establishes the full-suite result.
+No controlled speedup is claimed. Worker token/cost measurements remain null
+in `artifacts/agent-costs/2026-10-06-final-relation.json`.
+
 Start from repository root: `.venv/Scripts/python.exe -u tools/run_prototype.py --port 8765`.
 Persistent private projects/feedback: `artifacts/local-prototype/` (ignored).
 Nine historical projects existed before the complete snapshot task; their sessions
@@ -159,28 +207,24 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Separate independent verification task: admit and verify the producer's
-   proposal-to-final FIXED_ZERO_CONTINUOUS_V1 relation against both raw IRs.
-   Complete originals are now retained for new projects; historical hash-only
-   projects remain incomplete. Broader samplers and physical feasible selection
-   remain open. Keep independent verifier work separate from generation.
-2. Version complete generic analytic target coordinates before V7. Current r(s)
+1. Version complete generic analytic target coordinates before V7. Current r(s)
    does not determine axial movement signs for general profiles.
-3. Complete physical rest/shaping/loading/contact model for actual generated
+2. Complete physical rest/shaping/loading/contact model for actual generated
    INC/DEC cells and open calibration fixtures; retain target-free simulation.
-4. Implement independent V6 convergence, V7 geometry comparison, V8 material
+3. Implement independent V6 convergence, V7 geometry comparison, V8 material
    robustness and feasible-candidate selection, then V10 bound provenance.
-5. Complete uncertainty/calibration provenance, broader topology/solver domains,
+4. Complete uncertainty/calibration provenance, broader topology/solver domains,
    M1B/full export acceptance, recovery/security/release acceptance. See the full
    roadmap; this list does not waive any package acceptance requirement.
-6. Collect real crochet feedback/specimen measurements. Human physical trials and
+5. Collect real crochet feedback/specimen measurements. Human physical trials and
    new golden approvals are separate gates. Develop the separate mobile app later.
 
 ## Reading and commands
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
 `ANALYTIC_SEARCH_TRACE_V1.md`, `ANALYTIC_CANDIDATE_CLAIMS_V1.md`,
-`PROTOTYPE_PROPOSAL_BUNDLE_V1.md`, `VERIFICATION_PIPELINE.md`, then the affected
+`PROTOTYPE_PROPOSAL_BUNDLE_V1.md`, `PROTOTYPE_FINAL_RELATION_AUDIT_V1.md`,
+`VERIFICATION_PIPELINE.md`, then the affected
 subsystem contract/skill.
 
 Quality: `.venv/Scripts/python.exe -m pytest -q`,

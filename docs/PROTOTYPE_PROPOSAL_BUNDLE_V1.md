@@ -72,6 +72,11 @@ prototype V5 remains INDETERMINATE pending independently verified final relation
 physical feasible selection and later gates. Other target samplers remain open.
 NOT_VERIFIED and UNTESTED remain visible in the prototype and PDF.
 
+The subsequent separate [final-relation verifier](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md)
+now consumes these raw snapshots after search audit PASS. A passing relation
+removes that one missing V5 check. Physical feasible selection and later gates
+remain open; this persistence profile and the generator are unchanged.
+
 Tests must cover actual producer snapshots/hash order, restart/session/feedback,
 historical collisions without backfill, corrupted/refreshed manifest bindings,
 partial absence, bounds before hashing, transactional rollback, HTTP delivery to

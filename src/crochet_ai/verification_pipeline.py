@@ -22,6 +22,11 @@ from .models import DesignSpec, MaterialProfile
 from .pattern import TerminologyProfile, export_pattern, verify_semantic_round_trip
 from .pattern_context import PatternParseContext, PatternYarnBinding
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
+from .prototype_final_relation import (
+    PrototypeRelationInputError,
+    inspect_prototype_final_relation,
+    unique_original_proposal,
+)
 from .schema import validate_schema
 from .surface_topology import SurfaceTopologyInputError, audit_surface_topology
 from .trace_verification_types import TraceAuditInputError
@@ -885,6 +890,8 @@ def verify_artifacts(
         )
         evidence_data: dict[str, Any] = claims_data
         trace_failed = False
+        relation_data: dict[str, Any] | None = None
+        relation_failed = False
         if search_evidence is not None:
             try:
                 trace_audit = inspect_analytic_search_trace(
@@ -932,22 +939,89 @@ def verify_artifacts(
                             implementation_version="analytic-trace-adapter/1.0.0",
                         ),)
                 else:
-                    missing_checks += ("final_candidate_to_original_proposal_relation",)
+                    if "final_candidate_to_original_proposal_relation" not in missing_checks:
+                        missing_checks += ("final_candidate_to_original_proposal_relation",)
+                    original = unique_original_proposal(ir, search_evidence["candidate_proposals"])
+                    if original is None:
+                        missing_checks += (
+                            "final_candidate_to_original_proposal_relation: "
+                            "native_lineage_not_unique_or_not_found",
+                        )
+                    else:
+                        try:
+                            relation = inspect_prototype_final_relation(
+                                design,
+                                material,
+                                original,
+                                ir,
+                                validator=validator,
+                            )
+                            relation_data = relation.to_dict()
+                            produced_hashes += (("prototype_final_relation", relation.sha256),)
+                            assertions += tuple(
+                                ("relation." + key, value)
+                                for key, value in relation_data["assertions"].items()
+                            )
+                            diagnostics += tuple(
+                                Diagnostic(
+                                    FailureCode(row["code"]),
+                                    "V5",
+                                    "prototype_relation." + row["code"].lower(),
+                                    row["reason"],
+                                    hashes["crochet_ir"],
+                                    implementation_version="prototype-final-relation-adapter/1.0.0",
+                                )
+                                for row in relation_data["diagnostics"]
+                            )
+                            relation_failed = relation.status == "FAIL"
+                            if relation.status == "PASS":
+                                missing_checks = tuple(
+                                    item
+                                    for item in missing_checks
+                                    if item != "final_candidate_to_original_proposal_relation"
+                                )
+                        except (
+                            PrototypeRelationInputError,
+                            AnalyticClaimsInputError,
+                            ArtifactValidationError,
+                        ) as error:
+                            missing_checks += (
+                                "final_candidate_to_original_proposal_relation: " + str(error),
+                            )
+                if relation_data is not None:
+                    evidence_data["final_relation"] = relation_data
         return GateResult(
             GateOutcome.FAIL
-            if claims.status == "FAIL" or trace_failed else GateOutcome.INDETERMINATE,
-            assertions=assertions, diagnostics=diagnostics,
+            if claims.status == "FAIL" or trace_failed or relation_failed
+            else GateOutcome.INDETERMINATE,
+            assertions=assertions,
+            diagnostics=diagnostics,
             missing_checks=missing_checks,
-            scope=("Independent analytic schedule and bounded staged search; "
-                   "physical selection remains open") if search_evidence is not None else
-                  "Independent analytic schedule and bounds; complete search trace unavailable",
+            scope=(
+                "Independent analytic schedule and bounded staged search; "
+                "physical selection remains open"
+                + ("; final-relation audit linked" if relation_data is not None else "")
+            )
+            if search_evidence is not None
+            else "Independent analytic schedule and bounds; complete search trace unavailable",
             produced_artifact_hashes=produced_hashes,
-            threshold_profile_id=("EXACT_ANALYTIC_SCHEDULE_CLAIMS_V1"
-                                  if search_evidence is None else "EXACT_ANALYTIC_TRACE_AUDIT_V1"),
+            threshold_profile_id=(
+                "EXACT_ANALYTIC_SCHEDULE_CLAIMS_V1"
+                if search_evidence is None
+                else "EXACT_ANALYTIC_TRACE_AUDIT_V1"
+                + ("+PROTOTYPE_FINAL_RELATION_AUDIT_V1" if relation_data is not None else "")
+            ),
             work_budget_json=jcs_bytes(
-                claims_data["budgets"] if search_evidence is None else {
+                claims_data["budgets"]
+                if search_evidence is None
+                else {
                     "candidate_claims": claims_data["budgets"],
                     "search_audit": evidence_data["search_audit"]["budgets"],
+                    **(
+                        {"final_relation": relation_data["budgets"]}
+                        if relation_data is not None
+                        else {}
+                    ),
                 }
             ).decode(),
             parameters_json=jcs_bytes(claims_data["checked_parameters"]).decode(),
@@ -1002,9 +1076,16 @@ def verify_artifacts(
             gate: "target-adapter/1.1.0"
             if gate == "V0"
             else (
-                "closed-cell-source-adapter/1.0.0" if gate == "V4" else (
-                    ("analytic-claims-adapter/1.0.0" if search_evidence is None
-                     else "analytic-trace-adapter/1.0.0") if gate == "V5" else "adapter/1.0.0"
+                "closed-cell-source-adapter/1.0.0"
+                if gate == "V4"
+                else (
+                    (
+                        "analytic-claims-adapter/1.0.0"
+                        if search_evidence is None
+                        else "prototype-final-relation-adapter/1.0.0"
+                    )
+                    if gate == "V5"
+                    else "adapter/1.0.0"
                 )
             )
             for gate in GATES

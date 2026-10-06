@@ -532,6 +532,33 @@ Full integration passed 1,062 Python tests. Validation and publication context a
 and remain null in `artifacts/agent-costs/analytic-search-trace-20261005.json`.
 See [ANALYTIC_SEARCH_TRACE_V1.md](ANALYTIC_SEARCH_TRACE_V1.md).
 
+## Independent prototype final-relation checkpoint (2026-10-06)
+
+The separate [final-relation auditor](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md)
+checks retained native and final prototype raw IRs without calling generation.
+It verifies preserved provenance and parameter digests, actual counts, zero final
+phases, balanced shaping and exact ordered frontier replacement with required
+anchors. Only proven phase-dependent connections are removed before comparing
+the remaining canonical construction semantics. A valid hidden intermediate
+frontier rotation demonstrates why counts and semantic projection alone cannot
+establish this relation. Unsupported semantics remain incomplete; known
+contradictions fail. No schemas, goldens or producer code change.
+
+API/CLI/jobs deliver the same immutable input-bound report. V5 requires search
+audit PASS and a unique original from its audited batch before checking the
+relation; only relation PASS removes that missing check. Physical candidate
+selection, V6-V8/V10 and full R1-R4 acceptance remain open. Historical proposals
+are never synthesized or backfilled. Current validation and local runtime are
+recorded in [BACKEND_HANDOFF.md](BACKEND_HANDOFF.md).
+
+Integration passed 1,162 Python tests, including 37 new relation/delivery tests,
+full Ruff, strict mypy on 86 modules, five independent Node canonical vectors
+and ten frontend tests. Wheel dependency and isolated installation smoke passed.
+Source CLI, installed CLI and live HTTP whole verification reports match for the
+saved sphere. Ten projects and sessions are preserved; PDF download passed and
+the hash-only legacy sphere remains explicitly incomplete without invented
+originals. This closes only the documented final-relation subset.
+
 ## External dependencies and operational authority
 
 Physical specimens and new golden approvals require human input. Numerical

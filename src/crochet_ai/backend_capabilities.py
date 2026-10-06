@@ -29,8 +29,8 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B3",
             "IMPLEMENTED_SUBSET",
-            "Closed-pole single-yarn SC analytic proposals and bounded producer search traces",
-            "Independent V5 and full domain acceptance",
+            "Closed-pole SC proposals, bounded traces, independent final-relation audit",
+            "Full independent V5 and full domain acceptance",
         ),
         (
             "B4",
@@ -41,8 +41,8 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B5",
             "IMPLEMENTED_SUBSET",
-            "V0-V10 orchestration, closed SC topology and independent sphere search replay",
-            "Broader V4/target scopes, proposal-final relation, physical selection and V6-V10",
+            "V0-V10 orchestration, closed SC topology, sphere replay and scoped final relation",
+            "Broader V4/target scopes, physical selection and V6-V10",
         ),
         (
             "B6",

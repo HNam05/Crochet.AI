@@ -48,6 +48,7 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | inspect_closed_cell_conformance | design_spec, material_profile, crochet_ir |
 | inspect_analytic_candidate_claims | design_spec, material_profile, crochet_ir |
 | inspect_analytic_search_trace | design_spec, material_profile, run_config, search_trace, candidate_proposals |
+| inspect_prototype_final_relation | design_spec, material_profile, original_proposal, crochet_ir |
 
 `inspect_closed_surface_topology` constructs the server-owned target-free closed
 SC cells, then independently audits their combinatorial topology and checks the
@@ -94,8 +95,14 @@ project transaction and storage limits include the bundle. The prototype verify
 route admits its hashes/bindings and sends original proposals to the unchanged
 auditor, without regenerating historical evidence. Missing legacy artifacts stay
 incomplete; partially present or corrupted bundles fail explicitly. Complete new
-sphere traces can pass the scoped audit, while final relation/physical selection
-and full V5 acceptance remain open. API transport limits remain unchanged.
+sphere traces can pass the scoped audit. The separate
+[final-relation auditor](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md) compares complete
+native and final IRs, including actual ordered connections and anchor updates.
+Its standalone operation accepts the four artifacts above and returns an
+immutable, input-bound report. V5 invokes it only after search audit PASS and a
+unique native provenance match. Relation PASS removes only that missing check;
+physical selection and full V5 acceptance remain open. Legacy hash-only projects
+stay incomplete. API transport limits remain unchanged.
 
 `inspect_mesh_openings` is an additive diagnostic capability within the 1.0
 envelope, not generation or mesh acceptance. `mesh_json` contains the exact UTF-8

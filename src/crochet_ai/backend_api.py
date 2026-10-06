@@ -43,6 +43,7 @@ from .forward_pipeline import (
 from .models import DesignSpec, MaterialProfile
 from .pattern import TerminologyProfile, export_pattern
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
+from .prototype_final_relation import PrototypeRelationInputError, inspect_prototype_final_relation
 from .schema import validate_schema
 from .solver_types import GenerationError
 from .surface_topology import SurfaceTopologyInputError, audit_surface_topology
@@ -182,6 +183,7 @@ class BackendAPI:
                         "inspect_closed_surface_topology",
                         "inspect_closed_cell_conformance",
                         "inspect_analytic_candidate_claims",
+                        "inspect_prototype_final_relation",
                     ],
                     "candidate_domains": ["CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC"],
                     "physical_verification_available": False,
@@ -221,6 +223,46 @@ class BackendAPI:
                 data = {
                     "candidate_claims": claims.to_dict(), "candidate_claims_sha256": claims.sha256,
                     "verification_state": "REJECTED" if claims.status == "FAIL" else "NOT_VERIFIED",
+                    "physical_status": "UNTESTED",
+                }
+            elif operation == "inspect_prototype_final_relation":
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "design_spec",
+                        "material_profile",
+                        "original_proposal",
+                        "crochet_ir",
+                    },
+                    "request",
+                )
+                for key in ("design_spec", "material_profile", "original_proposal", "crochet_ir"):
+                    if not isinstance(request[key], dict):
+                        raise ApiInputError(f"request.{key}")
+                relation_design = request["design_spec"]
+                relation_material = request["material_profile"]
+                DesignSpec.from_dict(relation_design)
+                MaterialProfile.from_dict(relation_material)
+                relation_validator = SemanticValidator(
+                    design_specs={relation_design.get("design_spec_id", ""): relation_design},
+                    material_profiles={relation_material.get("profile_id", ""): relation_material},
+                )
+                relation = inspect_prototype_final_relation(
+                    relation_design,
+                    relation_material,
+                    request["original_proposal"],
+                    request["crochet_ir"],
+                    validator=relation_validator,
+                )
+                relation_report = relation.to_dict()
+                data = {
+                    "final_relation": relation_report,
+                    "final_relation_sha256": relation.sha256,
+                    "verification_state": "REJECTED"
+                    if relation.status == "FAIL"
+                    else "NOT_VERIFIED",
                     "physical_status": "UNTESTED",
                 }
             elif operation == "inspect_analytic_target":
@@ -654,6 +696,7 @@ class BackendAPI:
         except (
             SurfaceTopologyInputError, CellConformanceInputError, AnalyticClaimsInputError,
             TraceAuditInputError,
+            PrototypeRelationInputError,
         ) as error:
             return error_response("E_INPUT", str(error))
         except (ClosedCellsError, PhysicalProjectionError) as error:

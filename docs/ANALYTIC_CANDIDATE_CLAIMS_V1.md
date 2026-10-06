@@ -95,3 +95,11 @@ replaced by generation residuals or trace integrity. No such trace is synthesize
 by this audit. Its V5 adapter still does not admit producer traces, and both
 legacy and newly traced projects remain explicitly incomplete until that
 independent task is implemented.
+
+Follow-on implementation: the separate [trace audit](ANALYTIC_TRACE_AUDIT_V1.md)
+now independently replays supported sphere search. New projects retain complete
+native artifacts, and the separate [final-relation audit](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md)
+checks the fixed-zero prototype transformation. V5 links these proofs without
+changing this claims profile. Physical feasible selection and later gates remain
+open. This claims report's intentionally INDETERMINATE status is neither a
+standalone search PASS nor a rejection of otherwise valid schedule assertions.

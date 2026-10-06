@@ -225,9 +225,11 @@ Restart, downloads, progress updates and feedback preserve these snapshots.
 Same-ID legacy projects retain their original generation record without backfill.
 Before `/api/verify`, admit a present bundle strictly and pass its originals to
 the unchanged independent trace auditor; partial or corrupted bundles fail
-explicitly. Complete sphere traces can now pass their scoped audit. The final
-zero-phase relation and physical feasible selection still need independent
-verification, so overall `NOT_VERIFIED` and `UNTESTED` remain unchanged. Large
+explicitly. Complete sphere traces can now pass their scoped audit. The separate
+[final-relation audit](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md) checks the actual raw
+native/final construction and fixed-zero transformation after search audit PASS.
+Physical feasible selection still needs independent verification, so overall
+`NOT_VERIFIED` and `UNTESTED` remain unchanged. Large
 verification envelopes can exceed the existing 2 MB/100,000-node API limits;
 they fail explicitly without truncating evidence or enlarging those limits.
 

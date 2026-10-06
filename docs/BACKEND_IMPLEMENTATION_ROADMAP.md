@@ -635,3 +635,26 @@ Optimierung soll unveränderliche, an die konkrete Anfrage gebundene Prüfdaten
 wiederverwenden und sämtliche Zulassungsgrenzen erhalten. Keine globale mutable
 Cache-Lösung und kein Überspringen unabhängiger Prüfungen. Diese Messung ist
 ein Ansatzpunkt; eine Beschleunigung wurde noch nicht umgesetzt oder belegt.
+
+### Fortschreibung 2026-10-06: unabhängige finale Zuordnung
+
+Der separate [Prüfer der finalen Zuordnung](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md)
+bindet den aufbewahrten nativen Vorschlag an die finale Nullphasen-Anleitung.
+Er prüft beide tatsächlichen Konstruktionen, Rundenzahlen, Shaping-Reihenfolge,
+Maschenverbindungen, Ankerfortschreibung und unveränderte Semantik außerhalb
+der ausdrücklich geprüften Phasenänderung. Aufgezeichnete Herkunft muss bis auf
+die drei exakten Prototypparameter übereinstimmen. Der Solver, Compiler und die
+Vorschlagspersistenz bleiben in diesem Verifier-Paket unverändert.
+
+API/CLI und V5 verwenden denselben unveränderlichen Prüfbericht. V5 prüft die
+Zuordnung erst nach unabhängiger erfolgreicher Suchprüfung und eindeutiger
+Bindung an ein vorhandenes Original. Ein positiver Bericht schließt genau diese
+Lücke; physikalische Kandidatenauswahl, V6-V8/V10, Kalibrierung und R1-R4 bleiben
+offen. Alte Vorschlagshashes werden nicht in erfundene Originale umgewandelt.
+NOT_VERIFIED und UNTESTED bleiben sichtbar. Konkrete Validierung und Laufzeit
+werden im [Handoff](BACKEND_HANDOFF.md) festgehalten.
+
+Nächster größerer Umsetzungsschritt: eindeutige versionierte Zielkoordinaten für
+die allgemeinen analytischen Profile, damit die spätere V7-Prüfung eine vollständig
+bestimmte Zieloberfläche erhält. Danach das vollständige zielunabhängige physische
+Modell für Zu-/Abnahmen, Belastung und Kontakt sowie dessen unabhängige Abnahme.

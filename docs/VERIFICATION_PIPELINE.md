@@ -69,6 +69,15 @@ V5 remains INDETERMINATE pending physical feasible-selection evidence. False
 trace claims FAIL V5. Stored prototype hash-only original proposals remain
 explicitly incomplete. Legacy untraced requests retain their prior behavior;
 no source proposal or search execution evidence is synthesized for them.
+For complete prototype proposals, V5 additionally uses the separate
+[final-relation audit](PROTOTYPE_FINAL_RELATION_AUDIT_V1.md). After search audit
+PASS, a unique native provenance match binds the original. Both raw constructions
+must satisfy the exact anchored execution chain, balanced ordered shaping and
+unchanged semantic projection outside independently checked phase-dependent
+connections. Relation PASS removes only final_candidate_to_original_proposal_relation;
+contradictions FAIL V5, missing/ambiguous originals cannot establish PASS. The
+physical selection and physical verification checks remain open. No producer
+link or claimed report substitutes for this independent proof.
 V9 performs real single-yarn M1A DE/US/UK text export, parsing, binding from frozen
 external metadata and canonical semantic comparison. It retains text hashes.
 Multi-yarn V9 and broader M1B/PDF acceptance are still open. A schema failure
