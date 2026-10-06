@@ -175,7 +175,9 @@ A complete project contains:
 - design_spec, material_profile, crochet_ir, run_config, pattern_text;
 - source_crochet_ir_sha256, semantic_validation `PASS`, round_trip_state `PASS`,
   verification_state `NOT_VERIFIED`, physical_status `UNTESTED`;
-- generation {status,reason,work};
+- generation {status,reason,work,search_trace,search_trace_sha256,
+  proposal_to_final,proposal_to_final_sha256,proposal_bundle,
+  proposal_bundle_sha256} for newly saved traced projects;
 - courses [{course_id,number,total_stitches,summary_de,step_ids}];
 - steps [{step_id,event_index,course_id,course_number,kind,stitch_id,
   instruction_de,base_location_ids,top_location_ids,produced_stitches,
@@ -214,6 +216,20 @@ Project and feedback downloads retain exact source/material binding.
 Persist with bounded SQLite in a user-selected local data directory, default
 artifacts/local-prototype. Atomic session/feedback writes and explicit storage
 errors. Do not erase/migrate unrelated databases or data automatically.
+
+New generation retains the original complete proposal CrochetIR in the
+domain-hashed [proposal snapshot bundle](PROTOTYPE_PROPOSAL_BUNDLE_V1.md),
+including trace/input bindings and the existing final-phase-policy link. It is
+stored atomically with the project/session inside the existing payload limits.
+Restart, downloads, progress updates and feedback preserve these snapshots.
+Same-ID legacy projects retain their original generation record without backfill.
+Before `/api/verify`, admit a present bundle strictly and pass its originals to
+the unchanged independent trace auditor; partial or corrupted bundles fail
+explicitly. Complete sphere traces can now pass their scoped audit. The final
+zero-phase relation and physical feasible selection still need independent
+verification, so overall `NOT_VERIFIED` and `UNTESTED` remain unchanged. Large
+verification envelopes can exceed the existing 2 MB/100,000-node API limits;
+they fail explicitly without truncating evidence or enlarging those limits.
 
 ## Live acceptance
 

@@ -18,6 +18,7 @@ from .pattern import TerminologyProfile, export_pattern, verify_semantic_round_t
 from .pattern_context import PatternParseContext, PatternYarnBinding
 from .prototype_input import PROTOTYPE_VERSION, assemble_request
 from .prototype_presentation import present_ir
+from .prototype_proposals import create_proposal_bundle
 from .prototype_storage import PrototypeStore
 from .schema import validate_schema
 from .validation import SemanticValidator
@@ -116,6 +117,14 @@ class LocalPrototype:
             generation_link_sha256 = sha256(
                 b"Crochet.AI\0PROTOTYPE_GENERATION_LINK_V1\0" + jcs_bytes(generation_link)
             ).hexdigest()
+            proposal_bundle, proposal_bundle_sha256 = create_proposal_bundle(
+                batch.search_trace.to_dict(),
+                batch.search_trace.sha256,
+                generation_link,
+                generation_link_sha256,
+                [candidate.crochet_ir.to_dict() for candidate in batch.candidates],
+                validator,
+            )
             color = design["colors"][0]
             context = PatternParseContext(
                 design,
@@ -155,6 +164,8 @@ class LocalPrototype:
                         "search_trace_sha256": batch.search_trace.sha256,
                         "proposal_to_final": generation_link,
                         "proposal_to_final_sha256": generation_link_sha256,
+                        "proposal_bundle": proposal_bundle,
+                        "proposal_bundle_sha256": proposal_bundle_sha256,
                         "work": {
                             "count_transitions": batch.count_transition_evaluations,
                             "placement_transitions": batch.placement_transition_evaluations,

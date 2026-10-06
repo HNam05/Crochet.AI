@@ -615,3 +615,23 @@ API gebündelt, unabhängige Teilaufgaben parallel bearbeitet und die gesamte
 Testsuite einmal am Integrationspunkt ausgeführt. Laufzeitmessungen ersetzen
 Vermutungen über langsame Tests. Nächste größere Pakete bleiben eindeutige
 Zielkoordinaten und das vollständige zielunabhängige physikalische Shaping-Modell.
+
+### Fortschreibung 2026-10-06: vollständige Vorschlagspersistenz
+
+Neue Pilotprojekte speichern die vollständigen ursprünglichen CrochetIR-
+Vorschläge in einem versionierten, gehashten
+[Paket](PROTOTYPE_PROPOSAL_BUNDLE_V1.md). Die bestehende atomare Projektablage
+umfasst die Originale; Neustart, Fortschritt, Rückmeldungen und JSON-Downloads
+erhalten sie. Strikte Zulassung bindet Trace, Eingaben, Reihenfolge und finale
+Projektidentität. Beschädigte oder nur teilweise vorhandene Pakete führen zu
+einem ausdrücklichen Fehler. Alte Projekte werden nicht nachträglich ergänzt.
+Der vorhandene unabhängige Prüfer erhält diese Originale über die lokale API;
+Solver und Prüfer werden in diesem Paket nicht geändert. Die unabhängige finale
+Zuordnung und physikalische Kandidatenauswahl bleiben offen, ebenso V6-V8/V10.
+
+Ein Profil der gespeicherten Kugelprüfung zeigt viele wiederholte Schema-/IR-
+Validierungen, besonders in den drei V9-Sprach-Roundtrips. Eine separate
+Optimierung soll unveränderliche, an die konkrete Anfrage gebundene Prüfdaten
+wiederverwenden und sämtliche Zulassungsgrenzen erhalten. Keine globale mutable
+Cache-Lösung und kein Überspringen unabhängiger Prüfungen. Diese Messung ist
+ein Ansatzpunkt; eine Beschleunigung wurde noch nicht umgesetzt oder belegt.

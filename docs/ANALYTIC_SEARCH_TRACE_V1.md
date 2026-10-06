@@ -83,9 +83,18 @@ only that proposal. This link is producer provenance, not proof that recompilati
 preserves geometric quality. Neither canonical IR schema nor existing stored
 project schema is migrated; absent legacy trace remains absent.
 
-## Next independent task
+New projects also persist complete original proposal CrochetIR snapshots under
+[PROTOTYPE_PROPOSAL_BUNDLE_V1](PROTOTYPE_PROPOSAL_BUNDLE_V1.md). Its separate
+domain hash binds this unchanged link, trace, input hashes and ordered artifacts.
+Legacy same-ID records are preserved. Snapshot admission is producer integrity;
+the independent auditor still owns raw proposal/search checks, and the final
+phase-policy relation remains an open independent verification task.
 
-Validate untrusted trace envelopes, input bindings and actual prefix/work/window
-claims independently. Use bounded replay or independent exhaustive small-domain
-oracles, including interrupted passes and tampered refreshed hashes. Trace
-integrity alone cannot complete V5 or replace V6-V8/V10 and physical calibration.
+## Independent replay and remaining work
+
+[ANALYTIC_TRACE_AUDIT_V1](ANALYTIC_TRACE_AUDIT_V1.md) now validates sphere and
+equal-axis-ellipsoid trace envelopes, bindings, windows and actual DP work/prefix
+claims independently, including interrupted passes and refreshed tampered hashes.
+Broader samplers, independently verified proposal-to-final relation and physical
+feasible selection remain open. Trace integrity alone cannot complete V5 or
+replace V6-V8/V10 and physical calibration.

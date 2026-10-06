@@ -14,11 +14,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from .backend_api import BackendAPI, bounded_json
+import rfc8785
+
+from .backend_api import MAX_REQUEST_BYTES, BackendAPI, bounded_json
 from .calibration_pdf import render_calibration_packet
 from .prototype_backend import LocalPrototype
 from .prototype_input import PROTOTYPE_VERSION, REQUEST_FIELDS
 from .prototype_pdf import PrototypePdfError, render_project_pdf
+from .prototype_proposals import ProposalBundleIntegrityError, retained_proposals
 from .prototype_shapes import SHAPE_CATALOG
 from .prototype_storage import PrototypeStore, PrototypeStoreError
 
@@ -208,6 +211,11 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         self._error(404, "E_NOT_FOUND", "project.not_found")
                         return
                     try:
+                        retained_proposals(project)
+                    except ProposalBundleIntegrityError as error:
+                        self._error(422, "E_PROVENANCE", str(error))
+                        return
+                    try:
                         pdf = render_project_pdf(project, parts[3])
                     except PrototypePdfError as error:
                         self._error(422, "E_EXPORT", str(error))
@@ -235,6 +243,12 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     )
                 elif len(parts) == 4 and re.fullmatch(r"[0-9a-f]{64}", parts[3]):
                     project = store.get_project(parts[3])
+                    if project is not None:
+                        try:
+                            retained_proposals(project)
+                        except ProposalBundleIntegrityError as error:
+                            self._error(422, "E_PROVENANCE", str(error))
+                            return
                     self._send(
                         200 if project else 404,
                         {"ok": True, "data": project}
@@ -284,6 +298,7 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     if verification_project is None:
                         self._error(404, "E_NOT_FOUND", "project.not_found")
                         return
+                    candidate_proposals = retained_proposals(verification_project)
                     verification_request = {
                         "api_version": "1.0.0",
                         "operation": "verify_candidate",
@@ -302,8 +317,10 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                                 if key != "phase_policy"
                             },
                             "search_trace": generation["search_trace"],
-                            "candidate_proposals": [],
+                            "candidate_proposals": candidate_proposals,
                         }
+                    if len(rfc8785.dumps(verification_request)) > MAX_REQUEST_BYTES:
+                        raise OverflowError("verification.request_size")
                     response = backend.handle(verification_request)
                     self._send(200 if response["ok"] else 422, response)
                 elif path == "/api/session":
@@ -329,6 +346,8 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     "E_CONFLICT" if str(error) == "E_CONFLICT" else "E_STORAGE",
                     str(error),
                 )
+            except ProposalBundleIntegrityError as error:
+                self._error(422, "E_PROVENANCE", str(error))
             except KeyError as error:
                 self._error(404, "E_NOT_FOUND", str(error))
             except (ValueError, RuntimeError) as error:

@@ -105,7 +105,12 @@ def test_prototype_persists_proposal_final_link_and_preserves_legacy_project(
     ).hexdigest()
     legacy = deepcopy(project)
     for key in (
-        "search_trace", "search_trace_sha256", "proposal_to_final", "proposal_to_final_sha256",
+        "search_trace",
+        "search_trace_sha256",
+        "proposal_to_final",
+        "proposal_to_final_sha256",
+        "proposal_bundle",
+        "proposal_bundle_sha256",
     ):
         del legacy["generation"][key]
     store.close()

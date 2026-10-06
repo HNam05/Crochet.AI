@@ -88,6 +88,15 @@ and a hashed `PROTOTYPE_GENERATION_LINK_V1` proposal-to-final phase-policy link.
 Legacy stored projects remain unchanged. V5 can now independently replay these
 untrusted traces through the optional search_evidence extension above.
 
+New local projects additionally retain complete original CrochetIR proposals
+in [PROTOTYPE_PROPOSAL_BUNDLE_V1](PROTOTYPE_PROPOSAL_BUNDLE_V1.md). The existing
+project transaction and storage limits include the bundle. The prototype verify
+route admits its hashes/bindings and sends original proposals to the unchanged
+auditor, without regenerating historical evidence. Missing legacy artifacts stay
+incomplete; partially present or corrupted bundles fail explicitly. Complete new
+sphere traces can pass the scoped audit, while final relation/physical selection
+and full V5 acceptance remain open. API transport limits remain unchanged.
+
 `inspect_mesh_openings` is an additive diagnostic capability within the 1.0
 envelope, not generation or mesh acceptance. `mesh_json` contains the exact UTF-8
 source text; its bytes must match the DesignSpec digest, media type and frame.

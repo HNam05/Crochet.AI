@@ -73,21 +73,41 @@ checks. V5 still awaits physical feasible-selection evidence. Audit PASS does
 not authenticate source execution or pass V6-V8/V10; the report explicitly says
 source_authentication=NOT_VERIFIED and physical_status=UNTESTED.
 
-The prototype verification route now replays stored traces diagnostically.
-Current stored projects contain only the original proposal hash, so their exact
-original-proposal binding remains incomplete. Legacy requests are unchanged.
-Do not regenerate missing proposals or silently rewrite existing projects.
+The prototype verification route replays stored traces diagnostically. Historical
+hash-only projects remain incomplete; do not regenerate missing proposals or
+silently rewrite existing projects. Complete new snapshots are described below.
 
 Independent small exhaustive/hand oracles caught and repaired a DEC-center
 arity error in the new verifier before integration acceptance. Count/phase
 producer implementations, authoritative schemas and goldens are unchanged.
+
+## Complete proposal persistence checkpoint
+
+New projects retain the complete original raw CrochetIR proposals in
+`PROTOTYPE_PROPOSAL_BUNDLE_V1`, with a separate domain hash binding input hashes,
+trace, original order, final project identity and the existing phase-policy link.
+Existing SQLite project/session transactions and storage ceilings include these
+snapshots; no tables, canonical schema or database migration are added. Session,
+feedback and restart/download behavior preserve the bundle. Same-ID historical
+records return unchanged without backfill. Partial or corrupted bundles fail
+explicitly, including deletion of the trace while retaining the bundle marker.
+
+The local verify route admits the bundle and sends its original proposals to the
+unchanged independent auditor. Complete new spheres can pass the scoped trace
+audit. The existing zero-phase link is still producer provenance, not independent
+proof of the final relation or physical feasible selection. Prototype V5 remains
+INDETERMINATE; overall NOT_VERIFIED and physical status UNTESTED remain. Wider
+samplers and full V6-V8/V10 acceptance are still open. API 2 MB/100,000-node limits
+are unchanged; oversized verification fails explicitly rather than truncating.
+Solver/compiler, independent auditor and verification-pipeline source are
+unchanged in this producer/persistence package.
 
 ## Validation and runtime
 
 Previous accepted V5 claims checkpoint: 1,050 Python tests, Ruff, strict mypy on
 79 source modules, five independent Node canonical vectors, ten frontend tests;
 wheel dependency/isolated smoke and CLI/HTTP proof equality passed.
-Current trace checkpoint: 1,062 Python tests passed in 412 seconds; 48 targeted
+Producer trace checkpoint: 1,062 Python tests passed in 412 seconds; 48 targeted
 analytic tests and four API/job/prototype/legacy tests also passed. Ruff, strict
 mypy on 80 source modules, five Node canonical vectors and ten frontend tests
 passed. Wheel dependency and isolated installed smoke checks passed. HTTP,
@@ -104,24 +124,46 @@ canonical vectors and ten frontend tests passed. Final wheel build/install,
 dependency check and isolated smoke passed. Source and installed CLI return
 identical PASS reports for the historical native sphere proposal (44,289 proof
 units); source CLI and live HTTP return identical INDETERMINATE stored-project
-reports with only original_proposal_artifacts missing. Nine projects are retained.
+reports with only original_proposal_artifacts missing. Nine projects were retained
+at that checkpoint.
 The focused independent review found no additional fail-open computational claim.
+
+Proposal snapshot checkpoint: 1,125 full-suite tests passed in 493.76 s;
+15 targeted persistence/delivery tests passed in 48.53 s. Full Ruff and strict
+mypy (85 source modules), five Node canonical
+vectors and ten frontend tests passed. Wheel build/install, dependency check and
+isolated installed smoke passed. Installed bundle admission returns the exact
+original proposal. Source CLI, installed CLI and live HTTP return identical PASS
+search-audit reports (44,289 proof units). A separate temporary-store HTTP check
+confirmed nine explicit 422 E_PROVENANCE rejections across project/PDF/verify for
+deleted trace, missing design identity and malformed original IR. Quota rollback
+and the assembled verification request's 2 MB limit are covered by targeted tests.
+
+Live 40 mm sphere: `057803daeb6335dad900570d00693ad08bdd4f44c59b5a4208b9868596e3dc45`.
+GET restores the complete bundle; PDF export passed. Its V5 missing checks are
+deterministic_candidate_selection_and_tie_break,
+final_candidate_to_original_proposal_relation and physical_verification.
+V5 INDETERMINATE, overall NOT_VERIFIED and UNTESTED are intentional. The nine
+historical projects are preserved without backfill. This test project was created
+from the final source snapshot before publication; its recorded historical commit
+and snapshot are retained, not silently rewritten after publication.
 
 Local browser: `http://127.0.0.1:8765/`.
 Start from repository root: `.venv/Scripts/python.exe -u tools/run_prototype.py --port 8765`.
 Persistent private projects/feedback: `artifacts/local-prototype/` (ignored).
-Eight saved legacy projects existed before this task; their sessions are preserved.
-Nine projects are now saved, including a new traced sphere test project.
+Nine historical projects existed before the complete snapshot task; their sessions
+are preserved (eight untraced projects and one hash-only traced sphere).
+Ten projects are now saved, including the complete-bundle sphere above.
 Generated PDFs under `output/pdf/` are local exports, not authoritative fixtures.
 Do not infer installed runtime or remote branch state from this note; check live.
 
 ## Next work in order
 
-1. Separate producer/persistence task: retain complete original proposal artifacts
-   for new projects with bounded storage/transport and versioned final relation.
-   Existing historical hash-only projects remain incomplete. The independent
-   sphere trace-replay package above is implemented; broader target samplers,
-   proposal-to-final verification and physical feasible selection remain open.
+1. Separate independent verification task: admit and verify the producer's
+   proposal-to-final FIXED_ZERO_CONTINUOUS_V1 relation against both raw IRs.
+   Complete originals are now retained for new projects; historical hash-only
+   projects remain incomplete. Broader samplers and physical feasible selection
+   remain open. Keep independent verifier work separate from generation.
 2. Version complete generic analytic target coordinates before V7. Current r(s)
    does not determine axial movement signs for general profiles.
 3. Complete physical rest/shaping/loading/contact model for actual generated
@@ -138,7 +180,8 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
 `ANALYTIC_SEARCH_TRACE_V1.md`, `ANALYTIC_CANDIDATE_CLAIMS_V1.md`,
-`VERIFICATION_PIPELINE.md`, then the affected subsystem contract/skill.
+`PROTOTYPE_PROPOSAL_BUNDLE_V1.md`, `VERIFICATION_PIPELINE.md`, then the affected
+subsystem contract/skill.
 
 Quality: `.venv/Scripts/python.exe -m pytest -q`,
 `.venv/Scripts/python.exe -m ruff check src tests tools`,
@@ -178,3 +221,13 @@ dependency check finished in 4.04 s. This is a per-command release-check choice,
 not a global pip, cache, credential or security configuration change. The full
 suite timing is not a controlled before/after speed comparison. Worker token and
 cost measurements were unavailable and remain null in ignored agent-cost notes.
+
+Read-only cProfile evidence for one saved 40 mm sphere verification is retained
+under `artifacts/backend-proposal-persistence/`. It recorded 171.6 million calls
+and 66.06 s with profiler overhead: schema validation 57.54 s cumulative,
+21 IR validations 54.87 s, V9 42.42 s, three semantic round trips 34.57 s.
+Cumulative timings overlap and are not additive, nor a production benchmark.
+Repeated schema/IR validation is a measured next optimization target. Use a
+separate task with immutable, request-owned validated contexts and preserve
+independent input admission; never share mutable user inputs across boundaries.
+No verifier optimization or measured speedup is claimed in this checkpoint.
