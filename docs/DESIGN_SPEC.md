@@ -98,8 +98,9 @@ validation, signed frames, exact intersection admission and failure policy.
 Older profiles still use `MERIDIONAL_LENGTH` and retain their existing hashes.
 Admitting a target does not establish generator support, candidate fidelity or
 physical acceptance. Generation uses the separate
-[coordinate producer contract](ANALYTIC_COORDINATE_GENERATION_V1.md); independent
-coordinate replay and V7 remain incomplete.
+[coordinate producer contract](ANALYTIC_COORDINATE_GENERATION_V1.md). The separate
+[coordinate replay](ANALYTIC_COORDINATE_REPLAY_V1.md) supports its documented
+computational subset; V7 and physical acceptance remain incomplete.
 
 ### Domain-specific V0 profile
 

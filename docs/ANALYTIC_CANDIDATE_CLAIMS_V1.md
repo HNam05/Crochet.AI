@@ -2,7 +2,7 @@
 
 `ANALYTIC_CANDIDATE_CLAIMS_V1` independently audits candidate claims already
 recorded in CrochetIR. It does not invoke the analytic solver, compiler,
-balanced-course helper, placement optimizer, geometry decoder or cell verifier.
+balanced-course helper, placement optimizer, producer geometry decoder or cell verifier.
 It reads transport-admitted source artifacts and the populated SemanticValidator
 registry, validates the source and computes its canonical hash itself.
 Generation, existing semantic validation, schemas and golden files are unchanged.
@@ -68,8 +68,17 @@ Exact software budgets: 30,000 events, 512 courses, 256 parameters; source
 top-level tables and ID reference lists at most 30,000 entries before hashing.
 Identifiers/names at most 128 ASCII characters; parameter string values at most
 4,096 characters. Internal callers preserve API JSON byte/node/depth admission.
-All arithmetic for schedule predicates is integral. No tolerance or target
-coordinate enters this audit. Budgets have no physical meaning.
+All arithmetic for schedule predicates is integral. The original schedule audit
+introduced no target-coordinate or numerical tolerance checks. The additive
+[coordinate parameter scope](ANALYTIC_COORDINATE_REPLAY_V1.md) independently
+admits the authoritative target and reconstructs its configured numerical policy
+before recognizing the three coordinate-only solver parameters. Missing full
+metadata is incomplete; present partial or contradictory metadata fails. Other
+unknown solver parameters remain explicitly incomplete. Numerical preparation
+has its own 1,000-unit/128-segment bound; no physical claim is inferred.
+Existing work-counter range checks still do not establish search work or error
+diagnostics: those are checked exactly by the separate input-bound trace replay.
+Budgets have no physical meaning.
 
 Immutable JCS evidence binds canonical DesignSpec, MaterialProfile and CrochetIR
 hashes, assertions, recomputed schedule/construction summary, checked parameter

@@ -13,7 +13,15 @@ from math import ceil, floor, isfinite, pi, sin
 from typing import Any
 
 from .analytic_claims import inspect_analytic_candidate_claims
+from .analytic_coordinate_target import (
+    PROFILE_ID as COORDINATE_PROFILE_ID,
+)
+from .analytic_coordinate_target import (
+    admit_analytic_coordinate_target,
+)
+from .analytic_target import AnalyticTargetError
 from .canonical import CanonicalProfile, canonical_hash, jcs_bytes, validate_ijson
+from .coordinate_meridian_replay import CoordinateMeridianReplay, CoordinateReplayError
 from .diagnostics import ArtifactValidationError
 from .trace_count_replay import CountReplayBudget, replay_count_search
 from .trace_phase_replay import PhaseReplayBudget, replay_phase_search
@@ -277,6 +285,9 @@ def inspect_analytic_search_trace(
     assertions: dict[str, bool] = {}
     diagnostics: list[tuple[str, str]] = []
     missing: list[str] = []
+    coordinate_target = None
+    meridian: CoordinateMeridianReplay | None = None
+    coordinate_scope = False
 
     def check(name: str, actual: Any, expected: Any) -> None:
         ok = jcs_bytes(actual) == jcs_bytes(expected)
@@ -289,7 +300,11 @@ def inspect_analytic_search_trace(
         payload: dict[str, Any] = {
             "profile": "ANALYTIC_TRACE_AUDIT_V1",
             "status": status,
-            "scope": "Exact staged analytic sphere search; computational evidence only",
+            "scope": (
+                "Exact staged analytic coordinate-meridian search; computational evidence only"
+                if coordinate_scope
+                else "Exact staged analytic sphere search; computational evidence only"
+            ),
             "source_authentication": "NOT_VERIFIED",
             "physical_status": "UNTESTED",
             "search_trace_sha256": sha256(_TRACE_DOMAIN + jcs_bytes(trace)).hexdigest(),
@@ -303,6 +318,19 @@ def inspect_analytic_search_trace(
             },
             "proof_work": work.consumed,
         }
+        if coordinate_scope and coordinate_target is not None and meridian is not None:
+            payload["coordinate_sampling"] = {
+                "producer_policy": "EXPLICIT_COORDINATE_MERIDIAN_V1",
+                "verifier_policy": "COORDINATE_MERIDIAN_REPLAY_V1",
+                "target_sha256": coordinate_target.sha256,
+                "segment_count": len(meridian.lengths),
+                "total_length_mm": meridian.total_float,
+                "total_length_rational_mm": _rational(meridian.total),
+                "conservative_arc_error_bound_mm": meridian.error_bound,
+                "arc_length_abs_tolerance_mm": config["numerics"]["arc_length_abs_tolerance_mm"],
+                "roundoff_allowance_mm": config["numerics"]["roundoff_allowance_mm"],
+                "sqrt_bracket_max_steps_per_side": 2,
+            }
         encoded = jcs_bytes(payload)
         return AnalyticTraceAudit(
             status,
@@ -401,10 +429,43 @@ def inspect_analytic_search_trace(
         True,
     )
     radius = _radius(design)
-    if radius is None:
+    target_profile = design["target_geometry"].get("radial_profile", {})
+    if (
+        radius is None
+        and design["target_geometry"].get("primitive") == "SURFACE_OF_REVOLUTION"
+        and target_profile.get("canonicalization_profile") == COORDINATE_PROFILE_ID
+    ):
+        coordinate_scope = True
+        try:
+            coordinate_target = admit_analytic_coordinate_target(design, validator)
+            meridian = CoordinateMeridianReplay.build(
+                coordinate_target,
+                config["numerics"]["arc_length_abs_tolerance_mm"],
+                config["numerics"]["roundoff_allowance_mm"],
+                config["numerics"]["max_arc_panels"],
+                work,
+                config["numerics"]["radius_zero_tolerance_mm"],
+            )
+            assertions["coordinate_sampler_policy"] = True
+        except TraceReplayBudgetExceeded:
+            missing.append("independent_replay_budget_exhausted")
+            return finish()
+        except AnalyticTargetError as exc:
+            if exc.status == "NOT_APPLICABLE":
+                missing.append("unsupported_coordinate_target_scope")
+                return finish()
+            diagnostics.append(("E_DETERMINISM", "trace_audit.coordinate_target." + exc.reason))
+            return finish()
+        except CoordinateReplayError as exc:
+            if str(exc) == "coordinate.thin_neck":
+                missing.append("unsupported_coordinate_thin_neck")
+                return finish()
+            diagnostics.append(("E_DETERMINISM", "trace_audit.coordinate_sampler." + str(exc)))
+            return finish()
+    elif radius is None:
         missing.append("unsupported_target_sampler")
         return finish()
-    if not isfinite(pi * radius):
+    elif not isfinite(pi * radius):
         missing.append("nonfinite_sphere_sampling")
         return finish()
     proposals: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
@@ -413,6 +474,11 @@ def inspect_analytic_search_trace(
             raise TraceAuditInputError("candidate_proposal.object")
         claims = inspect_analytic_candidate_claims(design, material, proposal, validator=validator)
         data = claims.to_dict()
+        missing.extend(
+            f"proposal_{index}:{item}"
+            for item in claims.missing_checks
+            if item.startswith("unsupported_parameter:")
+        )
         check(
             f"proposal_{index}_raw_claims",
             claims.status != "FAIL"
@@ -436,6 +502,24 @@ def inspect_analytic_search_trace(
         check(
             f"proposal_{index}_native", any(key.startswith("prototype.") for key in params), False
         )
+        if coordinate_scope:
+            assert coordinate_target is not None and meridian is not None
+            check(
+                f"proposal_{index}_coordinate_parameters",
+                {
+                    key: params.get(key)
+                    for key in (
+                        "solver.coordinate_sampler_version",
+                        "solver.coordinate_target_sha256",
+                        "solver.coordinate_sqrt_bracket_max_steps",
+                    )
+                },
+                {
+                    "solver.coordinate_sampler_version": "EXPLICIT_COORDINATE_MERIDIAN_V1",
+                    "solver.coordinate_target_sha256": coordinate_target.sha256,
+                    "solver.coordinate_sqrt_bracket_max_steps": 2,
+                },
+            )
         schedule = data["schedule"]
         if not isinstance(schedule, dict):
             raise TraceAuditInputError("candidate_proposal.schedule")
@@ -477,25 +561,96 @@ def inspect_analytic_search_trace(
             expected_records.append(rec)
             circumferences = []
             windows = []
-            for i in range(courses):
-                fraction = Fraction(2 * i + 1, 2 * courses)
-                r = (
-                    radius
-                    if fraction == Fraction(1, 2)
-                    else radius * sin(pi * float(min(fraction, 1 - fraction)))
-                )
-                circumference = 2 * pi * r
-                if not isfinite(circumference):
-                    missing.append("nonfinite_sphere_sampling")
-                    return finish()
-                rec["samples"].append(
-                    {
-                        "s_mm": _rational(Fraction(float(fraction) * (pi * radius))),
-                        "radius_mm": _rational(Fraction(r)),
-                    }
-                )
-                circumferences.append(Fraction(circumference))
-            rec["circumference_mm"] = [_rational(value) for value in circumferences]
+            if coordinate_scope:
+                rec["stage"] = "sample"
+                sample_rows = []
+                numerical_failure = False
+                for i in range(courses):
+                    fraction = Fraction(2 * i + 1, 2 * courses)
+                    assert meridian is not None
+                    try:
+                        sample = meridian.sample(fraction, work)
+                    except TraceReplayBudgetExceeded:
+                        missing.append("independent_replay_budget_exhausted")
+                        return finish()
+                    except CoordinateReplayError as exc:
+                        reason = str(exc).removeprefix("coordinate.")
+                        if reason not in {
+                            "s_conversion",
+                            "radius_conversion",
+                            "axial_conversion",
+                            "negative_radius",
+                        }:
+                            diagnostics.append(
+                                ("E_DETERMINISM", "trace_audit.coordinate_sample." + str(exc))
+                            )
+                            return finish()
+                        rec.update(
+                            outcome="NUMERICAL_FAILURE",
+                            terminal_status="NUMERICAL_FAILURE",
+                            terminal_reason="meridian." + reason,
+                        )
+                        terminal_status, terminal_reason = (
+                            "NUMERICAL_FAILURE",
+                            "meridian." + reason,
+                        )
+                        missing.append("coordinate_sampling_numerical_failure")
+                        numerical_failure = True
+                        break
+                    sample_rows.append(
+                        {
+                            "s_mm": _rational(Fraction(sample.s_mm)),
+                            "radius_mm": _rational(Fraction(sample.radius_mm)),
+                            "axial_mm": _rational(Fraction(sample.axial_mm)),
+                        }
+                    )
+                if not numerical_failure:
+                    rec["samples"] = sample_rows
+                    rec["stage"] = "circumference"
+                    sampled_circumferences = [
+                        2 * pi * float(row_radius)
+                        for row_radius in (Fraction(row["radius_mm"]) for row in sample_rows)
+                    ]
+                    if not all(isfinite(value) for value in sampled_circumferences):
+                        rec.update(
+                            stage="circumference",
+                            outcome="NUMERICAL_FAILURE",
+                            terminal_status="NUMERICAL_FAILURE",
+                            terminal_reason="solver.circumference",
+                        )
+                        terminal_status, terminal_reason = (
+                            "NUMERICAL_FAILURE",
+                            "solver.circumference",
+                        )
+                        missing.append("coordinate_sampling_numerical_failure")
+                        numerical_failure = True
+                    else:
+                        circumferences = [Fraction(value) for value in sampled_circumferences]
+                        rec["stage"] = "count_windows"
+                        rec["circumference_mm"] = [_rational(value) for value in circumferences]
+                if numerical_failure:
+                    break
+            else:
+                for i in range(courses):
+                    fraction = Fraction(2 * i + 1, 2 * courses)
+                    assert radius is not None
+                    r = (
+                        radius
+                        if fraction == Fraction(1, 2)
+                        else radius * sin(pi * float(min(fraction, 1 - fraction)))
+                    )
+                    rec["samples"].append(
+                        {
+                            "s_mm": _rational(Fraction(float(fraction) * (pi * radius))),
+                            "radius_mm": _rational(Fraction(r)),
+                        }
+                    )
+                    circumference = 2 * pi * r
+                    if not isfinite(circumference):
+                        missing.append("nonfinite_sphere_sampling")
+                        return finish()
+                    circumferences.append(Fraction(circumference))
+                rec["circumference_mm"] = [_rational(value) for value in circumferences]
             for i, circumference_fraction in enumerate(circumferences):
                 quotient = circumference_fraction / pitch
                 low = max(config["min_count"], floor(quotient) - config["count_window_radius"])
@@ -615,8 +770,8 @@ def inspect_analytic_search_trace(
                     "count_transitions": count.used_transition_evaluations,
                     "placement_transitions": phase.used_transition_evaluations,
                     "placement_pairs": phase.used_pair_evaluations,
-                    "arc_panels": 0,
-                    "arc_error_bound_mm": 0.0,
+                    "arc_panels": (meridian is not None and len(meridian.lengths)) or 0,
+                    "arc_error_bound_mm": meridian.error_bound if meridian is not None else 0.0,
                     "material_response_id": response["response_id"],
                 }
                 check(

@@ -59,7 +59,8 @@ older radial profiles remain unsupported. Closed explicit caps and simple
 nonmonotone meridians are supported with cardinal axes; unsupported frames and
 boundaries return structured errors. Generation from this representation follows
 [EXPLICIT_COORDINATE_MERIDIAN_V1](ANALYTIC_COORDINATE_GENERATION_V1.md);
-independent coordinate replay, target sampling and V7 comparison remain open. Inspection alone
+the separate [coordinate replay](ANALYTIC_COORDINATE_REPLAY_V1.md) supports the
+documented numerical/search subset. V7 target sampling/comparison remains open. Inspection alone
 retains NOT_VERIFIED/UNTESTED. CLI request and isolated durable jobs use the same
 operation; no client-supplied proof or work-budget override is accepted.
 
@@ -216,7 +217,8 @@ for this algorithm. Finite overflow, failed enclosures or excessive rounding yie
 NUMERICAL_FAILURE, while insufficient segment budget yields SEARCH_BUDGET_EXHAUSTED.
 Sampler version and diagnostics are recorded in coordinate-only proposal
 provenance and bound by retained source/target/trace hashes. These producer
-calculations do not extend the untouched independent sphere replay or V7.
+calculations are checked by the separate coordinate replay; they do not complete
+V7, physical selection, calibration or full backend acceptance.
 
 ## Durable local jobs
 

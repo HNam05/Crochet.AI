@@ -102,8 +102,10 @@ stored as authoritative target input; AXIAL_LENGTH binds full extent. The
 [coordinate producer](ANALYTIC_COORDINATE_GENERATION_V1.md) derives bounded
 meridional length and samples for the existing course/count search. The legacy
 radial writer and saved projects remain untouched; native sphere/ellipsoid inputs
-remain unchanged. Coordinate targets can pass scoped ideal-target V0, while their
-independent search replay remains INDETERMINATE. Neither is physical acceptance.
+remain unchanged. Coordinate targets can pass scoped ideal-target V0 and their
+separate [independent search replay](ANALYTIC_COORDINATE_REPLAY_V1.md).
+V5 still awaits physical selection/verification. Neither computational subset
+establishes physical acceptance, and stored projects are not rewritten.
 
 ### Printable export
 

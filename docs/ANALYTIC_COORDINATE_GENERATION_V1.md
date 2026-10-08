@@ -95,6 +95,8 @@ These new fields/parameters do not appear on older input paths.
 API/CLI/jobs reuse generation dispatch. New generic prototype projects preserve
 the complete original proposals, trace and existing fixed-zero-phase final link.
 Neither producer link nor sampler error analysis completes independent search
-acceptance. The untouched sphere-only auditor returns INDETERMINATE with
-unsupported_target_sampler for these profiles. Separate future work must replay
-the numerical policy and search, implement V7 and complete calibrated physics.
+acceptance. At the producer checkpoint the sphere-only auditor returned
+INDETERMINATE with unsupported_target_sampler for these profiles. The subsequent
+separate [coordinate verifier](ANALYTIC_COORDINATE_REPLAY_V1.md) now reconstructs
+the numerical policy and staged search without importing this generator.
+Independent V7, numerical-failure trace coverage and calibrated physics remain open.

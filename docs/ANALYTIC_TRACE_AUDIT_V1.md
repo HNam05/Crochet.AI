@@ -6,6 +6,12 @@ balanced_course or the producer trace builder. SemanticValidator, canonical
 hashing, the existing raw-IR candidate-claims auditor and standard arithmetic
 are admissible common infrastructure, with the trust boundary recorded here.
 
+The additive [coordinate replay scope](ANALYTIC_COORDINATE_REPLAY_V1.md) also
+uses shared ideal-target input admission and its own independent numerical kernel.
+It never imports the producer coordinate sampler. Its signed sample fields,
+numerical evidence and preprocessing/scan proof units apply only to coordinate
+targets; ordinary native sphere evidence retains its previous bytes.
+
 ## Complete bounded audit package
 
 Inputs are validated DesignSpec, MaterialProfile, wire-format run config,
@@ -29,7 +35,8 @@ folded symmetric sine radius (exact equatorial radius at midpoint), sample arc
 coordinate and circumference 2*pi*radius. Match exact rational representations
 of these deterministic binary64 results. This checks the declared arithmetic
 policy, not real-number accuracy or physical fidelity. Other target samplers
-remain explicitly unsupported; there is no invented numerical tolerance.
+remain explicitly unsupported except the separately documented coordinate scope;
+there is no invented numerical tolerance.
 
 Rebuild integer windows using exact circumferences/pitch and the recorded
 run constraints, including allowed shaping, initial ring and terminal bounds;

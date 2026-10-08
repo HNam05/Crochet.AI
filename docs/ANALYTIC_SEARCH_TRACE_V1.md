@@ -25,8 +25,9 @@ same outer search/count/phase envelope. Coordinate-only samples additionally
 record local signed axial_mm; the retained original proposal records the
 EXPLICIT_COORDINATE_MERIDIAN_V1 sampler identity and numerical diagnostics.
 DesignSpec/target hashes bind its complete authoritative knots. Older paths do
-not acquire new fields or parameters. The independent sphere auditor remains
-unchanged and reports unsupported_target_sampler for coordinate targets.
+not acquire new fields or parameters. The subsequent
+[independent coordinate audit](ANALYTIC_COORDINATE_REPLAY_V1.md) reconstructs these
+samples and the staged search; the producer trace itself remains untrusted.
 
 The immutable trace retains JCS bytes and a separate SHA-256 using
 `Crochet.AI\0ANALYTIC_SEARCH_TRACE_V1\0`. `to_dict()` returns a fresh value.
@@ -103,6 +104,7 @@ phase-policy relation remains an open independent verification task.
 [ANALYTIC_TRACE_AUDIT_V1](ANALYTIC_TRACE_AUDIT_V1.md) now validates sphere and
 equal-axis-ellipsoid trace envelopes, bindings, windows and actual DP work/prefix
 claims independently, including interrupted passes and refreshed tampered hashes.
-Broader samplers, independently verified proposal-to-final relation and physical
-feasible selection remain open. Trace integrity alone cannot complete V5 or
+The separate coordinate audit and final-relation audit extend the documented
+computational scopes. Broader samplers and physical feasible selection remain
+open. Trace integrity alone cannot complete V5 or
 replace V6-V8/V10 and physical calibration.

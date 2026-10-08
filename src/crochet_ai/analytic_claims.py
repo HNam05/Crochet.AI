@@ -9,9 +9,18 @@ from typing import Any, cast
 
 import rfc8785
 
+from .analytic_coordinate_target import (
+    PROFILE_ID as COORDINATE_PROFILE_ID,
+)
+from .analytic_coordinate_target import (
+    admit_analytic_coordinate_target,
+)
+from .analytic_target import AnalyticTargetError
 from .canonical import CanonicalProfile, canonical_hash, jcs_bytes, validate_ijson
+from .coordinate_meridian_replay import CoordinateMeridianReplay, CoordinateReplayError
 from .diagnostics import ArtifactValidationError, FailureCode
 from .json_types import JSONValue
+from .trace_verification_types import TraceReplayBudgetExceeded, TraceReplayWork
 from .validation import SemanticValidator
 
 
@@ -97,6 +106,11 @@ _KNOWN_SOLVER = {
     "arc_error_bound_mm",
     "material_response_id",
     "parameter_profile_id",
+}
+_COORDINATE_SOLVER = {
+    "coordinate_sampler_version",
+    "coordinate_target_sha256",
+    "coordinate_sqrt_bracket_max_steps",
 }
 _KNOWN_PROTOTYPE = {"count_schedule", "final_phases", "phase_policy"}
 _MISSING_TRACE = (
@@ -404,11 +418,76 @@ def inspect_analytic_candidate_claims(
             "parameter hash does not match sorted ANALYTIC_COMPILER_PARAMETERS_V1 values",
         )
     values = {row["name"]: row["value"] for row in params if isinstance(row, dict)}
+    coordinate_scope = (
+        design.get("target_geometry", {}).get("primitive") == "SURFACE_OF_REVOLUTION"
+        and design.get("target_geometry", {})
+        .get("radial_profile", {})
+        .get("canonicalization_profile")
+        == COORDINATE_PROFILE_ID
+    )
+    if coordinate_scope:
+        coordinate_names = (
+            "solver.coordinate_sampler_version",
+            "solver.coordinate_target_sha256",
+            "solver.coordinate_sqrt_bracket_max_steps",
+        )
+        present = [name in values for name in coordinate_names]
+        if any(present):
+            valid_coordinate_claim = all(present)
+            if valid_coordinate_claim:
+                try:
+                    target = admit_analytic_coordinate_target(design, validator)
+                    arc_tolerance = values.get("run.numerics.arc_length_abs_tolerance_mm")
+                    roundoff = values.get("run.numerics.roundoff_allowance_mm")
+                    max_panels = values.get("run.numerics.max_arc_panels")
+                    radius_zero = values.get("run.numerics.radius_zero_tolerance_mm")
+                    if (
+                        type(arc_tolerance) not in (int, float)
+                        or type(roundoff) not in (int, float)
+                        or type(max_panels) is not int
+                        or type(radius_zero) not in (int, float)
+                    ):
+                        raise CoordinateReplayError("coordinate.run_numerics_missing")
+                    replay = CoordinateMeridianReplay.build(
+                        target,
+                        cast(float, arc_tolerance),
+                        cast(float, roundoff),
+                        max_panels,
+                        TraceReplayWork(1_000),
+                        cast(float, radius_zero),
+                    )
+                    valid_coordinate_claim = (
+                        values.get(coordinate_names[0]) == "EXPLICIT_COORDINATE_MERIDIAN_V1"
+                        and values.get(coordinate_names[1]) == target.sha256
+                        and type(values.get(coordinate_names[2])) is int
+                        and values.get(coordinate_names[2]) == 2
+                        and bool(replay.target_sha256)
+                    )
+                except (
+                    AnalyticTargetError,
+                    CoordinateReplayError,
+                    TraceReplayBudgetExceeded,
+                    TypeError,
+                ):
+                    valid_coordinate_claim = False
+            else:
+                valid_coordinate_claim = False
+            check(
+                "coordinate_sampler_parameters",
+                valid_coordinate_claim,
+                "coordinate sampler parameters do not bind to the admitted target and run numerics",
+            )
+        elif scope_ok:
+            missing.append("coordinate_sampler_parameters")
     unknown = sorted(
         name
         for name in values
         if (name.startswith("run.") and name[4:] not in _KNOWN_RUNS)
-        or (name.startswith("solver.") and name[7:] not in _KNOWN_SOLVER)
+        or (
+            name.startswith("solver.")
+            and name[7:] not in _KNOWN_SOLVER
+            and not (coordinate_scope and name[7:] in _COORDINATE_SOLVER)
+        )
         or (name.startswith("prototype.") and name[10:] not in _KNOWN_PROTOTYPE)
     )
     if scope_ok:

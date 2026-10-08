@@ -1,6 +1,6 @@
 # Backend handoff
 
-Latest checkpoint: 2026-10-06. Read this file before continuing backend work.
+Latest checkpoint: 2026-10-08. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
 ## Repository and product
@@ -194,7 +194,68 @@ owns numerical policy, independent adversarial tests, integration and publicatio
 A Luna/low mathematical reviewer checked the enclosure/2E displacement proof
 and implementation. Token and cost measurements are unavailable, not estimates.
 
+## Independent coordinate replay checkpoint
+
+COORDINATE_MERIDIAN_REPLAY_V1 now independently reconstructs the admitted explicit
+coordinate sampler and extends ANALYTIC_TRACE_AUDIT_V1's staged search scope.
+It uses exact squared input distances, bit-enumerated binary64 neighbor enclosures,
+exact accumulated lengths, independent linear segment lookup, strict conversion
+checks and signed axial trace samples. Coordinate numerical work shares the
+6,000,000-unit trace proof budget; exhausted proof is INDETERMINATE. No new
+tolerance is introduced. Native sphere evidence bytes are preserved.
+See [ANALYTIC_COORDINATE_REPLAY_V1.md](ANALYTIC_COORDINATE_REPLAY_V1.md) and
+[ADR 0019](adr/0019-independent-coordinate-search-replay.md).
+
+Raw candidate claims recognize the three coordinate-only solver parameters only
+after independent numerical/input binding checks. Partial/false metadata fails;
+unknown parameter semantics remains incomplete even after refreshed hashes.
+The existing final-relation and V5 adapters can consume the extended search proof
+without changing their raw construction predicates. Generation, canonical
+schemas/goldens, count/phase replay kernels, final-relation/pipeline/API/storage
+and the target-free forward model are unchanged in this verifier package.
+
+Coordinate search/final-relation PASS removes only the scoped computational
+missing checks. Physical feasible selection and physical_verification remain;
+overall NOT_VERIFIED and physical UNTESTED remain. Thin-neck/unsupported scopes
+are explicitly incomplete. Truthful reached sample-conversion/circumference
+failure traces retain a named incomplete numerical-failure scope; forged success
+or inconsistent reached-stage records fail. Preprocessing failures occur before
+trace creation and return no producer trace. Full numerical-failure acceptance,
+V7 coverage and physical calibration are separate remaining work.
+
+One Luna/medium worker implemented the bounded verifier package with its tests.
+Primary owns the contract, independent exact/property/adversarial and delivery
+tests, numerical review, integration and publication. A read-only Luna/low
+verifier reviewer checked the scoped numerical/trust boundaries. Its initial
+preprocessing failure concern was withdrawn after actual producer runs confirmed
+both cases return null trace; this was not a code defect or a weakened test.
+The review did not establish full physical or release correctness. Usage/cost
+measurements are unavailable and recorded as null in ignored agent-cost evidence.
+
 ## Validation and runtime
+
+Current independent coordinate replay checkpoint: all 1,280 Python tests passed
+in 540.28 s. The worker's 59 focused replay tests and 14 claims/delivery tests
+passed; the full suite includes the primary's exact, high-precision, property,
+adversarial, API/job and prototype integration checks. Full Ruff, strict mypy on
+89 source modules, five independent Node canonical vectors and ten frontend
+tests passed. Wheel build, clean isolated installation, dependency check and
+out-of-checkout smoke passed; all nine schemas are bundled byte-for-byte.
+Four complete source/installed CLI audit envelopes match: capped and nonmonotone
+coordinate targets PASS, tampering FAIL, absent originals INDETERMINATE. The
+complete native sphere audit retains its pre-edit canonical bytes and SHA-256
+`5dd73d5d57bdeaabdaf57947e2ce64ba328f4f32e568bf645e44ae2b82cdc440`.
+
+Live verification of the existing coordinate pear and complete-bundle sphere
+now gives search/final-relation PASS, with exactly physical feasible selection
+and physical_verification still missing from V5. Overall NOT_VERIFIED and
+physical UNTESTED remain. The pear's 20 rounds/354 stitches and stored raw IR
+are unchanged; its English PDF download passed (5,508 bytes). The hash-only
+legacy sphere remains incomplete because original proposals are absent.
+All 12 project snapshots and their listing were compared before and after live
+verification/PDF export and remain exactly unchanged. No project was created or
+backfilled. Evidence is under `artifacts/backend-coordinate-replay/`; worker
+usage/cost remain null in `artifacts/agent-costs/2026-10-08-coordinate-replay.json`.
 
 Previous accepted V5 claims checkpoint: 1,050 Python tests, Ruff, strict mypy on
 79 source modules, five independent Node canonical vectors, ten frontend tests;
@@ -328,8 +389,14 @@ Start from repository root: `.venv/Scripts/python.exe -u tools/run_prototype.py 
 On Windows, stopping the terminal session alone may leave its Python child alive.
 Before restart, identify only this checkout's prototype launcher/child process
 pair, stop that owned pair and confirm port 8765 has no listener. After restart,
-confirm exactly one listener belongs to the new process. A printed listening
-message alone does not prove that browser requests reach the new source.
+ confirm exactly one listener belongs to the new process. A printed listening
+ message alone does not prove that browser requests reach the new source.
+At the current checkpoint, a server started inside the restricted execution
+environment printed its listening message but timed out on loopback requests.
+After stopping its verified owned launcher/child pair and confirming the port
+was free, starting the same command outside that restriction restored access.
+No firewall or global security configuration was changed. Retain the distinct
+failed-start diagnostics; do not count the listening message as successful QA.
 Persistent private projects/feedback: `artifacts/local-prototype/` (ignored).
 Nine historical projects existed before the complete snapshot task; their sessions
 are preserved (eight untraced projects and one hash-only traced sphere).
@@ -340,19 +407,18 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Independently admit/replay the explicit coordinate producer's numerical policy,
-   samples and retained count/phase search traces. Keep this verifier package
-   separate from generation; do not import the producer sampler as its oracle.
-   Later target sampling/V7 must bind its own coverage/error policy. Older r(s)
-   profiles remain ambiguous and saved projects must not be upgraded or rewritten.
-2. Complete physical rest/shaping/loading/contact model for actual generated
+1. Complete physical rest/shaping/loading/contact model for actual generated
    INC/DEC cells and open calibration fixtures; retain target-free simulation.
-3. Implement independent V6 convergence, V7 geometry comparison, V8 material
+2. Implement independent V6 convergence, V7 geometry comparison, V8 material
    robustness and feasible-candidate selection, then V10 bound provenance.
-4. Complete uncertainty/calibration provenance, broader topology/solver domains,
+   V7 sampling must bind its own coverage/error policy; coordinate search proof
+   does not establish physical geometry accuracy.
+3. Complete numerical-failure trace acceptance beyond the explicitly incomplete
+   reached-stage scope, uncertainty/calibration provenance, broader topology/solver domains,
    M1B/full export acceptance, recovery/security/release acceptance. See the full
    roadmap; this list does not waive any package acceptance requirement.
-5. Collect real crochet feedback/specimen measurements. Human physical trials and
+   Older r(s) profiles remain ambiguous and saved projects must not be rewritten.
+4. Collect real crochet feedback/specimen measurements. Human physical trials and
    new golden approvals are separate gates. Develop the separate mobile app later.
 
 ## Reading and commands
@@ -360,6 +426,7 @@ Do not infer installed runtime or remote branch state from this note; check live
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
 `ANALYTIC_COORDINATE_TARGET_V1.md`, `DESIGN_SPEC.md`,
 `ANALYTIC_COORDINATE_GENERATION_V1.md`,
+`ANALYTIC_COORDINATE_REPLAY_V1.md`,
 `ANALYTIC_SEARCH_TRACE_V1.md`, `ANALYTIC_CANDIDATE_CLAIMS_V1.md`,
 `PROTOTYPE_PROPOSAL_BUNDLE_V1.md`, `PROTOTYPE_FINAL_RELATION_AUDIT_V1.md`,
 `VERIFICATION_PIPELINE.md`, then the affected

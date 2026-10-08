@@ -62,6 +62,9 @@ permutations, labels and derivations use the existing equivalence contract.
 This is a phase-policy relation, not semantic equivalence of the two whole IRs.
 
 Shared schema validation and canonical projection remain common dependencies.
+The additive coordinate claims/replay scope independently checks coordinate
+provenance before the unchanged relation checker can establish PASS. This does
+not waive any raw frontier, schedule, source or semantic comparison predicate.
 Adversarial tests must independently alter valid anchored frontiers/connections,
 same-count construction, color and lineage, with refreshed producer digests.
 At least one positive and negative pair must be hand-authored without compiling

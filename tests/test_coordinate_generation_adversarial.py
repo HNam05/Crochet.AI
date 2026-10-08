@@ -236,8 +236,9 @@ def test_coordinate_api_generation_is_bound_complete_and_unverified(tmp_path):
         "candidate_proposals": [candidate.crochet_ir.to_dict() for candidate in batch.candidates],
     })
     assert audit["ok"], audit
-    assert audit["data"]["status"] == "INDETERMINATE", audit
-    assert "unsupported_target_sampler" in audit["data"]["missing_checks"]
+    assert audit["data"]["status"] == "PASS", audit
+    assert audit["data"]["physical_status"] == "UNTESTED"
+    assert "coordinate-meridian" in audit["data"]["scope"]
     store = JobStore(tmp_path / "coordinate-generation.sqlite3")
     job_id = store.submit(json.dumps(request), "coordinate-generation")
     assert execute_one_isolated(store, BackendAPI(PROVENANCE), max_wall_seconds=20)

@@ -26,7 +26,7 @@ not mandatory verification or physical acceptance.
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A subset implemented; M1B and V9/V10 remain |
 | B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; closed sphere/ellipsoid and DesignSpec 1.2 simple explicit-coordinate revolution targets have ideal-target V0 admission; arbitrary-axis/open, flat and lace adapters remain open |
-| B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals implemented; coordinate replay, full V5 and domains remain |
+| B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals and independent staged search/final-relation replay implemented; numerical-failure trace coverage, full V5 and domains remain |
 | B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free experimental stretch, shear and bending terms with bounded combined descent and exact final-coordinate intersection/distance diagnostics; contact response, calibrated convergence and V6 missing |
 | B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered V0-V10 checkpoint, supported mesh V0, core V1-V3 and single-yarn M1A V9 are integrated; full V4/V5-V8/V10 and calibrated forward/metric evidence remain open |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
@@ -44,7 +44,7 @@ implemented through API/CLI/jobs and scoped V0 evidence. Full regression:
 cross-runtime hashes, isolated wheel installation and saved-project/PDF checks
 passed. This closed the stated input/admission slice only.
 
-Latest producer checkpoint (2026-10-06):
+Producer checkpoint (2026-10-06):
 [explicit-coordinate generation](ANALYTIC_COORDINATE_GENERATION_V1.md) samples
 admitted knots with exact rational cumulative lengths and bounded, exactly checked
 square-root enclosures. It reuses the existing count/phase search and compiler.
@@ -56,7 +56,19 @@ All 1,248 Python tests, Ruff, strict typing (88 modules), five independent Node
 canonical vectors, ten frontend tests, clean wheel installation/dependency/smoke
 checks and three complete source/installed generation-envelope comparisons passed.
 Coordinate replay/V7, calibrated physics and every remaining package above remain
-open; see [BACKEND_HANDOFF.md](BACKEND_HANDOFF.md) for live validation and next work.
+open at that checkpoint.
+
+Latest verifier checkpoint (2026-10-08):
+[independent coordinate replay](ANALYTIC_COORDINATE_REPLAY_V1.md) reconstructs the
+declared numerical policy, signed samples and staged search under bounded proof
+work. Coordinate provenance is independently checked before parameter recognition.
+Existing API/V5/final-relation integration admits scoped computational proofs;
+generation, schemas/goldens and forward physics are unchanged. Physical feasible
+selection and verification remain open, overall NOT_VERIFIED and UNTESTED remain.
+Unsupported scopes, unknown parameters and truthful reached numerical-failure
+traces remain explicitly incomplete; contradictory records fail. Full acceptance
+requirements are unchanged. Validation and current runtime are recorded in
+[BACKEND_HANDOFF.md](BACKEND_HANDOFF.md).
 
 ## First checkpoint (historical)
 

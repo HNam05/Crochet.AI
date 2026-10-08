@@ -699,3 +699,23 @@ Nächster Abschnitt ist dessen separate unabhängige numerische und Suchprüfung
 danach Geometrievergleich, vollständige zielunabhängige Physik und Kalibrierung.
 Die übrigen R1-R4-/B0-B12-Abnahmen bleiben offen; konkrete Softwareprüfungen
 werden im Handoff dokumentiert.
+
+### Fortschreibung 2026-10-08: Unabhängige Koordinaten- und Suchprüfung
+
+Der [separate Koordinatenprüfer](ANALYTIC_COORDINATE_REPLAY_V1.md) rekonstruiert
+Längenintervalle, Radius-/Axialwerte und Suchaufzeichnungen ohne Generator-Import.
+Er prüft Parameterbedeutung, Eingabe-/Quellbindungen, Maschenfenster, die globale
+Zähl- und Phasensuche, Arbeit, Unterbrechungen und Vorschlagsreihenfolge. Seine
+numerische Arbeit bleibt im vorhandenen Beweisbudget. Manipulierte oder nur
+teilweise vorhandene bekannte Herkunftsparameter scheitern; unbekannte Semantik
+und ausgeschöpfte Beweisbudgets bleiben ausdrücklich unvollständig.
+
+Die unveränderte Pilotprüfung kann damit die vorhandenen Koordinatenprojekte
+computergestützt prüfen und ihre Original-/Endkonstruktionsbeziehung bestätigen.
+Physische Kandidatenauswahl und physische Verifikation bleiben offen. Wahrheitsgetreu
+aufgezeichnete numerische Abbrüche haben weiterhin einen benannten unvollständigen
+Prüfumfang. P03 ist im dokumentierten Koordinaten-/Suchumfang umgesetzt; als
+nächster Schwerpunkt folgt das zielunabhängige Shaping-, Ruhe-, Belastungs- und
+Kontaktmodell mit echten Kalibriermessungen, danach V6/V7/V8/V10.
+R1-R4 und die vollständige Backend-Abnahme bleiben offen. Der Handoff dokumentiert
+die ausgeführten Software-, Installations- und Live-Prüfungen.
