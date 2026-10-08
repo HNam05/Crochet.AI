@@ -40,6 +40,9 @@ This is a working implementation checkpoint, not full backend acceptance.
   Contradictions FAIL; absent complete search/physical evidence stays incomplete.
 - Experimental target-free stretch/shear/bending and contact diagnostics are
   computational slices, not complete physical F0/V6 acceptance.
+- Closed shaped SC rest preparation and distinct ring/course initialization
+  with initial elastic forces are available through API/CLI/isolated jobs;
+  closure/loading/contact/optimization and calibration remain missing.
 
 ## Previous producer checkpoint
 
@@ -232,9 +235,67 @@ both cases return null trace; this was not a code defect or a weakened test.
 The review did not establish full physical or release correctness. Usage/cost
 measurements are unavailable and recorded as null in ignored agent-cost evidence.
 
+## Closed shaped elastic checkpoint
+
+FORWARD_SHAPED_ELASTIC_DIAGNOSTIC_V1 adds the missing closed-shaping elastic
+preparation alongside the unchanged plain-strip optimizer. It admits an explicit
+target-free hypothesis recipe, validates the closed cells before graph/coordinate
+allocation, retains every PLAIN/INC/DEC incidence and assigns separately declared
+ring rest lengths/stiffness. Gauge-based shape factors are explicit hypothesis
+inputs, not empirically accepted material coefficients. Rest terms are prepared
+before initialization, without deriving their values from initial geometry.
+
+The new deterministic ring/course polygons cover every closed-cell vertex; the
+existing spring kernel evaluates initial energy and nodal forces. The bundle
+binds projection/material/recipe/cells, all terms/coordinates and missing checks.
+Its shared spring kernel and closed-cell convention are documented dependencies,
+not an independent physical verifier. Source IR identity stays outside the
+physical bundle; excluded solver/target/color metadata cannot perturb it.
+API/CLI/isolated jobs expose inspect_shaped_forward_model. No generator,
+verification gate, old numeric algorithm, canonical schema/golden or storage
+migration changes. Limits: 1 initialization, 2,048 vertices, 4,096 faces,
+8,192 spring terms; malformed or failed numerical execution returns no bundle.
+See [FORWARD_SHAPED_ELASTIC_V1.md](FORWARD_SHAPED_ELASTIC_V1.md) and
+[ADR 0020](adr/0020-closed-shaped-elastic-diagnostic.md).
+
+This closes one P04 preparation slice only. Closure mechanics/open fixtures,
+shaped shear/bending, loading/contact response, optimization and calibration
+remain missing. Geometry is comparison-ineligible, V6 NOT_RUN, overall
+NOT_VERIFIED and physical UNTESTED. Initial force balance cannot establish
+convergence or physical accuracy. No hypothetical coefficients were applied to
+persisted projects or their human instructions.
+
+One Luna/medium worker owns the new kernel and targeted tests; primary owns
+the contract, API integration, independent force-gradient/incidence/metadata and
+delivery checks, final review and publication. Primary review removed an unsafe
+unsupported-topology assumption and repeated nested scans by reusing closed-cell
+preflight and indexed ownership. A focused read-only Luna/low geometry reviewer
+found no additional concrete issue in the reviewed scope; it did not run tests
+or establish physical/release acceptance. Worker usage/cost measurements remain
+null in ignored `artifacts/agent-costs/2026-10-08-shaped-forward.json`.
+
 ## Validation and runtime
 
-Current independent coordinate replay checkpoint: all 1,280 Python tests passed
+Shaped elastic checkpoint: all 1,303 Python tests passed in 521.22 s.
+70 targeted shaped/API/job and existing strip-pipeline
+tests passed in 23.53 s, including the worker's 13 kernel tests and primary's
+10 independent derivative/incidence/metadata/delivery tests. Full Ruff, strict
+mypy on 90 source modules, five Node canonical vectors and ten frontend tests
+passed. Wheel build through bundled Python, clean no-index/no-dependency reinstall,
+pip check and isolated out-of-checkout smoke passed; all nine schemas retain
+their exact bundled bytes. The source venv lacks bdist_wheel; its distinct failed
+build log is retained, and no dependency or global configuration was changed.
+
+Seven complete source/installed CLI envelopes agree: plain/shaped minimal cases,
+existing pear/sphere, missing material response, prohibited coordinate override
+and overflowing force evaluation. Success is an initial diagnostic only;
+errors return no geometry bundle. The unchanged stored pear produces 385 vertices,
+766 faces and 786 springs; sphere 368/732/751. These are physical graph/cell counts,
+not crochet round totals. All 12 live project snapshots/listing were compared
+before and after the diagnostic delivery checks and remain identical; no project
+was created or backfilled. Evidence: `artifacts/backend-shaped-forward/`.
+
+Independent coordinate replay checkpoint: all 1,280 Python tests passed
 in 540.28 s. The worker's 59 focused replay tests and 14 claims/delivery tests
 passed; the full suite includes the primary's exact, high-precision, property,
 adversarial, API/job and prototype integration checks. Full Ruff, strict mypy on
@@ -407,8 +468,10 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Complete physical rest/shaping/loading/contact model for actual generated
-   INC/DEC cells and open calibration fixtures; retain target-free simulation.
+1. Complete closure mechanics/open calibration fixtures and shaped-cell
+   shear/bending, declared loading/contact response and optimization. The new
+   closed-shaped rest/initial-force preparation is ready; retain target-free
+   simulation and independently calibrate its explicit hypotheses.
 2. Implement independent V6 convergence, V7 geometry comparison, V8 material
    robustness and feasible-candidate selection, then V10 bound provenance.
    V7 sampling must bind its own coverage/error policy; coordinate search proof
@@ -424,6 +487,7 @@ Do not infer installed runtime or remote branch state from this note; check live
 ## Reading and commands
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
+`FORWARD_SHAPED_ELASTIC_V1.md`, `FORWARD_MODEL.md`, `MATERIAL_MODEL.md`,
 `ANALYTIC_COORDINATE_TARGET_V1.md`, `DESIGN_SPEC.md`,
 `ANALYTIC_COORDINATE_GENERATION_V1.md`,
 `ANALYTIC_COORDINATE_REPLAY_V1.md`,

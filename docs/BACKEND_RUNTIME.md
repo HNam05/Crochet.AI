@@ -222,6 +222,24 @@ V7, physical selection, calibration or full backend acceptance.
 
 ## Durable local jobs
 
+### Closed shaped elastic preparation
+
+`inspect_shaped_forward_model` adds a target-free initial elastic diagnostic for
+closed SC bodies with binary shaping and MAGIC_RING/CLOSE. Supply the exact
+versioned [recipe](FORWARD_SHAPED_ELASTIC_V1.md); the backend does not invent
+mechanical constants from the viewer or MaterialProfile gauge. The existing
+API/CLI request and isolated-job paths return the same deterministic bundle.
+Limits: one initialization, 2,048 vertices, 4,096 faces, 8,192 spring terms;
+lower declared vertex budgets are enforced before coordinate output. Unknown
+fields/versions and target/coordinate overrides fail closed. Numeric force
+failure returns E_FORWARD_DIVERGED with no geometry bundle.
+
+The bundle is EXPERIMENTAL_INITIAL_ELASTIC_DIAGNOSTIC, comparison_eligible=false,
+NOT_VERIFIED / UNTESTED with V6 NOT_RUN. This is preparation and initial-force
+evaluation only; closure mechanics, shaped shear/bending, loading/contact
+response, optimization and calibration remain incomplete. The older plain-strip
+run_forward_prototype contract and verification-gate adapters are unchanged.
+
 ```powershell
 crochet-ai --json jobs submit --db jobs.sqlite --request-file generate-request.json --idempotency-key request-001 --dry-run
 crochet-ai --json jobs submit --db jobs.sqlite --request-file generate-request.json --idempotency-key request-001

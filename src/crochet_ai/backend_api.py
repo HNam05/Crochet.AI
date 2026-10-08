@@ -40,6 +40,11 @@ from .forward_pipeline import (
     admit_forward_pipeline_recipe,
     run_forward_pipeline,
 )
+from .forward_shaped import (
+    ForwardShapedError,
+    admit_shaped_forward_recipe,
+    inspect_shaped_forward_model,
+)
 from .models import DesignSpec, MaterialProfile
 from .pattern import TerminologyProfile, export_pattern
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
@@ -173,6 +178,7 @@ class BackendAPI:
                         "inspect_v0_closed_mesh_v2",
                         "inspect_v0_mesh_v2",
                         "run_forward_prototype",
+                        "inspect_shaped_forward_model",
                         "verify_candidate",
                         "inspect_analytic_search_trace",
                         "calibration_protocol",
@@ -538,7 +544,7 @@ class BackendAPI:
                     "mesh_preflight_state": preflight_state,
                     "physical_status": "UNTESTED",
                 }
-            elif operation == "run_forward_prototype":
+            elif operation in {"run_forward_prototype", "inspect_shaped_forward_model"}:
                 _object(
                     request,
                     {
@@ -580,13 +586,19 @@ class BackendAPI:
                     )
                 except PhysicalProjectionError as error:
                     raise ForwardPipelineError("E_UNSUPPORTED_FEATURE", str(error)) from error
-                recipe = admit_forward_pipeline_recipe(request["forward_run"])
                 execution_validator = SemanticValidator(
                     material_profiles={material.get("profile_id", ""): material}
                 )
-                bundle = run_forward_pipeline(
-                    projection, material, recipe, validator=execution_validator
-                )
+                if operation == "run_forward_prototype":
+                    recipe = admit_forward_pipeline_recipe(request["forward_run"])
+                    bundle = run_forward_pipeline(
+                        projection, material, recipe, validator=execution_validator
+                    )
+                else:
+                    shaped_recipe = admit_shaped_forward_recipe(request["forward_run"])
+                    bundle = inspect_shaped_forward_model(
+                        projection, material, shaped_recipe, validator=execution_validator
+                    )
                 data = {
                     "source_crochet_ir_sha256": source_sha256,
                     "experimental_forward_bundle": bundle,
@@ -725,7 +737,7 @@ class BackendAPI:
                     "gate": "V0",
                 },
             }
-        except ForwardPipelineError as error:
+        except (ForwardPipelineError, ForwardShapedError) as error:
             return error_response(error.code, error.reason)
         except (
             ApiInputError,

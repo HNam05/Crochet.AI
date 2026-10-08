@@ -719,3 +719,20 @@ nächster Schwerpunkt folgt das zielunabhängige Shaping-, Ruhe-, Belastungs- un
 Kontaktmodell mit echten Kalibriermessungen, danach V6/V7/V8/V10.
 R1-R4 und die vollständige Backend-Abnahme bleiben offen. Der Handoff dokumentiert
 die ausgeführten Software-, Installations- und Live-Prüfungen.
+
+### Fortschreibung 2026-10-08: Ruhemodell und Startkräfte für geformte Körper
+
+Die [neue elastische Diagnose](FORWARD_SHAPED_ELASTIC_V1.md) verbindet die
+vorhandene physische Projektion und geschlossene SC-Zellkonstruktion mit
+expliziten Ruheparametern für Plain/Zu-/Abnahmen und Ring-Inzidenzen.
+Zielunabhängige Startkoordinaten, vollständige Maschenverbindungen und
+dimensionsgebundene Energie/Kräfte sind über API, CLI und dauerhafte Jobs
+abrufbar. Startkoordinaten bestimmen keine Ruhelängen. Form-/Solver-Provenienz
+kann die physische Nachweiskette nicht beeinflussen.
+
+Dies schließt einen P04-Abschnitt für die tatsächlichen generierten Körper,
+keine vollständige P04/P05-Abnahme. Abschlussmechanik und offene Messkörper,
+Schub/Biegung auf den geformten Zellen, Last-/Kontaktreaktion und Optimierung
+bleiben offen. Darauf folgen V6-Konvergenz, V7/V8/V10 und reale Kalibrierung.
+Die Diagnose liefert ausdrücklich keine für den Geometrievergleich freigegebene
+Vorhersage. Alle R1-R4-Abnahmen und physische Häkeltests bleiben unverändert offen.

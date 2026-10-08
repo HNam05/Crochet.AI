@@ -35,8 +35,8 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B4",
             "EXPERIMENTAL",
-            "Target-free stretch/shear/bending prototype and topology-only shaped closed cells",
-            "Physical shaping/rest model, contact response, convergence and calibration",
+            "Target-free strip prototype, shaped closed cells and initial shaped elastic forces",
+            "Closure mechanics, loading/contact response, convergence and calibration",
         ),
         (
             "B5",

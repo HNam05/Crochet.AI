@@ -19,5 +19,6 @@ Accepted foundational decisions:
 17. [`0017-explicit-analytic-meridian-coordinates.md`](0017-explicit-analytic-meridian-coordinates.md): additive DesignSpec coordinate profiles, bounded ideal-target admission and explicit solver boundary
 18. [`0018-bounded-coordinate-meridian-generation.md`](0018-bounded-coordinate-meridian-generation.md): bounded producer arclength enclosures, signed-coordinate sampling and legacy preservation
 19. [`0019-independent-coordinate-search-replay.md`](0019-independent-coordinate-search-replay.md): independent numerical and staged search verification with bounded proof work
+20. [`0020-closed-shaped-elastic-diagnostic.md`](0020-closed-shaped-elastic-diagnostic.md): explicit shaped/ring rest terms, target-free initial elastic diagnostics and unchanged physical acceptance boundary
 
 New decisions that alter public schemas, verification gates, trust boundaries, reproducibility, or physical claims require a new ADR. Accepted ADRs are superseded rather than rewritten to conceal history.

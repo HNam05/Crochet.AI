@@ -30,6 +30,7 @@ from crochet_ai.calibration_pdf import render_calibration_packet
 from crochet_ai.certified_orientation import orientation2d, orientation3d
 from crochet_ai.forward_closed_cells import PROFILE as CLOSED_CELLS_PROFILE
 from crochet_ai.forward_pipeline import PROFILE as FORWARD_PIPELINE_PROFILE
+from crochet_ai.forward_shaped import PROFILE as FORWARD_SHAPED_PROFILE
 from crochet_ai.schema import SCHEMA_FILENAMES, schema_documents
 from crochet_ai.target_mesh_adjacent_residual import (
     diagnose_indexed_triangle_mesh_adjacent_residual,
@@ -178,6 +179,14 @@ def main() -> int:
     _require(
         FORWARD_PIPELINE_PROFILE == "FORWARD_STRETCH_SHEAR_BENDING_PIPELINE_V1",
         "smoke.forward_pipeline_profile_mismatch",
+    )
+    _require(
+        "inspect_shaped_forward_model" in capabilities["data"]["operations"],
+        "smoke.shaped_forward_operation_missing",
+    )
+    _require(
+        FORWARD_SHAPED_PROFILE == "FORWARD_SHAPED_ELASTIC_DIAGNOSTIC_V1",
+        "smoke.shaped_forward_profile_mismatch",
     )
     _require(
         capabilities["data"]["physical_verification_available"] is False,
