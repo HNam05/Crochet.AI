@@ -212,6 +212,15 @@ eindeutige Inzidenz/Orientierung, keine versteckten Zielabhängigkeiten.
 
 ### P05. F0-Energie, Belastung und Kontaktreaktion ergänzen
 
+Experimenteller Stand 2026-10-08: Das getrennte Profil
+[FORWARD_CLOSED_MECHANICS_PROTOTYPE_V1](FORWARD_CLOSED_MECHANICS_V1.md) ergänzt
+Ring/CLOSE-Zugreaktion, deklarierten Druck und begrenzte Armijo-Optimierung auf
+geschlossenen SC-Zellen. Rezept, Einheiten, Provenienz, Volumengrenze und
+Arbeitszähler sind explizit; Fehlversuche liefern keine Geometrie. Das ist ein
+P05/P06-Produzentenabschnitt, keine vollständige Abnahme. Offen bleiben
+kalibrierte Abschluss-/Kappenmodelle, geformte Shear-/Bending-Terme, Kontakt-
+reaktion/Pfadsicherheit, Mehrfachstarts und unabhängige V6-Prüfung.
+
 - Vorhandene Stretch-/Shear-/Bending-Terme erweitern und ihre Ableitungen gegen
   unabhängige Formeln bzw. geeignete Differenzen-/Symmetrieprüfungen absichern.
 - Dimensionskonforme Loading-/Boundary-Terme einführen. Gefüllte Körper gehören

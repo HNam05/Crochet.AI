@@ -21,4 +21,6 @@ Accepted foundational decisions:
 19. [`0019-independent-coordinate-search-replay.md`](0019-independent-coordinate-search-replay.md): independent numerical and staged search verification with bounded proof work
 20. [`0020-closed-shaped-elastic-diagnostic.md`](0020-closed-shaped-elastic-diagnostic.md): explicit shaped/ring rest terms, target-free initial elastic diagnostics and unchanged physical acceptance boundary
 
+21. [`0021-closed-closure-pressure-optimization.md`](0021-closed-closure-pressure-optimization.md): explicit tension-only closure and pressure loading with bounded experimental optimization and unchanged independent acceptance
+
 New decisions that alter public schemas, verification gates, trust boundaries, reproducibility, or physical claims require a new ADR. Accepted ADRs are superseded rather than rewritten to conceal history.

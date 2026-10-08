@@ -667,6 +667,14 @@ ReportLab is the reviewed pagination dependency. The recipient can read/print
 the exported file without this server. An unsupported font character is an
 explicit export error; no missing glyph is silently substituted.
 
+`POST /api/forward/closed` computes the separate experimental closure/pressure
+profile for a saved project using caller-declared recipe parameters. The same
+host/origin/CSRF and body limits apply; the assembled backend request also has
+the API byte/node/depth limits. It does not write projects or replace the
+schematic preview. API/CLI/isolated jobs expose `run_closed_forward_prototype`.
+See [FORWARD_CLOSED_MECHANICS_V1.md](FORWARD_CLOSED_MECHANICS_V1.md) for budgets,
+operational volume guard, geometry redaction and missing physical/V6 checks.
+
 ```powershell
 python -B -m pytest -q
 python -m ruff check src tests setup.py

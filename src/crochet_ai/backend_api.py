@@ -35,6 +35,11 @@ from .canonical import (
 from .cell_conformance import CellConformanceInputError, inspect_closed_cell_conformance
 from .diagnostics import ArtifactValidationError
 from .forward_closed_cells import ClosedCellsError, build_closed_surface_cells
+from .forward_closed_mechanics import (
+    ForwardClosedMechanicsError,
+    admit_closed_mechanics_recipe,
+    run_closed_mechanics,
+)
 from .forward_pipeline import (
     ForwardPipelineError,
     admit_forward_pipeline_recipe,
@@ -179,6 +184,7 @@ class BackendAPI:
                         "inspect_v0_mesh_v2",
                         "run_forward_prototype",
                         "inspect_shaped_forward_model",
+                        "run_closed_forward_prototype",
                         "verify_candidate",
                         "inspect_analytic_search_trace",
                         "calibration_protocol",
@@ -544,7 +550,11 @@ class BackendAPI:
                     "mesh_preflight_state": preflight_state,
                     "physical_status": "UNTESTED",
                 }
-            elif operation in {"run_forward_prototype", "inspect_shaped_forward_model"}:
+            elif operation in {
+                "run_forward_prototype",
+                "inspect_shaped_forward_model",
+                "run_closed_forward_prototype",
+            }:
                 _object(
                     request,
                     {
@@ -594,10 +604,15 @@ class BackendAPI:
                     bundle = run_forward_pipeline(
                         projection, material, recipe, validator=execution_validator
                     )
-                else:
+                elif operation == "inspect_shaped_forward_model":
                     shaped_recipe = admit_shaped_forward_recipe(request["forward_run"])
                     bundle = inspect_shaped_forward_model(
                         projection, material, shaped_recipe, validator=execution_validator
+                    )
+                else:
+                    closed_recipe = admit_closed_mechanics_recipe(request["forward_run"])
+                    bundle = run_closed_mechanics(
+                        projection, material, closed_recipe, validator=execution_validator
                     )
                 data = {
                     "source_crochet_ir_sha256": source_sha256,
@@ -737,7 +752,7 @@ class BackendAPI:
                     "gate": "V0",
                 },
             }
-        except (ForwardPipelineError, ForwardShapedError) as error:
+        except (ForwardPipelineError, ForwardShapedError, ForwardClosedMechanicsError) as error:
             return error_response(error.code, error.reason)
         except (
             ApiInputError,

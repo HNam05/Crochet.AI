@@ -42,7 +42,9 @@ This is a working implementation checkpoint, not full backend acceptance.
   computational slices, not complete physical F0/V6 acceptance.
 - Closed shaped SC rest preparation and distinct ring/course initialization
   with initial elastic forces are available through API/CLI/isolated jobs;
-  closure/loading/contact/optimization and calibration remain missing.
+  a new separate profile adds tension-only ring/CLOSE, declared pressure and
+  bounded experimental optimization. Calibrated closure/cap material, shaped
+  shear/bending, contact response, multistart and independent V6 remain missing.
 
 ## Previous producer checkpoint
 
@@ -274,7 +276,77 @@ found no additional concrete issue in the reviewed scope; it did not run tests
 or establish physical/release acceptance. Worker usage/cost measurements remain
 null in ignored `artifacts/agent-costs/2026-10-08-shaped-forward.json`.
 
+## Closed closure, pressure and optimization checkpoint
+
+FORWARD_CLOSED_MECHANICS_PROTOTYPE_V1 adds an explicit outer recipe around
+the shaped elastic preparation. Ring and final CLOSE cycles use tension-only
+purse strings with independent rest perimeters/stiffness; pressure adds -pV
+and the closed oriented surface volume gradient. Signed volume must exceed the
+owned orientation epsilon and stay below an independently declared operational
+volume limit even when pressure is zero. Positive constant pressure can make
+this quadratic spring model unbounded: the volume guard is a divergence limit,
+not an equilibrium target or calibrated threshold. No target geometry enters
+mechanical execution.
+
+The existing Armijo core is unchanged. Limits: 1 initialization, 2,048 vertices,
+4,096 faces, 8,192 springs, 128 iterations, 512 complete objective callbacks,
+32 trials per iteration. Preparation's one elastic energy evaluation is separately
+recorded. Initial/final complete mechanics use counted callbacks only; the cache
+holds one state. Invalid trial volume/closure edges backtrack; invalid initial
+state, nonfinite sums or squared-force overflow yield NUMERICAL_FAILURE.
+Failure/budget/line-search results publish no geometry or nested initial points.
+Only EXPERIMENTAL_FORCE_BALANCED exposes comparison-ineligible debug geometry,
+still NOT_VERIFIED, UNTESTED, V6 NOT_RUN. This does not accept contact, shaped
+shear/bending, closure yarn/cap accuracy, multistart or calibration.
+
+API/CLI/jobs: run_closed_forward_prototype. Local HTTP:
+CSRF-protected POST /api/forward/closed with exact project_id and forward_run.
+It executes stored source artifacts and checks retained proposal integrity,
+without changing any project/session, instructions or previews. Limits apply to
+the assembled request. Legacy evidence is never invented. See
+[FORWARD_CLOSED_MECHANICS_V1.md](FORWARD_CLOSED_MECHANICS_V1.md) and
+[ADR 0021](adr/0021-closed-closure-pressure-optimization.md).
+
+One Luna/medium worker implemented the coherent kernel/test package; primary
+owns contract, API/HTTP delivery, independent objective and publication checks.
+A focused Luna/low geometry reviewer independently checked pressure derivatives
+and exposed shared Armijo force-square overflow. Primary/worker review also
+corrected force-map coordinates, hidden initial evaluation, oversized caching
+and extreme finite closure arithmetic before integration. No old optimizer,
+generator, verification algorithm, canonical schema/golden or storage migration
+changes. Unknown worker token/cost measurements stay null in
+`artifacts/agent-costs/2026-10-08-closed-mechanics.json`.
+
 ## Validation and runtime
+
+Closed mechanics checkpoint: all 1,327 Python tests passed in 546.87 s.
+The 24 new focused tests passed in 7.60 s: 13 worker kernel tests and 11 primary
+independent objective/source-mutation/API/job/HTTP regressions. Full Ruff,
+strict mypy on 91 source modules, five Node canonical vectors and ten frontend
+tests passed. Bundled-runtime wheel build, clean no-index/no-dependency reinstall,
+pip check and isolated external-directory installation smoke passed; nine
+bundled schemas retain exact bytes. No dependency or global configuration changed.
+
+Nine complete source/installed CLI envelopes agree: immediate initial balance,
+nontrivial deformed SC 3/4/3, energy-budget exhaustion, invalid initial volume,
+extreme finite pressure, extreme finite closure stiffness, prohibited target
+override, and existing saved pear/sphere. Temporary loopback HTTP execution for
+the saved pear and sphere agrees with both runtimes. The deformed synthetic case
+uses 62 objective callbacks, 21 iterations and 41 trials; energy falls from
+20.4499748137 to 7.6693981689 N mm and maximum force is 0.0431934055 N under
+its explicitly synthetic 0.05 N criterion. Saved pear/sphere checks use a loose
+synthetic criterion and establish delivery only, not nontrivial convergence.
+All 12 listing/project snapshots were compared unchanged before/after execution.
+The saved pear's English PDF remains 5,508 bytes / 3 pages; R1 MR/sc and final
+parenthetic total notation were checked. No projects or measurements were created
+or backfilled. Evidence: `artifacts/backend-closed-mechanics/`.
+
+The first full run was stopped after an additional extreme finite closure test
+exposed an uncaught -inf/+inf compensated sum. The guarded correction, regression
+and complete rerun above passed. Preserve the distinct interrupted/final logs.
+Publication restarts the owned port-8765 launcher/child pair against the final
+checkout revision; verify listener ownership and advertised operation before
+reusing runtime state in the next chat. Historical saved provenance is unchanged.
 
 Shaped elastic checkpoint: all 1,303 Python tests passed in 521.22 s.
 70 targeted shaped/API/job and existing strip-pipeline
@@ -468,10 +540,11 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Complete closure mechanics/open calibration fixtures and shaped-cell
-   shear/bending, declared loading/contact response and optimization. The new
-   closed-shaped rest/initial-force preparation is ready; retain target-free
-   simulation and independently calibrate its explicit hypotheses.
+1. Extend the closed-shaped model with explicitly declared shaped shear/bending,
+   calibrated closure yarn/cap and open-fixture mechanics, contact response and
+   optimization path safety. Ring/CLOSE tension, pressure and bounded Armijo now
+   have an experimental producer; retain target-free execution and calibrate its
+   hypotheses independently. No complete physical F0 or V6 acceptance yet.
 2. Implement independent V6 convergence, V7 geometry comparison, V8 material
    robustness and feasible-candidate selection, then V10 bound provenance.
    V7 sampling must bind its own coverage/error policy; coordinate search proof
@@ -487,7 +560,8 @@ Do not infer installed runtime or remote branch state from this note; check live
 ## Reading and commands
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
-`FORWARD_SHAPED_ELASTIC_V1.md`, `FORWARD_MODEL.md`, `MATERIAL_MODEL.md`,
+`FORWARD_CLOSED_MECHANICS_V1.md`, `FORWARD_SHAPED_ELASTIC_V1.md`,
+`FORWARD_MODEL.md`, `MATERIAL_MODEL.md`,
 `ANALYTIC_COORDINATE_TARGET_V1.md`, `DESIGN_SPEC.md`,
 `ANALYTIC_COORDINATE_GENERATION_V1.md`,
 `ANALYTIC_COORDINATE_REPLAY_V1.md`,

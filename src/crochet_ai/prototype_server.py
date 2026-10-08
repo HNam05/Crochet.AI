@@ -323,6 +323,32 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         raise OverflowError("verification.request_size")
                     response = backend.handle(verification_request)
                     self._send(200 if response["ok"] else 422, response)
+                elif path == "/api/forward/closed":
+                    if set(body) != {"project_id", "forward_run"}:
+                        raise ValueError("forward.fields")
+                    project_id = body["project_id"]
+                    if (
+                        not isinstance(project_id, str)
+                        or re.fullmatch(r"[0-9a-f]{64}", project_id) is None
+                    ):
+                        raise ValueError("forward.project_id")
+                    forward_project = store.get_project(project_id)
+                    if forward_project is None:
+                        self._error(404, "E_NOT_FOUND", "project.not_found")
+                        return
+                    retained_proposals(forward_project)
+                    forward_request = {
+                        "api_version": "1.0.0",
+                        "operation": "run_closed_forward_prototype",
+                        "design_spec": forward_project["design_spec"],
+                        "material_profile": forward_project["material_profile"],
+                        "crochet_ir": forward_project["crochet_ir"],
+                        "forward_run": body["forward_run"],
+                    }
+                    if len(rfc8785.dumps(forward_request)) > MAX_REQUEST_BYTES:
+                        raise OverflowError("forward.request_size")
+                    response = backend.handle(forward_request)
+                    self._send(200 if response["ok"] else 422, response)
                 elif path == "/api/session":
                     required = {"prototype_version", "project_id", "expected_revision", "cursor"}
                     if set(body) != required or body["prototype_version"] != PROTOTYPE_VERSION:
