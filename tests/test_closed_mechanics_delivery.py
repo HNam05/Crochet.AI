@@ -12,11 +12,12 @@ import pytest
 from test_forward_shaped_delivery import PROVENANCE, _energy, shaped_request
 
 from crochet_ai.backend_api import BackendAPI
-from crochet_ai.canonical import jcs_bytes
+from crochet_ai.canonical import CanonicalProfile, canonical_hash, jcs_bytes
 from crochet_ai.forward_closed_mechanics import PROFILE, _evaluate, _perimeter_term
 from crochet_ai.job_store import JobStore
 from crochet_ai.job_worker import execute_one_isolated
 from crochet_ai.prototype_server import make_server
+from crochet_ai.validation import SemanticValidator
 
 
 def closed_request():
@@ -216,7 +217,14 @@ def test_http_saved_project_compute_is_read_only_and_csrf_protected(tmp_path):
     project_id = "b" * 64
     # A legacy snapshot has no trace to fabricate; only stored source artifacts execute.
     project = {key: request[key] for key in ("design_spec", "material_profile", "crochet_ir")}
-    project.update(project_id=project_id, source_crochet_ir_sha256=project_id, generation={})
+    validator = SemanticValidator(
+        design_specs={project["design_spec"]["design_spec_id"]: project["design_spec"]},
+        material_profiles={project["material_profile"]["profile_id"]: project["material_profile"]},
+    )
+    source_hash = canonical_hash(
+        project["crochet_ir"], CanonicalProfile.CROCHET_IR, validator=validator
+    )
+    project.update(project_id=project_id, source_crochet_ir_sha256=source_hash, generation={})
     server.prototype_store.save_project(project, "2026-10-08T00:00:00Z")
     before = server.prototype_store.get_project(project_id)
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -262,6 +270,25 @@ def test_http_saved_project_compute_is_read_only_and_csrf_protected(tmp_path):
             )
         assert rejected.value.code == 422
         assert json.loads(rejected.value.read())["error"]["code"] == "E_INPUT"
+        forged_project = deepcopy(project)
+        forged_project_id = "d" * 64
+        forged_project.update(project_id=forged_project_id, source_crochet_ir_sha256="e" * 64)
+        server.prototype_store.save_project(forged_project, "2026-10-09T00:00:00Z")
+        forged_before = server.prototype_store.get_project(forged_project_id)
+        with pytest.raises(HTTPError) as wrong_source:
+            urlopen(
+                Request(
+                    base + "/api/forward/closed",
+                    headers=headers,
+                    data=jcs_bytes(
+                        {"project_id": forged_project_id, "forward_run": request["forward_run"]}
+                    ),
+                ),
+                timeout=30,
+            )
+        assert wrong_source.value.code == 422
+        assert json.loads(wrong_source.value.read())["error"]["code"] == "E_PROVENANCE"
+        assert server.prototype_store.get_project(forged_project_id) == forged_before
     finally:
         server.shutdown()
         thread.join(timeout=5)

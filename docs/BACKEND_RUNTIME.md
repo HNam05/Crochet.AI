@@ -2,7 +2,8 @@
 
 Status: implemented research subset, not a complete backend release. No output
 of this runtime is physically verified. The facade is transport-independent;
-there is no HTTP listener, account system, remote service, or frontend dependency.
+the separate local prototype supplies a loopback HTTP listener. There is no
+account system or remote service dependency.
 
 ## Install and inspect
 
@@ -43,6 +44,14 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | validate_ir | design_spec, material_profile, crochet_ir |
 | export_ir | design_spec, material_profile, crochet_ir, terminology |
 | run_forward_prototype | design_spec, material_profile, crochet_ir, forward_run |
+| run_closed_f0 | design_spec, material_profile, crochet_ir, forward_run |
+| compare_geometry | predicted_mesh, target_mesh, comparison_policy |
+| sample_analytic_target_surface | design_spec, material_profile, sampling_policy |
+| import_mesh_obj | source_text, import_parameters |
+| generate_geodesic_draft | design_spec, material_profile, mesh_json, run_config |
+| compile_reserve_schedule | design_spec, material_profile, schedule |
+| verify_numerical_candidate | design_spec, material_profile, crochet_ir, mesh_json, diagnostic_mode, numerical_run; optional search_evidence |
+| inspect_provenance_chain | evidence_bundle |
 | inspect_mesh_openings | design_spec, material_profile, mesh_json |
 | inspect_analytic_target | design_spec, material_profile |
 | inspect_closed_surface_topology | design_spec, material_profile, crochet_ir |
@@ -50,6 +59,64 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | inspect_analytic_candidate_claims | design_spec, material_profile, crochet_ir |
 | inspect_analytic_search_trace | design_spec, material_profile, run_config, search_trace, candidate_proposals |
 | inspect_prototype_final_relation | design_spec, material_profile, original_proposal, crochet_ir |
+
+## Numerical and mesh operations (2026-10-09)
+
+`compile_reserve_schedule` accepts the exact explicit schedule profile in
+[RESERVE_SCHEDULE_COMPILER_V1.md](RESERVE_SCHEDULE_COMPILER_V1.md). It compiles
+one reserved suffix and active-prefix continuation with complete terminal
+accounting under event/location/snapshot budgets. Source provenance is owned
+by the server. The result is structural IR, NOT_VERIFIED/UNTESTED; current
+visible Pattern V1A and closed forward simulation deliberately reject it.
+It is available through generic requests and durable jobs, not the six-shape UI.
+
+`run_closed_f0` accepts the exact hypothesis mechanical recipe in
+[FORWARD_CLOSED_F0_V1.md](FORWARD_CLOSED_F0_V1.md). Geometry appears only after
+every required start converges, conservative path checks succeed and observed
+modes agree. Standalone computation returns NOT_VERIFIED/UNTESTED and does not
+assert V6. `verify_numerical_candidate` additionally takes the exact context in
+[NUMERICAL_VERIFICATION_V1.md](NUMERICAL_VERIFICATION_V1.md); its fresh V6 run
+must pass independent replay before V7 can use its coordinates. Every hard
+metric and all five gauge cases are required. `diagnostic_mode=true` permits
+inspection after incomplete gates but never promotes status.
+
+`sample_analytic_target_surface` returns the sampled mesh and bound discretization
+metadata. The bound explicitly excludes binary64 rounding. `compare_geometry`
+compares explicit-frame surfaces under an owned, dimensioned hypothesis policy;
+it is not calibrated acceptance. Prediction landmarks are looked up by mesh
+vertex index. In the numerical context all target landmark names/coordinates,
+frames and tolerances must exactly bind to DesignSpec. A declared index does not
+establish independently recognized feature identity.
+
+`import_mesh_obj` supports only strict triangular Wavefront records under
+[MESH_IMPORT_V1.md](MESH_IMPORT_V1.md), with explicit units and frame, no external
+resources and no repair. `generate_geodesic_draft` takes the raw mesh JSON text
+and the versioned configuration in [GEODESIC_SOLVER_V1.md](GEODESIC_SOLVER_V1.md).
+API callers omit `software_commit`; the server inserts its own provenance.
+The admitted family, parameter profile, seed and candidate budget must match
+DesignSpec. Source mesh hash and compiler snapshot hash are separate bindings.
+Graph-distance proposals remain NOT_VERIFIED/UNTESTED.
+
+The generic CLI request and bounded isolated jobs support these operations.
+Provenance-chain inspection checks artifact consistency, not authenticated source
+execution or physical measurements. Physical-review registry operations are local
+Python interfaces in [CALIBRATION_REGISTRY_V1.md](CALIBRATION_REGISTRY_V1.md),
+not remote approval or a mechanism for turning supplied claims into proof.
+
+The prototype exposes `/api/forward/f0` with exactly `{project_id, forward_run}`
+and `/api/verification/numerical` with exactly `{project_id, numerical_run}`.
+They bind server-stored DesignSpec/material/IR, enforce existing origin/token,
+Host and request limits, and do not update projects or sessions. Numerical
+verification remains diagnostic. Existing `/api/forward/closed` and `/api/verify`
+retain their behavior. The browser layout and English PDF are unchanged.
+
+Local operational backup/restore uses
+[tools/prototype_backup.py](../tools/prototype_backup.py) and
+[PROTOTYPE_BACKUP_V1.md](PROTOTYPE_BACKUP_V1.md). It snapshots WAL databases,
+checks integrity/schema/hash/counts and restores only to a new destination.
+Filesystem paths are trusted local CLI arguments and never exposed over HTTP.
+
+## Existing inspection and generation contracts
 
 `inspect_analytic_target` also accepts DesignSpec 1.2 explicit radius/axial
 profiles through [ANALYTIC_COORDINATE_TARGET_V1](ANALYTIC_COORDINATE_TARGET_V1.md).
@@ -60,7 +127,8 @@ nonmonotone meridians are supported with cardinal axes; unsupported frames and
 boundaries return structured errors. Generation from this representation follows
 [EXPLICIT_COORDINATE_MERIDIAN_V1](ANALYTIC_COORDINATE_GENERATION_V1.md);
 the separate [coordinate replay](ANALYTIC_COORDINATE_REPLAY_V1.md) supports the
-documented numerical/search subset. V7 target sampling/comparison remains open. Inspection alone
+documented numerical/search subset. Optional sampled V7 comparison is available
+under the numerical context below; ideal-surface/rounding coverage remains open. Inspection alone
 retains NOT_VERIFIED/UNTESTED. CLI request and isolated durable jobs use the same
 operation; no client-supplied proof or work-budget override is accepted.
 

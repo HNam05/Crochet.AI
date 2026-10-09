@@ -289,8 +289,13 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         raise ValueError("request.fields")
                     project = service.generate(body)
                     self._send(200, {"ok": True, "data": project})
-                elif path == "/api/verify":
-                    if set(body) != {"project_id"} or not isinstance(body["project_id"], str):
+                elif path in {"/api/verify", "/api/verification/numerical"}:
+                    expected_fields = (
+                        {"project_id", "numerical_run"}
+                        if path == "/api/verification/numerical"
+                        else {"project_id"}
+                    )
+                    if set(body) != expected_fields or not isinstance(body["project_id"], str):
                         raise ValueError("verification.project_id")
                     if re.fullmatch(r"[0-9a-f]{64}", body["project_id"]) is None:
                         raise ValueError("verification.project_id")
@@ -301,13 +306,17 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     candidate_proposals = retained_proposals(verification_project)
                     verification_request = {
                         "api_version": "1.0.0",
-                        "operation": "verify_candidate",
+                        "operation": "verify_numerical_candidate"
+                        if path == "/api/verification/numerical"
+                        else "verify_candidate",
                         "design_spec": verification_project["design_spec"],
                         "material_profile": verification_project["material_profile"],
                         "crochet_ir": verification_project["crochet_ir"],
                         "mesh_json": None,
-                        "diagnostic_mode": False,
+                        "diagnostic_mode": path == "/api/verification/numerical",
                     }
+                    if path == "/api/verification/numerical":
+                        verification_request["numerical_run"] = body["numerical_run"]
                     generation = verification_project.get("generation", {})
                     if generation.get("search_trace") is not None:
                         verification_request["search_evidence"] = {
@@ -322,8 +331,13 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     if len(rfc8785.dumps(verification_request)) > MAX_REQUEST_BYTES:
                         raise OverflowError("verification.request_size")
                     response = backend.handle(verification_request)
+                    if response["ok"] and response["data"]["input_hashes"]["crochet_ir"] != (
+                        verification_project.get("source_crochet_ir_sha256")
+                    ):
+                        self._error(422, "E_PROVENANCE", "verification.saved_source_hash_mismatch")
+                        return
                     self._send(200 if response["ok"] else 422, response)
-                elif path == "/api/forward/closed":
+                elif path in {"/api/forward/closed", "/api/forward/f0"}:
                     if set(body) != {"project_id", "forward_run"}:
                         raise ValueError("forward.fields")
                     project_id = body["project_id"]
@@ -339,7 +353,9 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     retained_proposals(forward_project)
                     forward_request = {
                         "api_version": "1.0.0",
-                        "operation": "run_closed_forward_prototype",
+                        "operation": "run_closed_f0"
+                        if path == "/api/forward/f0"
+                        else "run_closed_forward_prototype",
                         "design_spec": forward_project["design_spec"],
                         "material_profile": forward_project["material_profile"],
                         "crochet_ir": forward_project["crochet_ir"],
@@ -348,6 +364,11 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     if len(rfc8785.dumps(forward_request)) > MAX_REQUEST_BYTES:
                         raise OverflowError("forward.request_size")
                     response = backend.handle(forward_request)
+                    if response["ok"] and response["data"]["source_crochet_ir_sha256"] != (
+                        forward_project.get("source_crochet_ir_sha256")
+                    ):
+                        self._error(422, "E_PROVENANCE", "forward.saved_source_hash_mismatch")
+                        return
                     self._send(200 if response["ok"] else 422, response)
                 elif path == "/api/session":
                     required = {"prototype_version", "project_id", "expected_revision", "cursor"}

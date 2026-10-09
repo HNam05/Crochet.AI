@@ -99,17 +99,28 @@ def compile_closed_schedule(
     provenance: CompileProvenance,
     *,
     max_stitches: int,
+    generation_profile: str = "ANALYTIC_CLOSED_SC_V1",
 ) -> dict[str, Any]:
     """Compile all-or-nothing, then check with the unchanged semantic validator."""
     provenance.validate()
+    if not isinstance(generation_profile, str) or generation_profile not in {
+        "ANALYTIC_CLOSED_SC_V1",
+        "GEODESIC_CLOSED_SC_V1",
+    }:
+        raise GenerationError(GenerationStatus.INVALID_SOLVER_INPUT, "compiler.generation_profile")
+    material_report = SemanticValidator().validate_material_profile(material)
+    if not material_report.ok:
+        raise ArtifactValidationError(material_report)
+    if not isinstance(design.get("design_spec_id"), str):
+        raise GenerationError(GenerationStatus.INVALID_SOLVER_INPUT, "design_spec.identity_invalid")
     validator = SemanticValidator(
-        material_profiles={material.get("profile_id", ""): material},
+        material_profiles={
+            material.get("profile_id", ""): material,
+            (material.get("profile_id", ""), material.get("revision", 0)): material,
+        },
         design_specs={design.get("design_spec_id", ""): design},
     )
-    for report in (
-        validator.validate_material_profile(material),
-        validator.validate_design_spec(design),
-    ):
+    for report in (validator.validate_design_spec(design),):
         if not report.ok:
             raise ArtifactValidationError(report)
     if not (
@@ -150,11 +161,20 @@ def compile_closed_schedule(
     ):
         raise GenerationError(GenerationStatus.NOT_APPLICABLE, "compiler.design_techniques")
     parameter_map = dict(provenance.parameters)
+    if generation_profile == "GEODESIC_CLOSED_SC_V1":
+        if "compiler_generation_profile" in parameter_map:
+            raise GenerationError(GenerationStatus.INVALID_SOLVER_INPUT, "compiler.parameter_names")
+        parameter_map["compiler_generation_profile"] = generation_profile
     parameter_map["source_snapshot_sha256"] = provenance.source_snapshot_sha256
     parameters = [{"name": name, "value": val} for name, val in sorted(parameter_map.items())]
     validate_ijson(parameters)
     parameter_hash = sha256(
-        b"Crochet.AI\0ANALYTIC_COMPILER_PARAMETERS_V1\0" + rfc8785.dumps(parameters)
+        (
+            b"Crochet.AI\0GEODESIC_CLOSED_SC_COMPILER_PARAMETERS_V1\0"
+            if generation_profile == "GEODESIC_CLOSED_SC_V1"
+            else b"Crochet.AI\0ANALYTIC_COMPILER_PARAMETERS_V1\0"
+        )
+        + rfc8785.dumps(parameters)
     ).hexdigest()
     if counts[0] + sum(min(a, b) for a, b in pairwise(counts)) > max_stitches:
         raise GenerationError(GenerationStatus.SEARCH_BUDGET_EXHAUSTED, "compiler.stitches")
@@ -162,7 +182,7 @@ def compile_closed_schedule(
     for before, after, phase in zip(counts, counts[1:], phases, strict=False):
         plans.append(balanced_course(before, after, phase))
     color = {key: design["colors"][0][key] for key in ("color_id", "label", "srgb_hex")}
-    emitter = _Emitter(color["color_id"], parameter_hash)
+    emitter = _Emitter(color["color_id"], parameter_hash, generation_profile)
     ring_subject = {"entity_type": "CONSTRUCTION_OPERATION", "operation_id": "op_ring"}
     sites = emitter.locations(ring_subject, counts[0], "MAGIC_RING_ANCHOR")
     emitter.operation("op_ring", "MAGIC_RING", [], sites, [], sites)
@@ -202,7 +222,7 @@ def compile_closed_schedule(
         "crochet_ir_id": "cir_analytic",
         "design_spec_ref": {
             "design_spec_id": design["design_spec_id"],
-            "sha256": canonical_hash(design, CanonicalProfile.DESIGN_SPEC),
+            "sha256": canonical_hash(design, CanonicalProfile.DESIGN_SPEC, validator=validator),
         },
         "units": {"length": "MILLIMETER", "mass": "GRAM", "angle": "RADIAN"},
         "required_capabilities": caps,
@@ -266,13 +286,15 @@ def compile_closed_schedule(
         "derivations": emitter.derivations,
         "provenance": {
             "generator": {
-                "solver_family": "ANALYTIC",
-                "name": "analytic-closed-sc",
+                "solver_family": emitter.solver_family,
+                "name": emitter.generator_name,
                 "version": "1",
             },
             "solver_parameters": parameters,
             "solver_parameters_sha256": parameter_hash,
-            "random_seed": None,
+            "random_seed": None
+            if emitter.solver_family == "ANALYTIC"
+            else design["solver_options"]["random_seed"],
             "search_budget": {
                 "budget_type": "CANDIDATE_EVALUATIONS",
                 "limit": 1,
@@ -294,7 +316,15 @@ def compile_closed_schedule(
 
 
 class _Emitter:
-    def __init__(self, color_id: str, parameter_hash: str) -> None:
+    def __init__(self, color_id: str, parameter_hash: str, generation_profile: str) -> None:
+        self.solver_family = (
+            "GEODESIC" if generation_profile == "GEODESIC_CLOSED_SC_V1" else "ANALYTIC"
+        )
+        self.generator_name = (
+            "geodesic-graph-distance-closed-sc"
+            if self.solver_family == "GEODESIC"
+            else "analytic-closed-sc"
+        )
         self.color_id = color_id
         self.parameter_hash = parameter_hash
         self.attachments: list[dict[str, Any]] = []
@@ -313,8 +343,12 @@ class _Emitter:
         self.derivations.append(
             {
                 "derivation_id": identifier,
-                "method": "ANALYTIC_RULE",
-                "rule_id": "analytic.closed-sc",
+                "method": "GEODESIC_COUPLING"
+                if self.solver_family == "GEODESIC"
+                else "ANALYTIC_RULE",
+                "rule_id": "geodesic.graph-distance.closed-sc"
+                if self.solver_family == "GEODESIC"
+                else "analytic.closed-sc",
                 "rule_version": "1",
                 "parameter_sha256": self.parameter_hash,
                 "subject_refs": [subject],

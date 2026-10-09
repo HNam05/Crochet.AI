@@ -5,6 +5,26 @@ Status: IN UMSETZUNG. Der erste Softwareabschnitt ist implementiert; siehe
 Abschnitt 8. R1-R4 sind nicht abgenommen. Keine Abnahmeregel, kein bestehendes
 Schema oder Golden und kein physischer Prüfstatus wurde dadurch verändert.
 
+Aktueller Fortschritt: 2026-10-09. Die Ausgangslage in Abschnitt 2 ist historisch.
+Geschlossene SC-Zellmechanik enthält jetzt Schub/Biegung, Kontaktreaktion,
+konservative kontinuierliche Bewegungsprüfung und begrenzte Mehrfachstarts.
+Ein separater Prüfer rekonstruiert die Optimierung und verlangt exakt dieselben
+Koordinaten. Optional sind V6/V7/V8/V10 mit vollständigem diskretem Metrikvektor,
+DesignSpec-gebundenen Formpunkten und fünf Materialfällen verbunden.
+Dazu kommen strikter OBJ-Import, ein geschlossener genus-null Mesh-Entwurf mit
+GEODESIC-Provenienz, eine Registry für lokale Mess-/Reviewbehauptungen sowie
+Sicherung/Wiederherstellung der Pilotprojekte. Das schließt experimentelle
+Softwareteile von P05-P12 und P14, ersetzt aber keine physische Abnahme.
+P15 enthält jetzt außerdem einen echten, begrenzten Reserve-Compiler: eine
+explizite Aufteilung in aktiven und zurückgestellten Rand, aktive SC-Fortsetzung
+und zwei vollständige Abschlüsse. Der Compiler erzeugt strukturelles core 1.1
+CrochetIR mit unabhängiger semantischer Prüfung. M1B-Ausgabe, Geometrieplanung
+und Simulation solcher Konstruktionen sind damit noch nicht implementiert.
+P15-P19, kalibrierte Auswahl, vollständige Betriebsabnahme und R1-R4 bleiben offen.
+Aktuelle Validierung und konkrete Fortsetzung stehen in
+[BACKEND_HANDOFF.md](BACKEND_HANDOFF.md). Alle ursprünglichen Anforderungen
+und Abnahmegrenzen bleiben verbindlich.
+
 ## 1. Ziel und Bedeutung von „fertig“
 
 Crochet.AI soll aus einem eindeutigen DesignSpec und gemessenen Materialdaten

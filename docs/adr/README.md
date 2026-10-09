@@ -23,4 +23,8 @@ Accepted foundational decisions:
 
 21. [`0021-closed-closure-pressure-optimization.md`](0021-closed-closure-pressure-optimization.md): explicit tension-only closure and pressure loading with bounded experimental optimization and unchanged independent acceptance
 
+22. [`0022-bounded-numerical-backend-and-mesh-drafts.md`](0022-bounded-numerical-backend-and-mesh-drafts.md): target-free multistart mechanics, independent optimizer replay, optional numerical checks and source-bound mesh drafts without physical release claims
+
+23. [`0023-explicit-reserve-schedule-compiler.md`](0023-explicit-reserve-schedule-compiler.md): complete bounded reserve/continuation IR production with unchanged independent semantics and explicit export/physics gaps
+
 New decisions that alter public schemas, verification gates, trust boundaries, reproducibility, or physical claims require a new ADR. Accepted ADRs are superseded rather than rewritten to conceal history.

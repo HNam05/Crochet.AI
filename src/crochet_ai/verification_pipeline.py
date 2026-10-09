@@ -18,13 +18,18 @@ from .analytic_coordinate_target import (
 from .analytic_target import VERSION as ANALYTIC_TARGET_VERSION
 from .analytic_target import AnalyticTargetError, admit_analytic_target
 from .analytic_trace_audit import bound_analytic_search_evidence, inspect_analytic_search_trace
-from .backend_provenance import implementation_identity_hash
+from .backend_provenance import implementation_identity_hash, runtime_provenance
 from .canonical import CanonicalProfile, canonical_hash, jcs_bytes, parse_json, validate_ijson
 from .cell_conformance import CellConformanceInputError, inspect_closed_cell_conformance
 from .diagnostics import ArtifactValidationError, Diagnostic, FailureCode
 from .forward_closed_cells import ClosedCellsError, build_closed_surface_cells
 from .json_types import JSONValue
 from .models import DesignSpec, MaterialProfile
+from .numerical_verification import (
+    NumericalVerificationContext,
+    NumericalVerificationError,
+    build_numerical_gate_runners,
+)
 from .pattern import TerminologyProfile, export_pattern, verify_semantic_round_trip
 from .pattern_context import PatternParseContext, PatternYarnBinding
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
@@ -519,11 +524,25 @@ def verify_artifacts(
     diagnostic_mode: bool = False,
     search_evidence: Mapping[str, Any] | None = None,
     profile: VerificationProfile = BACKEND_SEMANTIC_CHECKPOINT_V1,
+    numerical_context: NumericalVerificationContext | None = None,
+    software_commit: str | None = None,
+    source_snapshot: Mapping[str, str] | None = None,
 ) -> VerificationResult:
-    """Adapt existing V0/V1/V2-V4 validators; future gates remain explicitly unavailable."""
+    """Adapt source validators and optionally register server-owned numerical gates."""
     design = dict(design_spec)
     material = dict(material_profile)
     ir = dict(crochet_ir)
+    numerical_values = (numerical_context, software_commit, source_snapshot)
+    if all(value is None for value in numerical_values):
+        numerical_enabled = False
+    elif (
+        isinstance(numerical_context, NumericalVerificationContext)
+        and isinstance(software_commit, str)
+        and isinstance(source_snapshot, Mapping)
+    ):
+        numerical_enabled = True
+    else:
+        raise ValueError("numerical verification requires admitted context and server identity")
     for artifact in (design, material, ir):
         validate_ijson(artifact)
     material_schema = validate_schema("material_profile", material)
@@ -1129,33 +1148,67 @@ def verify_artifacts(
         )
 
     runners["V9"] = v9_runner
+    numerical_versions: dict[str, str] = {}
+    if numerical_enabled:
+        assert numerical_context is not None
+        assert software_commit is not None
+        assert source_snapshot is not None
+        server_provenance = runtime_provenance(software_commit)
+        if (
+            source_snapshot.get("source_snapshot_sha256")
+            != server_provenance.source_snapshot_sha256
+            or source_snapshot.get("implementation_identity") != implementation_identity_hash()
+        ):
+            raise NumericalVerificationError(
+                "E_PROVENANCE", "server_source_snapshot_or_implementation_identity_mismatch"
+            )
+        numerical = build_numerical_gate_runners(
+            design,
+            material,
+            ir,
+            validator,
+            numerical_context,
+            software_commit,
+            source_snapshot,
+            mesh_json=mesh_json,
+            mesh_budgets=mesh_budgets,
+        )
+        if set(hashes) & set(numerical.input_hashes):
+            raise ValueError("numerical verification input hash name collides with source input")
+        hashes.update(numerical.input_hashes)
+        runners.update(numerical.runners)
+        numerical_versions = {
+            gate: "numerical-verification/1.0.0" for gate in ("V6", "V7", "V8", "V10")
+        }
+    implementation_versions = {
+        gate: (
+            "analytic-coordinate-target-adapter/1.0.0"
+            if coordinate_target_scope
+            else "target-adapter/1.1.0"
+        )
+        if gate == "V0"
+        else (
+            "closed-cell-source-adapter/1.0.0"
+            if gate == "V4"
+            else (
+                (
+                    "analytic-claims-adapter/1.0.0"
+                    if search_evidence is None
+                    else "prototype-final-relation-adapter/1.0.0"
+                )
+                if gate == "V5"
+                else "adapter/1.0.0"
+            )
+        )
+        for gate in GATES
+    }
+    implementation_versions.update(numerical_versions)
     return verify_runners(
         input_hashes=hashes,
         runners=runners,
         profile=profile,
         diagnostic_mode=diagnostic_mode,
-        implementation_versions={
-            gate: (
-                "analytic-coordinate-target-adapter/1.0.0"
-                if coordinate_target_scope
-                else "target-adapter/1.1.0"
-            )
-            if gate == "V0"
-            else (
-                "closed-cell-source-adapter/1.0.0"
-                if gate == "V4"
-                else (
-                    (
-                        "analytic-claims-adapter/1.0.0"
-                        if search_evidence is None
-                        else "prototype-final-relation-adapter/1.0.0"
-                    )
-                    if gate == "V5"
-                    else "adapter/1.0.0"
-                )
-            )
-            for gate in GATES
-        },
+        implementation_versions=implementation_versions,
     )
 
 

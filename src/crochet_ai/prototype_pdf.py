@@ -43,6 +43,9 @@ _SHAPE_EN = {
     "pear": "Pear",
 }
 
+# Four millimeters of cell padding alone must not become a visible row fragment.
+_ROUND_ROW_MIN_SPLIT_HEIGHT = 23
+
 
 def _run_notation(instructions: list[str]) -> str:
     groups: list[str] = []
@@ -334,7 +337,7 @@ def render_project_pdf(project: object, expected_id: str) -> bytes:
                     ]
                 ],
                 colWidths=[170 * mm],
-                splitInRow=1,
+                splitInRow=_ROUND_ROW_MIN_SPLIT_HEIGHT,
                 style=TableStyle(
                     [
                         ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#9B8B78")),

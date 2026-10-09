@@ -1,6 +1,6 @@
 # Backend handoff
 
-Latest checkpoint: 2026-10-08. Read this file before continuing backend work.
+Latest checkpoint: 2026-10-09. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
 ## Repository and product
@@ -38,13 +38,104 @@ This is a working implementation checkpoint, not full backend acceptance.
 - Independent V5 candidate-claims subset: counts, binary transitions, balanced
   shaping, phases, construction maxima, parameter/hash/material/run conditions.
   Contradictions FAIL; absent complete search/physical evidence stays incomplete.
-- Experimental target-free stretch/shear/bending and contact diagnostics are
-  computational slices, not complete physical F0/V6 acceptance.
+- Experimental target-free closed SC stretch, closure, pressure, shear/bending,
+  surface contact, conservative continuous movement certificates and bounded
+  multistart optimization; independent optimizer replay audits every start and
+  the exact winning coordinates. Constitutive kernels remain shared hypotheses.
 - Closed shaped SC rest preparation and distinct ring/course initialization
   with initial elastic forces are available through API/CLI/isolated jobs;
   a new separate profile adds tension-only ring/CLOSE, declared pressure and
-  bounded experimental optimization. Calibrated closure/cap material, shaped
-  shear/bending, contact response, multistart and independent V6 remain missing.
+  bounded experimental optimization. The separate full computational F0 profile
+  now includes shell/contact/multistart and independent replay. Identified
+  closure/cap material, open-fixture mechanics and physical acceptance remain open.
+- Full declared sampled geometry metric vector, DesignSpec-bound mesh landmarks,
+  five deterministic gauge endpoint scenarios and optional numerical V6/V7/V8/V10
+  callbacks. Hard failures retain metrics and never become PASS by aggregation.
+- Strict triangular OBJ import and bounded closed genus-zero graph-distance SC
+  drafts with actual GEODESIC IR provenance and original source references.
+- An explicit reserve SC compiler: one ordered active/reserved partition,
+  continued active courses and complete closure of both obligations. API/CLI
+  and durable jobs return structural core 1.1 IR, not a visible M1B pattern.
+- Append-only physical-review claim registry, artifact provenance consistency,
+  and local WAL-safe project backup/restore to new paths only.
+
+## Current numerical integration checkpoint
+
+The 2026-10-09 package adds the experimental profiles documented in
+[ADR 0022](adr/0022-bounded-numerical-backend-and-mesh-drafts.md),
+[FORWARD_CLOSED_F0_V1](FORWARD_CLOSED_F0_V1.md),
+[FORWARD_F0_AUDIT_V1](FORWARD_F0_AUDIT_V1.md), and
+[NUMERICAL_VERIFICATION_V1](NUMERICAL_VERIFICATION_V1.md).
+It preserves canonical schemas, approved goldens, old analytic compiler bytes,
+default verification and all saved project/session bytes.
+
+F0 never receives target positions. Every accepted movement has a conservative
+continuous contact certificate; undecided paths cannot pass. Failed convergence
+redacts aggregate and nested coordinates. Replay checks exact canonical
+coordinates even if the caller declares generous force/energy review tolerances.
+Budgets and actual consumed work remain explicit on failures. The positive
+integrated convergence fixture uses openly synthetic compliant coefficients;
+production convergence or calibrated physical accuracy is not established.
+
+Numerical comparison supports analytic sampled meshes and V0-admitted closed
+genus-zero mesh targets. It requires all ten hard metrics. Predicted landmark
+positions come from audited, aligned mesh vertices; every required target point,
+frame and tolerance is bound to DesignSpec. Feature correspondence is an explicit
+vertex nomination, not independently proven semantic feature recognition.
+No-required-landmarks has an explicit empty-set status and zero maximum error.
+The analytical discretization bound excludes binary64 rounding; five gauge cases
+do not certify continuous material uncertainty. Shared geometry/contact kernels
+are documented common-mode risks.
+
+API/CLI/durable jobs expose `run_closed_f0`, `compare_geometry`,
+`sample_analytic_target_surface`, `generate_geodesic_draft`, `import_mesh_obj`,
+`verify_numerical_candidate`, and `inspect_provenance_chain`.
+The prototype has read-only `/api/forward/f0` and
+`/api/verification/numerical` routes bound to stored source artifacts. Numerical
+HTTP verification is explicitly diagnostic so incomplete earlier gates do not
+prevent inspection; it cannot promote a failed/incomplete candidate to VERIFIED.
+The UI layout and English PDF instruction semantics remain unchanged. Ordinary
+round rows now move intact to the next page rather than leaving an empty border
+fragment; genuinely long instructions still split without losing their text.
+
+The graph-distance draft is approximate, records exact work budgets and retains
+the original mesh DesignSpec/material bindings. Its distinct compiler parameter
+domain, GEODESIC generator/derivations, seed and candidate budget are explicit.
+Source mesh identity is separate from compiler source identity. Import success
+does not perform mesh repair or establish V0/topology/physical acceptance.
+
+The calibration registry records locally reviewed claims, not authenticated
+measurements. Physical status remains UNTESTED even for schema-valid review
+records. Source hashes check running-package consistency; execution authenticity
+and commit-to-checkout authenticity remain unconfirmed. Whole-backend R1-R4 and
+P00-P20/B0-B12 acceptance are unchanged and remain incomplete.
+
+Final integration validation, 2026-10-09: **1,569 passed, 2 skipped** in 619.80
+seconds, including the reserve compiler and PDF layout repair.
+The skips are Windows symlink-creation cases for calibration and backup paths.
+Ruff and strict mypy (105 source files), five independent Node canonical vectors,
+ten frontend checks, isolated installed-wheel smoke/dependency checks and exact
+source/installed F0, geodesic and reserve response comparisons passed. The PDF
+layout repair passed all 15 PDF tests and visual inspection of all three pages;
+all 18 printed round totals were independently matched to the saved IR.
+An interrupted initial regression and a repaired historical fixture failure are
+retained separately, never counted as passing evidence.
+
+Read-only live checks found all **12 saved projects**. The local WAL-safe backup
+was restored to a new ignored directory and compared against every original
+project/session/feedback row: 12 projects, 12 sessions, 1 feedback record,
+identical contents. No stored projects were regenerated or migrated.
+Evidence is retained under ignored `artifacts/backend-completion/`; private
+projects, backup bundles, restored copies and the existing user `output/` are
+excluded from publication. Publish this code and handoff together on `main`;
+compare the actual checkout and remote revisions before future continuation.
+The local source server is restarted against the resulting main revision and
+the existing `artifacts/local-prototype` store, not a regenerated database.
+Runtime/publication checks are retained in ignored evidence; historical PIDs
+below must never be reused without checking current listener ownership.
+
+Earlier checkpoint sections below are historical evidence, not the current
+capability inventory.
 
 ## Previous producer checkpoint
 
@@ -540,26 +631,64 @@ Do not infer installed runtime or remote branch state from this note; check live
 
 ## Next work in order
 
-1. Extend the closed-shaped model with explicitly declared shaped shear/bending,
-   calibrated closure yarn/cap and open-fixture mechanics, contact response and
-   optimization path safety. Ring/CLOSE tension, pressure and bounded Armijo now
-   have an experimental producer; retain target-free execution and calibrate its
-   hypotheses independently. No complete physical F0 or V6 acceptance yet.
-2. Implement independent V6 convergence, V7 geometry comparison, V8 material
-   robustness and feasible-candidate selection, then V10 bound provenance.
-   V7 sampling must bind its own coverage/error policy; coordinate search proof
-   does not establish physical geometry accuracy.
-3. Complete numerical-failure trace acceptance beyond the explicitly incomplete
-   reached-stage scope, uncertainty/calibration provenance, broader topology/solver domains,
-   M1B/full export acceptance, recovery/security/release acceptance. See the full
-   roadmap; this list does not waive any package acceptance requirement.
-   Older r(s) profiles remain ambiguous and saved projects must not be rewritten.
-4. Collect real crochet feedback/specimen measurements. Human physical trials and
-   new golden approvals are separate gates. Develop the separate mobile app later.
+1. Identify mechanical parameters through real loading fixtures; benchmark robust
+   convergence on noncompliant closed SC examples, calibrate closure/cap and
+   open-fixture mechanics. The full hypothesis computational runner/replay is
+   implemented; production/calibrated physical F0 acceptance is still absent.
+2. Complete physical feasible-candidate selection, calibrated metric profiles,
+   ideal-surface/rounding coverage, broader uncertainty and authenticated physical
+   evidence/source execution. Optional numerical gates are implemented, not an
+   authenticated release profile. Keep missing V5 physical selection visible.
+3. Extend P14-P16 beyond the genus-zero graph draft: openings, branch construction,
+   topology/frontier planning, multipart assembly and M1B exports. Flat rows,
+   garments and lace (P17-P19) require their own executable domain contracts and
+   independent forward semantics; do not route them through the closed SC model.
+4. Complete numerical-failure trace acceptance beyond the supported reached-stage
+   scope and remaining recovery/security/release gates. Collect actual crochet
+   trials/holdouts and independent human golden approvals. The separate mobile
+   app remains later work. Historical projects must not be silently rewritten.
+
+### Reserve compiler delivered and next branch work
+
+A focused read-only exploration on 2026-10-09 found no canonical schema blocker
+for P15. Existing core 1.0 already admits `FRONTIER_BRANCHING_V1`, splits,
+reservations, reattachments, oriented joins and declared openings. Independent
+positive examples are `tests/conftest.py::make_split_join_ir`, `make_reserve_ir`
+and `make_reattach_ir`, exercised by semantic/equivalence tests. They are hand-built
+oracles, not generators. Do not return or mutate those fixtures as implementation.
+
+That structural producer is now implemented in `reserve_compile.py` under
+[EXPLICIT_RESERVE_SC_V1](RESERVE_SCHEDULE_COMPILER_V1.md) and
+[ADR 0023](adr/0023-explicit-reserve-schedule-compiler.md). It uses approved core
+1.1 lowering for a genuine multi-site initial ring, then emits one ordered
+reserve partition, actual active-prefix SC continuation, and both closures.
+Every stitch, operation, event, immutable snapshot, yarn membership and terminal
+obligation is explicit. Final provenance is FRONTIER/FRONTIER_SEARCH with its
+own parameter domain and schedule/DesignSpec/material/source/seed bindings.
+The unchanged validator admits positive schedules and rejects reservation
+corruption. Exact preflight limits include repeated frontier memberships, not
+just unique locations/events. A malformed identity or parameter collision is a
+structured rejection. No schemas or approved goldens changed.
+
+The API/CLI/jobs operation `compile_reserve_schedule` returns
+COMPILED_STRUCTURAL_PROPOSAL / NOT_VERIFIED / UNTESTED and explicitly disables
+visible export and forward simulation for this profile. It is not a seventh
+human-test shape. Twenty-five focused compiler/delivery tests passed; final
+full regression and installed delivery evidence are recorded above.
+
+Next add independently parsed M1B visible instructions in a separate pass and
+branch/open physical semantics before geometry acceptance. Existing Pattern V1
+rejects these operations and existing closed-cell F0 cannot simulate them.
+A reserve fixture, planning graph or generated IR alone must not be labelled
+a two-leg garment solver, free-form topology engine or fully verified pattern.
 
 ## Reading and commands
 
 Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
+`NUMERICAL_VERIFICATION_V1.md`, `FORWARD_CLOSED_F0_V1.md`,
+`FORWARD_F0_AUDIT_V1.md`, `GEODESIC_SOLVER_V1.md`, `MESH_IMPORT_V1.md`,
+`CALIBRATION_REGISTRY_V1.md`, `PROTOTYPE_BACKUP_V1.md`,
+`RESERVE_SCHEDULE_COMPILER_V1.md`,
 `FORWARD_CLOSED_MECHANICS_V1.md`, `FORWARD_SHAPED_ELASTIC_V1.md`,
 `FORWARD_MODEL.md`, `MATERIAL_MODEL.md`,
 `ANALYTIC_COORDINATE_TARGET_V1.md`, `DESIGN_SPEC.md`,

@@ -16,8 +16,10 @@ from .analytic_geometry import MeridianNumerics
 from .analytic_placement import PlacementBudget
 from .analytic_solver import AnalyticRunConfig, generate_analytic
 from .analytic_target import AnalyticTargetError, admit_analytic_target
+from .analytic_target_surface import AnalyticTargetSurfaceError, sample_analytic_target_surface
 from .analytic_trace_audit import inspect_analytic_search_trace
 from .backend_capabilities import backend_capability_matrix
+from .backend_provenance import implementation_identity_hash
 from .calibration_campaign import (
     CalibrationCampaign,
     CalibrationError,
@@ -35,6 +37,7 @@ from .canonical import (
 from .cell_conformance import CellConformanceInputError, inspect_closed_cell_conformance
 from .diagnostics import ArtifactValidationError
 from .forward_closed_cells import ClosedCellsError, build_closed_surface_cells
+from .forward_closed_f0 import ClosedF0Error, admit_closed_f0_recipe, run_closed_f0
 from .forward_closed_mechanics import (
     ForwardClosedMechanicsError,
     admit_closed_mechanics_recipe,
@@ -50,10 +53,19 @@ from .forward_shaped import (
     admit_shaped_forward_recipe,
     inspect_shaped_forward_model,
 )
+from .forward_shell_terms import ShellTermsError
+from .forward_surface_contact import ContactError
+from .geodesic_solver import generate_geodesic_draft
+from .geometry_comparison import GeometryComparisonError, compare_geometry
+from .mesh_import import MeshImportError, admit_obj_import_parameters, import_wavefront_obj
 from .models import DesignSpec, MaterialProfile
+from .numerical_verification import NumericalVerificationError, admit_numerical_run
 from .pattern import TerminologyProfile, export_pattern
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
 from .prototype_final_relation import PrototypeRelationInputError, inspect_prototype_final_relation
+from .provenance_chain import ProvenanceChainError, inspect_provenance_chain
+from .reserve_compile import PROFILE as RESERVE_COMPILER_PROFILE
+from .reserve_compile import compile_reserve_schedule
 from .schema import validate_schema
 from .solver_types import GenerationError
 from .surface_topology import SurfaceTopologyInputError, audit_surface_topology
@@ -177,6 +189,10 @@ class BackendAPI:
                     "operations": [
                         "capabilities",
                         "generate_analytic",
+                        "generate_geodesic_draft",
+                        "compile_reserve_schedule",
+                        "sample_analytic_target_surface",
+                        "import_mesh_obj",
                         "validate_ir",
                         "export_ir",
                         "inspect_mesh_openings",
@@ -185,7 +201,11 @@ class BackendAPI:
                         "run_forward_prototype",
                         "inspect_shaped_forward_model",
                         "run_closed_forward_prototype",
+                        "run_closed_f0",
+                        "compare_geometry",
+                        "inspect_provenance_chain",
                         "verify_candidate",
+                        "verify_numerical_candidate",
                         "inspect_analytic_search_trace",
                         "calibration_protocol",
                         "inspect_calibration_campaign",
@@ -197,8 +217,12 @@ class BackendAPI:
                         "inspect_analytic_candidate_claims",
                         "inspect_prototype_final_relation",
                     ],
-                    "candidate_domains": ["CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC"],
+                    "candidate_domains": [
+                        "CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC",
+                        "CLOSED_GENUS_ZERO_SINGLE_COLOR_SC_GRAPH_DISTANCE_DRAFT",
+                    ],
                     "physical_verification_available": False,
+                    "structural_compiler_profiles": [RESERVE_COMPILER_PROFILE],
                     "deployment_scope": "LOCAL_SINGLE_USER",
                     "verification_profiles": [
                         {
@@ -211,6 +235,77 @@ class BackendAPI:
                     ],
                     "capability_matrix": backend_capability_matrix(),
                 }
+            elif operation == "compile_reserve_schedule":
+                _object(
+                    request,
+                    {"api_version", "operation", "design_spec", "material_profile", "schedule"},
+                    "request",
+                )
+                schedule = _object(
+                    request["schedule"],
+                    {
+                        "profile", "initial_count", "reserved_count", "continuing_counts",
+                        "continuing_phases", "max_events", "max_attachment_locations",
+                        "max_frontier_location_references",
+                    },
+                    "schedule",
+                )
+                if schedule["profile"] != RESERVE_COMPILER_PROFILE:
+                    raise ApiInputError("schedule.profile")
+                for name in ("continuing_counts", "continuing_phases"):
+                    if not isinstance(schedule[name], list):
+                        raise ApiInputError(f"schedule.{name}")
+                design, material = request["design_spec"], request["material_profile"]
+                value = compile_reserve_schedule(
+                    design, material,
+                    schedule["initial_count"], schedule["reserved_count"],
+                    tuple(schedule["continuing_counts"]), tuple(schedule["continuing_phases"]),
+                    self.provenance,
+                    max_events=schedule["max_events"],
+                    max_attachment_locations=schedule["max_attachment_locations"],
+                    max_frontier_location_references=schedule["max_frontier_location_references"],
+                )
+                validator = SemanticValidator(
+                    design_specs={design["design_spec_id"]: design},
+                    material_profiles={(material["profile_id"], material["revision"]): material},
+                )
+                data = {
+                    "profile": RESERVE_COMPILER_PROFILE,
+                    "status": "COMPILED_STRUCTURAL_PROPOSAL",
+                    "crochet_ir": value,
+                    "sha256": canonical_hash(
+                        value, CanonicalProfile.CROCHET_IR, validator=validator
+                    ),
+                    "verification_state": "NOT_VERIFIED",
+                    "physical_status": "UNTESTED",
+                    "visible_export_available": False,
+                    "forward_simulation_available": False,
+                    "work": {
+                        "events": len(value["construction_sequence"]),
+                        "attachment_locations": len(value["attachment_locations"]),
+                        "frontier_location_references": sum(
+                            len(f["attachment_location_ids"]) for f in value["frontiers"]
+                        ),
+                    },
+                }
+            elif operation == "compare_geometry":
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "predicted_mesh",
+                        "target_mesh",
+                        "comparison_policy",
+                    },
+                    "request",
+                )
+                data = compare_geometry(
+                    request["predicted_mesh"], request["target_mesh"], request["comparison_policy"]
+                )
+            elif operation == "inspect_provenance_chain":
+                _object(request, {"api_version", "operation", "evidence_bundle"}, "request")
+                data = inspect_provenance_chain(request["evidence_bundle"])
             elif operation == "inspect_analytic_candidate_claims":
                 _object(
                     request,
@@ -229,11 +324,14 @@ class BackendAPI:
                     material_profiles={claims_material.get("profile_id", ""): claims_material},
                 )
                 claims = inspect_analytic_candidate_claims(
-                    claims_design, claims_material, request["crochet_ir"],
+                    claims_design,
+                    claims_material,
+                    request["crochet_ir"],
                     validator=claims_validator,
                 )
                 data = {
-                    "candidate_claims": claims.to_dict(), "candidate_claims_sha256": claims.sha256,
+                    "candidate_claims": claims.to_dict(),
+                    "candidate_claims_sha256": claims.sha256,
                     "verification_state": "REJECTED" if claims.status == "FAIL" else "NOT_VERIFIED",
                     "physical_status": "UNTESTED",
                 }
@@ -313,7 +411,8 @@ class BackendAPI:
                     "physical_status": "UNTESTED",
                 }
             elif operation in (
-                "inspect_closed_surface_cells", "inspect_closed_surface_topology",
+                "inspect_closed_surface_cells",
+                "inspect_closed_surface_topology",
                 "inspect_closed_cell_conformance",
             ):
                 _object(
@@ -354,7 +453,9 @@ class BackendAPI:
                     data["surface_topology"] = audit.to_dict()
                     data["surface_topology_sha256"] = audit.sha256
                     conformance = inspect_closed_cell_conformance(
-                        request["crochet_ir"], surface, validator=cells_validator,
+                        request["crochet_ir"],
+                        surface,
+                        validator=cells_validator,
                         projection_sha256=cells_projection.sha256,
                         surface_cells_sha256=cells.sha256,
                     )
@@ -403,13 +504,26 @@ class BackendAPI:
                     created_at=request["created_at"],
                 )
             elif operation == "inspect_analytic_search_trace":
-                _object(request, {"api_version", "operation", "design_spec", "material_profile",
-                                  "run_config", "search_trace", "candidate_proposals"}, "request")
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "design_spec",
+                        "material_profile",
+                        "run_config",
+                        "search_trace",
+                        "candidate_proposals",
+                    },
+                    "request",
+                )
                 for key in ("design_spec", "material_profile"):
                     if not isinstance(request[key], dict):
                         raise ApiInputError("request." + key)
-                for key, identity in (("design_spec", "design_spec_id"),
-                                      ("material_profile", "profile_id")):
+                for key, identity in (
+                    ("design_spec", "design_spec_id"),
+                    ("material_profile", "profile_id"),
+                ):
                     if not isinstance(request[key].get(identity), str):
                         raise ApiInputError("request." + key + "." + identity)
                 validator = SemanticValidator(
@@ -417,15 +531,94 @@ class BackendAPI:
                         request["design_spec"].get("design_spec_id", ""): request["design_spec"]
                     },
                     material_profiles={
-                        request["material_profile"].get("profile_id", ""):
-                        request["material_profile"]
+                        request["material_profile"].get("profile_id", ""): request[
+                            "material_profile"
+                        ]
                     },
                 )
                 data = inspect_analytic_search_trace(
-                    request["design_spec"], request["material_profile"], request["run_config"],
-                    request["search_trace"], request["candidate_proposals"], validator=validator,
+                    request["design_spec"],
+                    request["material_profile"],
+                    request["run_config"],
+                    request["search_trace"],
+                    request["candidate_proposals"],
+                    validator=validator,
                 ).to_dict()
-            elif operation == "verify_candidate":
+            elif operation == "import_mesh_obj":
+                _object(
+                    request,
+                    {"api_version", "operation", "source_text", "import_parameters"},
+                    "request",
+                )
+                if not isinstance(request["source_text"], str):
+                    raise ApiInputError("request.source_text")
+                data = import_wavefront_obj(
+                    request["source_text"],
+                    admit_obj_import_parameters(request["import_parameters"]),
+                ).to_dict()
+            elif operation in {"sample_analytic_target_surface", "generate_geodesic_draft"}:
+                _object(
+                    request,
+                    {"api_version", "operation", "design_spec", "material_profile"}
+                    | (
+                        {"sampling_policy"}
+                        if operation == "sample_analytic_target_surface"
+                        else {"mesh_json", "run_config"}
+                    ),
+                    "request",
+                )
+                for key in ("design_spec", "material_profile"):
+                    if not isinstance(request[key], dict):
+                        raise ApiInputError(f"request.{key}")
+                material = request["material_profile"]
+                design = request["design_spec"]
+                material_report = SemanticValidator().validate_material_profile(material)
+                if not material_report.ok:
+                    raise ArtifactValidationError(material_report)
+                if not isinstance(design.get("design_spec_id"), str):
+                    raise ApiInputError("request.design_spec.design_spec_id")
+                validator = SemanticValidator(
+                    material_profiles={
+                        material.get("profile_id", ""): material,
+                        (material.get("profile_id", ""), material.get("revision", 0)): material,
+                    },
+                    design_specs={design.get("design_spec_id", ""): design},
+                )
+                for report in (
+                    validator.validate_material_profile(material),
+                    validator.validate_design_spec(design),
+                ):
+                    if not report.ok:
+                        raise ArtifactValidationError(report)
+                if operation == "sample_analytic_target_surface":
+                    target = admit_analytic_target(design, validator)
+                    sampled = sample_analytic_target_surface(
+                        design,
+                        target,
+                        request["sampling_policy"],
+                        validator=validator,
+                    )
+                    data = sampled.to_dict()
+                    data["sampled_mesh"] = parse_json(sampled.sampled_mesh_jcs_bytes)
+                else:
+                    if not isinstance(request["mesh_json"], str):
+                        raise ApiInputError("request.mesh_json")
+                    if not isinstance(request["run_config"], dict):
+                        raise ApiInputError("request.run_config")
+                    if "software_commit" in request["run_config"]:
+                        raise ApiInputError("run_config.server_owned_provenance")
+                    config = {
+                        **request["run_config"],
+                        "software_commit": self.provenance.software_commit,
+                    }
+                    data = generate_geodesic_draft(
+                        design,
+                        material,
+                        request["mesh_json"].encode("utf-8"),
+                        config,
+                        provenance=self.provenance,
+                    )
+            elif operation in {"verify_candidate", "verify_numerical_candidate"}:
                 _object(
                     request,
                     {
@@ -436,7 +629,9 @@ class BackendAPI:
                         "crochet_ir",
                         "mesh_json",
                         "diagnostic_mode",
-                    } | ({"search_evidence"} if "search_evidence" in request else set()),
+                    }
+                    | ({"search_evidence"} if "search_evidence" in request else set())
+                    | ({"numerical_run"} if operation == "verify_numerical_candidate" else set()),
                     "request",
                 )
                 if type(request["diagnostic_mode"]) is not bool:
@@ -450,7 +645,8 @@ class BackendAPI:
                 if "search_evidence" in request:
                     evidence = _object(
                         request["search_evidence"],
-                        {"run_config", "search_trace", "candidate_proposals"}, "search_evidence",
+                        {"run_config", "search_trace", "candidate_proposals"},
+                        "search_evidence",
                     )
                 raw_mesh = (
                     None if request["mesh_json"] is None else request["mesh_json"].encode("utf-8")
@@ -478,6 +674,18 @@ class BackendAPI:
                     else None,
                     diagnostic_mode=request["diagnostic_mode"],
                     search_evidence=evidence,
+                    numerical_context=admit_numerical_run(request["numerical_run"])
+                    if operation == "verify_numerical_candidate"
+                    else None,
+                    software_commit=self.provenance.software_commit
+                    if operation == "verify_numerical_candidate"
+                    else None,
+                    source_snapshot={
+                        "source_snapshot_sha256": self.provenance.source_snapshot_sha256,
+                        "implementation_identity": implementation_identity_hash(),
+                    }
+                    if operation == "verify_numerical_candidate"
+                    else None,
                 )
                 data = checkpoint.to_dict()
             elif operation in {
@@ -554,6 +762,7 @@ class BackendAPI:
                 "run_forward_prototype",
                 "inspect_shaped_forward_model",
                 "run_closed_forward_prototype",
+                "run_closed_f0",
             }:
                 _object(
                     request,
@@ -609,10 +818,15 @@ class BackendAPI:
                     bundle = inspect_shaped_forward_model(
                         projection, material, shaped_recipe, validator=execution_validator
                     )
-                else:
+                elif operation == "run_closed_forward_prototype":
                     closed_recipe = admit_closed_mechanics_recipe(request["forward_run"])
                     bundle = run_closed_mechanics(
                         projection, material, closed_recipe, validator=execution_validator
+                    )
+                else:
+                    f0_recipe = admit_closed_f0_recipe(request["forward_run"])
+                    bundle = run_closed_f0(
+                        projection, material, f0_recipe, validator=execution_validator
                     )
                 data = {
                     "source_crochet_ir_sha256": source_sha256,
@@ -721,7 +935,9 @@ class BackendAPI:
                 },
             }
         except (
-            SurfaceTopologyInputError, CellConformanceInputError, AnalyticClaimsInputError,
+            SurfaceTopologyInputError,
+            CellConformanceInputError,
+            AnalyticClaimsInputError,
             TraceAuditInputError,
             PrototypeRelationInputError,
         ) as error:
@@ -752,8 +968,20 @@ class BackendAPI:
                     "gate": "V0",
                 },
             }
-        except (ForwardPipelineError, ForwardShapedError, ForwardClosedMechanicsError) as error:
+        except (
+            ForwardPipelineError,
+            ForwardShapedError,
+            ForwardClosedMechanicsError,
+            ClosedF0Error,
+            GeometryComparisonError,
+            ProvenanceChainError,
+            NumericalVerificationError,
+            AnalyticTargetSurfaceError,
+            MeshImportError,
+        ) as error:
             return error_response(error.code, error.reason)
+        except (ContactError, ShellTermsError) as error:
+            return error_response("E_INPUT", error.reason)
         except (
             ApiInputError,
             CanonicalizationError,

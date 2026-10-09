@@ -29,6 +29,7 @@ from crochet_ai.calibration_campaign import PROTOCOL_ID, calibration_protocol
 from crochet_ai.calibration_pdf import render_calibration_packet
 from crochet_ai.certified_orientation import orientation2d, orientation3d
 from crochet_ai.forward_closed_cells import PROFILE as CLOSED_CELLS_PROFILE
+from crochet_ai.forward_closed_f0 import PROFILE as CLOSED_F0_PROFILE
 from crochet_ai.forward_closed_mechanics import PROFILE as CLOSED_MECHANICS_PROFILE
 from crochet_ai.forward_pipeline import PROFILE as FORWARD_PIPELINE_PROFILE
 from crochet_ai.forward_shaped import PROFILE as FORWARD_SHAPED_PROFILE
@@ -197,6 +198,16 @@ def main() -> int:
     _require(
         capabilities["data"]["physical_verification_available"] is False,
         "smoke.physical_claim",
+    )
+    _require(
+        CLOSED_F0_PROFILE == "FORWARD_CLOSED_F0_V1"
+        and {
+            "run_closed_f0", "compare_geometry", "inspect_provenance_chain",
+            "sample_analytic_target_surface", "generate_geodesic_draft",
+            "verify_numerical_candidate", "import_mesh_obj",
+            "compile_reserve_schedule",
+        }.issubset(capabilities["data"]["operations"]),
+        "smoke.numerical_delivery_missing",
     )
     _require(
         {"verify_candidate", "calibration_protocol", "inspect_calibration_campaign",

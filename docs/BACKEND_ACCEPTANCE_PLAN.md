@@ -27,15 +27,27 @@ not mandatory verification or physical acceptance.
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A subset implemented; M1B and V9/V10 remain |
 | B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; closed sphere/ellipsoid and DesignSpec 1.2 simple explicit-coordinate revolution targets have ideal-target V0 admission; arbitrary-axis/open, flat and lace adapters remain open |
 | B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals and independent staged search/final-relation replay implemented; numerical-failure trace coverage, full V5 and domains remain |
-| B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Target-free strip stretch/shear/bending and contact diagnostics; closed shaped elastic preparation plus hypothesis ring/CLOSE tension, declared pressure and bounded Armijo; shaped shear/bending, calibrated closure/caps, contact response, multistart and V6 missing |
-| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered V0-V10 checkpoint, supported mesh V0, core V1-V3 and single-yarn M1A V9 are integrated; full V4/V5-V8/V10 and calibrated forward/metric evidence remain open |
+| B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Experimental closed SC stretch/closure/pressure/shell/contact, conservative continuous path checks, bounded multistart and independent exact-coordinate optimizer replay implemented; identified material laws, open fixtures, production convergence and physical acceptance remain |
+| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered checkpoint with optional fresh audited F0, full sampled metric vector and five gauge endpoint scenarios in V6/V7/V8/V10; calibrated physical selection, broader domains, ideal-surface coverage and authenticated release evidence remain |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
 | B7 | Durable jobs and artifacts | Atomicity, idempotency, cancellation, resource limits, concurrency and recovery tests | Local SQLite jobs subset implemented; operational gates open |
-| B8 | Security, packaging and operation | Untrusted input limits, path safety, isolation, diagnostics, install and end-to-end tests | Request limits and wheel subset implemented; service hardening open |
-| B9 | Free-form, geodesic, topology and frontier solvers | Separate applicability contracts, branch/join fixtures, budgets, independent reconstruction | Missing; research required |
+| B8 | Security, packaging and operation | Untrusted input limits, path safety, isolation, diagnostics, install and end-to-end tests | Request limits, isolation, wheel and WAL-safe new-path project backup/restore implemented; complete operational/security acceptance remains |
+| B9 | Free-form, geodesic, topology and frontier solvers | Separate applicability contracts, branch/join fixtures, budgets, independent reconstruction | Strict triangular OBJ, closed graph-distance SC drafts and an explicit one-partition reserve/continuation compiler implemented experimentally; geometry-derived branch planning, openings, joins/assembly, visible M1B export and physical acceptance remain |
 | B10 | Garment, flat and lace solvers | Separate domain contracts, semantics, fixtures and acceptance | Missing; research required |
-| B11 | Empirical material and acceptance profiles | Real calibration samples, frozen thresholds, separate holdouts, human review | Frozen pilot campaigns, append-only measurements, baseline Type-A drafts and PDF measurement sheets implemented; full uncertainty, open-tube instructions, physical evidence and accepted profiles remain open |
+| B11 | Empirical material and acceptance profiles | Real calibration samples, frozen thresholds, separate holdouts, human review | Campaigns, append-only observations/review claims, Type-A drafts, gauge endpoint scenarios and PDF measurement sheets implemented; real fixtures, authenticated reviews, identified model uncertainty and accepted physical profiles remain |
 | B12 | Backend release | Every promised package accepted; compatibility and operational evidence documented | Not ready |
+
+Latest integration checkpoint (2026-10-09):
+[ADR 0022](adr/0022-bounded-numerical-backend-and-mesh-drafts.md) connects the
+experimental closed mechanics, independent replay, sampled geometry/material
+scenarios, original-reference mesh drafts, provenance consistency and local
+backup/restore. All metrics are conjunctive; failed comparisons retain measured
+vectors. Named target landmarks and absolute bounds come from DesignSpec while
+prediction points come from the audited mesh. Source/runtime hashes are checked
+against the executing package, but do not authenticate checkout or physical
+measurements. Existing source/pattern/PDF contracts, schemas and approved goldens
+are unchanged. Full validation and publication are recorded in
+[BACKEND_HANDOFF.md](BACKEND_HANDOFF.md). R1-R4 remain unaccepted.
 
 Additive input checkpoint (2026-10-06): DesignSpec 1.2 and
 [explicit coordinate target admission](ANALYTIC_COORDINATE_TARGET_V1.md) are

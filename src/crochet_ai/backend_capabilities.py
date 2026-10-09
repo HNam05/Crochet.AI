@@ -35,14 +35,15 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B4",
             "EXPERIMENTAL",
-            "Target-free strip prototype, shaped closed cells and initial shaped elastic forces",
-            "Closure mechanics, loading/contact response, convergence and calibration",
+            "Closed SC hypothesis mechanics, loading, shell/contact and bounded multistart F0",
+            "Identified material/closure laws, physical holdouts and production convergence",
         ),
         (
             "B5",
             "IMPLEMENTED_SUBSET",
-            "V0-V10 orchestration, closed SC topology, scoped search/final-relation audits",
-            "Broader V4/target scopes, physical selection and V6-V10",
+            "V0-V10 checkpoint with optional fresh F0 audit, sampled metrics and five scenarios",
+            "Broader domains, ideal geometry certification, calibrated selection "
+            "and source authentication",
         ),
         (
             "B6",
@@ -64,8 +65,8 @@ def backend_capability_matrix() -> dict[str, object]:
         ),
         (
             "B9",
-            "MISSING",
-            "No accepted free-mesh/geodesic/branch solver",
+            "EXPERIMENTAL",
+            "Triangular OBJ, closed graph-distance SC draft and explicit reserve compiler",
             "P14-P16 implementation and independent acceptance",
         ),
         (
@@ -77,8 +78,8 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B11",
             "IMPLEMENTED_SUBSET",
-            "Frozen calibration campaigns and draft gauge derivation",
-            "Real specimens, uncertainty extensions, review and frozen holdouts",
+            "Frozen campaigns, gauge endpoints and append-only reviewed-claim registry",
+            "Real specimens, authenticated review, identified uncertainty and frozen holdouts",
         ),
         (
             "B12",

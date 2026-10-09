@@ -11,11 +11,15 @@ from typing import Any
 
 import pytest
 from pypdf import PdfReader
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Table
 
 from crochet_ai.analytic_compile import CompileProvenance, compile_closed_schedule
 from crochet_ai.canonical import CanonicalProfile, canonical_hash
 from crochet_ai.prototype_backend import LocalPrototype
 from crochet_ai.prototype_pdf import (
+    _ROUND_ROW_MIN_SPLIT_HEIGHT,
     PrototypePdfError,
     _course_notation,
     _round_notation,
@@ -108,6 +112,36 @@ def test_compact_us_notation_keeps_final_round_totals() -> None:
     assert _round_notation(["1 sc", "inc sc"] * 6) + " (18 stitches)" == (
         "(1 sc, inc sc) x 6 (18 stitches)"
     )
+
+
+def test_round_row_split_defers_padding_fragment_but_splits_long_instructions() -> None:
+    style = ParagraphStyle("RoundSplitTest", fontName="Helvetica", fontSize=9.5, leading=12)
+
+    def make_row(text: str) -> Table:
+        return Table(
+            [[Paragraph(text, style)]],
+            colWidths=[170 * mm],
+            splitInRow=_ROUND_ROW_MIN_SPLIT_HEIGHT,
+            style=[
+                ("TOPPADDING", (0, 0), (-1, -1), 2 * mm),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2 * mm),
+            ],
+        )
+
+    ordinary = make_row("[ ] R17: 6 sc (6 stitches)")
+    assert ordinary.split(170 * mm, 4 * mm) == []
+
+    long_instruction = " ".join(f"instruction{i}" for i in range(500))
+    fragments = make_row(long_instruction).split(170 * mm, 50 * mm)
+    assert len(fragments) == 2
+    document = BytesIO()
+    SimpleDocTemplate(document).build(fragments)
+    pages = PdfReader(document).pages
+    page_texts = [page.extract_text() or "" for page in pages]
+    assert all(text.strip() for text in page_texts)
+    assert re.findall(r"instruction\d+", " ".join(page_texts)) == [
+        f"instruction{i}" for i in range(500)
+    ]
 
 
 def test_compact_notation_preserves_uneven_tail_and_event_order() -> None:
