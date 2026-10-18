@@ -65,7 +65,9 @@ The exact schedule object contains `profile="EXPLICIT_RESERVE_SC_V1"`,
 `max_frontier_location_references`. There are no client-owned source/commit
 overrides. A positive response reports `COMPILED_STRUCTURAL_PROPOSAL`, canonical
 IR/hash, actual work, `NOT_VERIFIED` and `UNTESTED`. It explicitly reports
-`visible_export_available=false` and `forward_simulation_available=false`.
+`visible_export_available=true`, `visible_export_profile=PATTERN_M1B_V1` and
+`forward_simulation_available=false`. Export is an explicit separate operation;
+its own text/replay budgets may reject a large source without truncation.
 This operation is not wired into the six-shape human-test UI.
 
 ## Structural meaning and limits
@@ -76,7 +78,7 @@ and reserved frontiers remain obligations in the existing single branch and
 component records; this compiler does not claim a branch DAG decomposition.
 Both are closed directly after active continuation. This is a structural
 construction proposal, not a two-leg garment solver, geometry/topology solver,
-pattern instruction compiler, or physically verified crochet pattern.
+geometry-derived instruction planner, or physically verified crochet pattern.
 
 The unchanged `SemanticValidator` is the acceptance check for emitted IR.
 Its reserve ledger catches lost or duplicated reservation locations and

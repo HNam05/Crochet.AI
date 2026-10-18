@@ -206,6 +206,10 @@ def main() -> int:
             "sample_analytic_target_surface", "generate_geodesic_draft",
             "verify_numerical_candidate", "import_mesh_obj",
             "compile_reserve_schedule",
+            "generate_flat_rows",
+            "export_m1b",
+            "import_m1b",
+            "verify_m1b_candidate",
         }.issubset(capabilities["data"]["operations"]),
         "smoke.numerical_delivery_missing",
     )

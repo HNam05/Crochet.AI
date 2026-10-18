@@ -17,14 +17,14 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B1",
             "IMPLEMENTED_SUBSET",
-            "M1A DE/US/UK text and prototype PDF",
-            "M1B and complete V9/V10 acceptance",
+            "M1A, bounded M1B visible topology replay DE/US/UK, explicit V9 and prototype PDF",
+            "Authenticated detached certification and complete V9/V10 acceptance",
         ),
         (
             "B2",
             "IMPLEMENTED_SUBSET",
-            "Mesh V0, sphere/ellipsoid targets, cardinal closed coordinate admission",
-            "Other coordinate scopes, coordinate V7, flat and lace adapters",
+            "Mesh V0, sphere/ellipsoid, cardinal closed coordinates and bound flat rectangles",
+            "Other coordinate scopes, coordinate V7, general flat and lace adapters",
         ),
         (
             "B3",
@@ -66,14 +66,14 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B9",
             "EXPERIMENTAL",
-            "Triangular OBJ, closed graph-distance SC draft and explicit reserve compiler",
+            "Triangular OBJ, closed graph-distance SC, reserve compiler and visible M1B replay",
             "P14-P16 implementation and independent acceptance",
         ),
         (
             "B10",
-            "MISSING",
-            "No accepted flat/garment/lace solver",
-            "P17-P19 implementation and independent acceptance",
+            "EXPERIMENTAL",
+            "Bounded rectangular FLAT SC row proposals; independent semantics/export checks",
+            "General flat, garment and lace generation, flat physics and P17-P19 acceptance",
         ),
         (
             "B11",

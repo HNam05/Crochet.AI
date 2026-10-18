@@ -5,7 +5,7 @@ Status: IN UMSETZUNG. Der erste Softwareabschnitt ist implementiert; siehe
 Abschnitt 8. R1-R4 sind nicht abgenommen. Keine Abnahmeregel, kein bestehendes
 Schema oder Golden und kein physischer Prüfstatus wurde dadurch verändert.
 
-Aktueller Fortschritt: 2026-10-09. Die Ausgangslage in Abschnitt 2 ist historisch.
+Aktueller Fortschritt: 2026-10-18. Die Ausgangslage in Abschnitt 2 ist historisch.
 Geschlossene SC-Zellmechanik enthält jetzt Schub/Biegung, Kontaktreaktion,
 konservative kontinuierliche Bewegungsprüfung und begrenzte Mehrfachstarts.
 Ein separater Prüfer rekonstruiert die Optimierung und verlangt exakt dieselben
@@ -18,8 +18,14 @@ Softwareteile von P05-P12 und P14, ersetzt aber keine physische Abnahme.
 P15 enthält jetzt außerdem einen echten, begrenzten Reserve-Compiler: eine
 explizite Aufteilung in aktiven und zurückgestellten Rand, aktive SC-Fortsetzung
 und zwei vollständige Abschlüsse. Der Compiler erzeugt strukturelles core 1.1
-CrochetIR mit unabhängiger semantischer Prüfung. M1B-Ausgabe, Geometrieplanung
-und Simulation solcher Konstruktionen sind damit noch nicht implementiert.
+CrochetIR mit unabhängiger semantischer Prüfung. Die separate M1B-Ausgabe und
+ihr unabhängiger Rückimport unterstützen jetzt explizite Verzweigungen,
+Reservierungen, Zusammenfügen und Öffnungen einschließlich einer eigenen
+V9-Anbindung. Geometrieplanung und Simulation solcher Konstruktionen fehlen.
+Für P17 existiert jetzt ein eigener, begrenzter Rechteck-Solver für flache
+SC-Reihen mit exakten Dimensionsprädikaten, IR-Ausgabe sowie API/CLI/Jobs.
+Sein ungebundener Anker, fehlende Wendeluftmaschen und das Pitch-Modell erlauben
+noch keine physische oder allgemeine Flächenfreigabe.
 P15-P19, kalibrierte Auswahl, vollständige Betriebsabnahme und R1-R4 bleiben offen.
 Aktuelle Validierung und konkrete Fortsetzung stehen in
 [BACKEND_HANDOFF.md](BACKEND_HANDOFF.md). Alle ursprünglichen Anforderungen

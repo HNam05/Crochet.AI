@@ -1,7 +1,92 @@
 # Backend handoff
 
-Latest checkpoint: 2026-10-09. Read this file before continuing backend work.
+Latest checkpoint: 2026-10-19. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
+
+## Current implementation, 2026-10-18/19
+
+Baseline was main `7d52202145bf34eb02f63f81ef4d937663b701e0`; existing untracked
+`output/` contains user files and is excluded from publication. This checkpoint
+adds actual implementation, not a completion claim:
+
+- `pattern_m1b.py` and `pattern_m1b_bind.py`: a separate bounded visible grammar
+  and target-independent replay. Existing M1A/schema/golden contracts stay frozen.
+  Raw independent fixtures cover reserve, split/join, reattach, yarn changes/cuts,
+  declared openings, multisite rings, six plain stitch families and SC shaping,
+  in US/UK/German stitch notation. Context resolves only external artifacts.
+- API/CLI/jobs: `export_m1b`, `import_m1b`, `verify_m1b_candidate`. The explicit
+  V9 adapter checks all three exports and binds the selected profile in evidence
+  identity. Default M1A V9 is unchanged. Import provenance is unauthenticated;
+  structural V9 PASS never promotes physical/overall acceptance.
+- `flat_solver.py`: a separate bounded FLAT/ROWS rectangular single-yarn SC
+  producer, exact rational pitch/count predicates, exhaustive prefix search,
+  deterministic ordering and exact preflight resource accounting. It emits
+  complete IR and passes existing independent semantic/export checks. API/CLI/
+  jobs operation: `generate_flat_rows`. Both CHAIN and SC must be explicitly
+  allowed in DesignSpec; an omitted foundation stitch is rejected.
+- Reserve compiler responses now advertise the separate M1B export profile;
+  branch/open forward simulation remains unavailable. Capability inventory
+  reports B10 experimental rather than missing, without claiming acceptance.
+
+Contracts: [M1B](PATTERN_M1B_V1.md), [flat rows](FLAT_SC_ROWS_V1.md),
+[ADR 0024](adr/0024-visible-m1b-and-flat-row-proposals.md).
+
+Important FLAT limits: the ATTACH point is an unbound logical fabric anchor;
+no substrate geometry or separate turning chain is supplied. First SC row works
+back from the hook end and later directions alternate. Pitch times count is a
+coverage hypothesis. This is not yet a standalone beginner crochet swatch or
+flat physical solver and is not added to the six-shape human-test UI.
+
+Review fixes: shared Color aliases reject conflicting complete color bindings;
+opening requirements retain actual external identifiers; REFERENCE material
+bindings use admitted hash context; malformed direct AST fields reject with
+controlled diagnostics; first flat-row direction and repeated-reference counts
+were corrected and independently tested. No physical data was fabricated.
+
+Validation: the complete workspace-basetemp regression passed **1,634 tests,
+2 Windows symlink skips in 735.66 seconds**. Log:
+`artifacts/backend-m1b-full-workspace.log`. The preceding restricted-temp run
+had three WinError 5 backup publication failures; all six backup checks pass
+with workspace basetemp, followed by the successful full run. No backup rule,
+permission, test expectation or global configuration was weakened.
+
+After that full-run snapshot, primary review fixed exact FLAT rational report
+pairs to decimal strings: binary64 fractions such as 0.1 exceed I-JSON's safe
+integer range. **16 targeted FLAT/API/export checks passed**, including two new
+decimal-gauge cases (candidate and no-candidate). This final report-only
+serialization change did not receive another full-suite run. Source and
+installed CLI delivery agree for **17 complete response envelopes**, including
+the decimal-gauge case, all three M1B locales, import and explicit V9. Receipts
+record their invocation's commit/source provenance; do not rewrite old records.
+
+Ruff and strict mypy (108 modules) pass; five independent Node canonical vectors
+and ten frontend tests pass. A seeded 240-case text mutation check produced
+controlled parser errors. Isolated wheel smoke preserves nine exact schemas;
+dependency checking passes. Private backup/restore preserves all 12 projects,
+12 sessions and 1 feedback record. Detailed receipts are under ignored
+`artifacts/backend-m1b-delivery/`; private artifacts and user `output/` must
+never be staged. Historical results later in this file are dated checkpoints,
+not claims about the current revision.
+The publication runtime receipt is `artifacts/backend-m1b-delivery/runtime.json`;
+check live process/listener ownership and that receipt before reusing the server.
+Isolated-job delivery receipts are in `jobs-summary.json` in the same directory.
+
+Remaining real software work: geometry-derived branching/multipart planning;
+branch/open/flat target-free physics; general flat, garment and lace solvers;
+complete numerical-failure/physical-feasible candidate evidence; authenticated
+source/certification and full operational/security release acceptance. Real
+material measurements, identified laws, reviewed thresholds and holdouts remain
+external requirements. Do not describe these gaps as only physical testing.
+
+Next bounded R1 software task: verifier-only reached-stage numerical-failure
+trace replay in `analytic_trace_audit.py` / `coordinate_meridian_replay.py`.
+Start with `test_coordinate_trace_replay.py`'s truthful sample-failure example;
+inventory actual producer-emittable post-trace sample/circumference errors,
+independently reconstruct failing stage, retained samples/work and empty proposal
+membership, reject forged terminal claims and retain INDETERMINATE for unproved
+failure scopes. Preprocessing null-trace behavior and successful native trace
+bytes must stay unchanged. Do not alter generator code in that audit pass.
+Physical feasible selection still depends on real admitted calibrated evidence.
 
 ## Repository and product
 
@@ -55,7 +140,8 @@ This is a working implementation checkpoint, not full backend acceptance.
   drafts with actual GEODESIC IR provenance and original source references.
 - An explicit reserve SC compiler: one ordered active/reserved partition,
   continued active courses and complete closure of both obligations. API/CLI
-  and durable jobs return structural core 1.1 IR, not a visible M1B pattern.
+  and durable jobs return structural core 1.1 IR; the separate M1B profile now
+  provides visible export/replay, within its own text/resource limits.
 - Append-only physical-review claim registry, artifact provenance consistency,
   and local WAL-safe project backup/restore to new paths only.
 
@@ -640,8 +726,9 @@ Do not infer installed runtime or remote branch state from this note; check live
    evidence/source execution. Optional numerical gates are implemented, not an
    authenticated release profile. Keep missing V5 physical selection visible.
 3. Extend P14-P16 beyond the genus-zero graph draft: openings, branch construction,
-   topology/frontier planning, multipart assembly and M1B exports. Flat rows,
-   garments and lace (P17-P19) require their own executable domain contracts and
+   topology/frontier planning and multipart assembly. Bounded M1B exports now
+   exist. Broader flat work, garments and lace (P17-P19) require their own
+   executable domain contracts and
    independent forward semantics; do not route them through the closed SC model.
 4. Complete numerical-failure trace acceptance beyond the supported reached-stage
    scope and remaining recovery/security/release gates. Collect actual crochet
@@ -671,13 +758,13 @@ just unique locations/events. A malformed identity or parameter collision is a
 structured rejection. No schemas or approved goldens changed.
 
 The API/CLI/jobs operation `compile_reserve_schedule` returns
-COMPILED_STRUCTURAL_PROPOSAL / NOT_VERIFIED / UNTESTED and explicitly disables
-visible export and forward simulation for this profile. It is not a seventh
+COMPILED_STRUCTURAL_PROPOSAL / NOT_VERIFIED / UNTESTED. The 2026-10-18 M1B profile
+adds separate visible export; forward simulation stays disabled. It is not a seventh
 human-test shape. Twenty-five focused compiler/delivery tests passed; final
 full regression and installed delivery evidence are recorded above.
 
-Next add independently parsed M1B visible instructions in a separate pass and
-branch/open physical semantics before geometry acceptance. Existing Pattern V1
+M1B visible replay was added in the 2026-10-18 pass. Next implement
+branch/open physical semantics before geometry acceptance. Existing Pattern V1A
 rejects these operations and existing closed-cell F0 cannot simulate them.
 A reserve fixture, planning graph or generated IR alone must not be labelled
 a two-leg garment solver, free-form topology engine or fully verified pattern.
@@ -699,9 +786,15 @@ Contracts: `BACKEND_IMPLEMENTATION_ROADMAP.md`, `BACKEND_ACCEPTANCE_PLAN.md`,
 `VERIFICATION_PIPELINE.md`, then the affected
 subsystem contract/skill.
 
-Quality: `.venv/Scripts/python.exe -m pytest -q`,
+Quality: `.venv/Scripts/python.exe -m pytest -q --basetemp artifacts/<new-test-run>`,
 `.venv/Scripts/python.exe -m ruff check src tests tools`,
 `.venv/Scripts/python.exe -m mypy src`, `git diff --check`.
+Use a fresh, non-existing test directory verified to be under this workspace:
+pytest clears its basetemp directory. The 2026-10-19 restricted default sandbox
+temp path denied `os.rename` with WinError 5 in three backup publication tests.
+Those same six backup checks pass with workspace basetemp (one symlink skip);
+do not weaken backup semantics or change global permissions to bypass this.
+The initial full log is retained at `artifacts/backend-m1b-full-final.log`.
 Node: `tools/canonical_reference.mjs tests/conformance/canonical-vectors.json`
 and `tools/prototype_frontend_tests.mjs`.
 CLI: `python -m crochet_ai.cli --json request --request-file <request.json>`.

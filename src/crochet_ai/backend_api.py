@@ -36,6 +36,7 @@ from .canonical import (
 )
 from .cell_conformance import CellConformanceInputError, inspect_closed_cell_conformance
 from .diagnostics import ArtifactValidationError
+from .flat_solver import FlatRowsRunConfig, generate_flat_rows
 from .forward_closed_cells import ClosedCellsError, build_closed_surface_cells
 from .forward_closed_f0 import ClosedF0Error, admit_closed_f0_recipe, run_closed_f0
 from .forward_closed_mechanics import (
@@ -61,6 +62,9 @@ from .mesh_import import MeshImportError, admit_obj_import_parameters, import_wa
 from .models import DesignSpec, MaterialProfile
 from .numerical_verification import NumericalVerificationError, admit_numerical_run
 from .pattern import TerminologyProfile, export_pattern
+from .pattern_context import PatternParseContext, PatternYarnBinding
+from .pattern_m1b import PROFILE as PATTERN_M1B_PROFILE
+from .pattern_m1b import export_pattern_m1b, parse_pattern_m1b, verify_semantic_round_trip_m1b
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
 from .prototype_final_relation import PrototypeRelationInputError, inspect_prototype_final_relation
 from .provenance_chain import ProvenanceChainError, inspect_provenance_chain
@@ -161,6 +165,36 @@ def error_response(code: str, reason: str) -> dict[str, Any]:
     return {"api_version": API_VERSION, "ok": False, "error": {"code": code, "reason": reason}}
 
 
+def _m1b_context(design: Any, bindings: Any) -> tuple[PatternParseContext, SemanticValidator]:
+    DesignSpec.from_dict(design)
+    if not isinstance(bindings, list) or not 1 <= len(bindings) <= 32:
+        raise ApiInputError("request.yarn_bindings")
+    values = []
+    profiles: dict[str | tuple[str, int], dict[str, Any]] = {}
+    for row in bindings:
+        row = _object(row, {"symbol", "material_profile", "color_label", "srgb_hex"}, "binding")
+        if any(not isinstance(row[key], str) for key in ("symbol", "color_label", "srgb_hex")):
+            raise ApiInputError("binding.fields")
+        material = row["material_profile"]
+        report = SemanticValidator().validate_material_profile(material)
+        if not report.ok:
+            raise ArtifactValidationError(report)
+        key = (material["profile_id"], material["revision"])
+        if key in profiles and profiles[key] != material:
+            raise ApiInputError("binding.conflicting_revision")
+        profiles[key] = material
+        values.append(
+            PatternYarnBinding(row["symbol"], material, row["color_label"], row["srgb_hex"])
+        )
+    validator = SemanticValidator(
+        design_specs={design["design_spec_id"]: design}, material_profiles=profiles
+    )
+    report = validator.validate_design_spec(design)
+    if not report.ok:
+        raise ArtifactValidationError(report)
+    return PatternParseContext(design, tuple(values)), validator
+
+
 class BackendAPI:
     """Local single-user service facade; provenance is server-owned, never client supplied."""
 
@@ -190,11 +224,14 @@ class BackendAPI:
                         "capabilities",
                         "generate_analytic",
                         "generate_geodesic_draft",
+                        "generate_flat_rows",
                         "compile_reserve_schedule",
                         "sample_analytic_target_surface",
                         "import_mesh_obj",
                         "validate_ir",
                         "export_ir",
+                        "export_m1b",
+                        "import_m1b",
                         "inspect_mesh_openings",
                         "inspect_v0_closed_mesh_v2",
                         "inspect_v0_mesh_v2",
@@ -205,6 +242,7 @@ class BackendAPI:
                         "compare_geometry",
                         "inspect_provenance_chain",
                         "verify_candidate",
+                        "verify_m1b_candidate",
                         "verify_numerical_candidate",
                         "inspect_analytic_search_trace",
                         "calibration_protocol",
@@ -220,9 +258,11 @@ class BackendAPI:
                     "candidate_domains": [
                         "CLOSED_POLE_SINGLE_COLOR_SC_ANALYTIC",
                         "CLOSED_GENUS_ZERO_SINGLE_COLOR_SC_GRAPH_DISTANCE_DRAFT",
+                        "FLAT_RECTANGLE_SINGLE_COLOR_SC_ROWS_DRAFT",
                     ],
                     "physical_verification_available": False,
                     "structural_compiler_profiles": [RESERVE_COMPILER_PROFILE],
+                    "pattern_export_profiles": ["PATTERN_V1A", PATTERN_M1B_PROFILE],
                     "deployment_scope": "LOCAL_SINGLE_USER",
                     "verification_profiles": [
                         {
@@ -235,6 +275,42 @@ class BackendAPI:
                     ],
                     "capability_matrix": backend_capability_matrix(),
                 }
+            elif operation in {"export_m1b", "import_m1b"}:
+                expected = {"api_version", "operation", "design_spec", "yarn_bindings"}
+                expected |= (
+                    {"crochet_ir", "terminology"} if operation == "export_m1b" else {"pattern"}
+                )
+                _object(request, expected, "request")
+                context, validator = _m1b_context(request["design_spec"], request["yarn_bindings"])
+                if operation == "export_m1b":
+                    try:
+                        terminology = TerminologyProfile(request["terminology"])
+                    except (ValueError, TypeError) as error:
+                        raise ApiInputError("request.terminology") from error
+                    value = request["crochet_ir"]
+                    text = export_pattern_m1b(value, terminology, validator=validator)
+                    round_trip = verify_semantic_round_trip_m1b(
+                        value, terminology, context=context, validator=validator
+                    )
+                    if not round_trip.ok:
+                        raise ArtifactValidationError(round_trip)
+                    data = {
+                        "profile": PATTERN_M1B_PROFILE,
+                        "pattern": text,
+                        "semantic_round_trip": "PASS",
+                    }
+                else:
+                    value = parse_pattern_m1b(request["pattern"], context=context)
+                    data = {
+                        "profile": PATTERN_M1B_PROFILE,
+                        "crochet_ir": value,
+                        "provenance_status": "UNAUTHENTICATED_IMPORT",
+                    }
+                data.update(
+                    sha256=canonical_hash(value, CanonicalProfile.CROCHET_IR, validator=validator),
+                    verification_state="NOT_VERIFIED",
+                    physical_status="UNTESTED",
+                )
             elif operation == "compile_reserve_schedule":
                 _object(
                     request,
@@ -278,7 +354,8 @@ class BackendAPI:
                     ),
                     "verification_state": "NOT_VERIFIED",
                     "physical_status": "UNTESTED",
-                    "visible_export_available": False,
+                    "visible_export_available": True,
+                    "visible_export_profile": PATTERN_M1B_PROFILE,
                     "forward_simulation_available": False,
                     "work": {
                         "events": len(value["construction_sequence"]),
@@ -618,7 +695,40 @@ class BackendAPI:
                         config,
                         provenance=self.provenance,
                     )
-            elif operation in {"verify_candidate", "verify_numerical_candidate"}:
+            elif operation == "generate_flat_rows":
+                _object(
+                    request,
+                    {
+                        "api_version",
+                        "operation",
+                        "design_spec",
+                        "material_profile",
+                        "target_json",
+                        "run_config",
+                    },
+                    "request",
+                )
+                if not isinstance(request["target_json"], str):
+                    raise ApiInputError("request.target_json")
+                flat_config = FlatRowsRunConfig(
+                    **_object(
+                        request["run_config"],
+                        {field.name for field in fields(FlatRowsRunConfig)},
+                        "run_config",
+                    )
+                )
+                data = generate_flat_rows(
+                    request["design_spec"],
+                    request["material_profile"],
+                    request["target_json"].encode("utf-8"),
+                    flat_config,
+                    self.provenance,
+                )
+            elif operation in {
+                "verify_candidate",
+                "verify_numerical_candidate",
+                "verify_m1b_candidate",
+            }:
                 _object(
                     request,
                     {
@@ -674,6 +784,8 @@ class BackendAPI:
                     else None,
                     diagnostic_mode=request["diagnostic_mode"],
                     search_evidence=evidence,
+                    pattern_profile=PATTERN_M1B_PROFILE
+                    if operation == "verify_m1b_candidate" else "PATTERN_V1A",
                     numerical_context=admit_numerical_run(request["numerical_run"])
                     if operation == "verify_numerical_candidate"
                     else None,

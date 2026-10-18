@@ -27,6 +27,31 @@ not after each edit; installed delivery checks follow the final source snapshot.
 
 ## Current package
 
+2026-10-18: implemented a separate bounded M1B visible grammar/replay and
+external-only binder, export/import API/CLI/jobs and explicit V9 profile.
+Independent raw fixtures cover branch/reserve/oriented join/reattach/openings,
+yarn lifecycle, six plain stitch families, SC shaping and DE/US/UK terms.
+Added a separate bounded FLAT rectangular SC rows producer, exact pitch/count
+predicates and resource accounting, API/CLI/jobs and semantic/export integration.
+The existing core validators, default M1A V9, schemas and goldens stay frozen.
+Primary review repaired direct-AST type admission, shared-color conflicts,
+external opening names/reference hashes, flat first-row orientation and explicit
+CHAIN difficulty admission. New profiles remain NOT_VERIFIED/UNTESTED.
+
+The flat ATTACH point is unbound, turning chains are omitted and the dimension
+model is a hypothesis. Geometry-derived topology, broader domains and actual
+open/branch/flat physics are still real implementation gaps. The acceptance
+plan is not reduced to physical testing. Final validation/publication evidence
+for this pass is recorded in the latest handoff.
+
+Full regression: 1,634 passed, two Windows symlink skips, 735.66 seconds, using
+a fresh workspace basetemp. The default sandbox temp directory had denied
+backup publication with WinError 5; the failed log is retained. A subsequent
+report-only exact-ratio I-JSON fix passed 16 targeted checks, including two new
+decimal cases, then final-source installed CLI comparison passed 17 envelopes.
+Ruff, strict mypy (108 modules), canonical/frontend Node checks and isolated
+wheel smoke pass. This evidence is not full B0-B12/R1-R4 acceptance.
+
 2026-10-09: integrated closed SC shell/contact/multistart, independent optimizer
 replay, analytic/discrete mesh target comparison, five gauge scenarios, optional
 numerical V6/V7/V8/V10, source/reference-bound graph-distance drafts, strict OBJ

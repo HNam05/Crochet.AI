@@ -30,8 +30,10 @@ from .numerical_verification import (
     NumericalVerificationError,
     build_numerical_gate_runners,
 )
-from .pattern import TerminologyProfile, export_pattern, verify_semantic_round_trip
+from .pattern import TerminologyProfile, _label, export_pattern, verify_semantic_round_trip
 from .pattern_context import PatternParseContext, PatternYarnBinding
+from .pattern_m1b import PROFILE as PATTERN_M1B_PROFILE
+from .pattern_m1b import export_pattern_m1b, verify_semantic_round_trip_m1b
 from .physical_projection import PhysicalProjectionError, PhysicalSemanticProjection
 from .prototype_final_relation import (
     PrototypeRelationInputError,
@@ -527,11 +529,14 @@ def verify_artifacts(
     numerical_context: NumericalVerificationContext | None = None,
     software_commit: str | None = None,
     source_snapshot: Mapping[str, str] | None = None,
+    pattern_profile: str = "PATTERN_V1A",
 ) -> VerificationResult:
     """Adapt source validators and optionally register server-owned numerical gates."""
     design = dict(design_spec)
     material = dict(material_profile)
     ir = dict(crochet_ir)
+    if pattern_profile not in {"PATTERN_V1A", PATTERN_M1B_PROFILE}:
+        raise ValueError("unsupported pattern export profile")
     numerical_values = (numerical_context, software_commit, source_snapshot)
     if all(value is None for value in numerical_values):
         numerical_enabled = False
@@ -557,6 +562,10 @@ def verify_artifacts(
         "material_profile": _artifact_hash(material, CanonicalProfile.MATERIAL_PROFILE, validator),
         "crochet_ir": _artifact_hash(ir, CanonicalProfile.CROCHET_IR, validator),
     }
+    if pattern_profile == PATTERN_M1B_PROFILE:
+        hashes["pattern_export_profile"] = _digest(
+            b"Crochet.AI\0PATTERN_EXPORT_PROFILE_V1\0", {"profile": pattern_profile}
+        )
     if search_evidence is not None:
         search_evidence = bound_analytic_search_evidence(search_evidence)
         hashes["analytic_search_evidence"] = _digest(
@@ -1116,26 +1125,62 @@ def verify_artifacts(
             return GateResult(
                 GateOutcome.NOT_RUN, missing_checks=("semantic source validation did not pass",)
             )
-        if len(ir["yarns"]) != 1:
+        if pattern_profile == "PATTERN_V1A" and len(ir["yarns"]) != 1:
             return GateResult(
                 GateOutcome.NOT_RUN, missing_checks=("multi-yarn V9 adapter not implemented",)
             )
-        yarn = ir["yarns"][0]
-        color = next(item for item in ir["colors"] if item["color_id"] == yarn["color_id"])
-        context = PatternParseContext(
-            design, (PatternYarnBinding("Yarn A", material, color["label"], color["srgb_hex"]),)
+        if pattern_profile == PATTERN_M1B_PROFILE:
+            # Match visible first-use labels, independently of source table order.
+            uses: list[str | None] = []
+            stitches = {item["stitch_id"]: item for item in ir["stitches"]}
+            operations = {item["operation_id"]: item for item in ir["construction_operations"]}
+            for event in sorted(
+                ir["construction_sequence"], key=lambda item: item["sequence_index"]
+            ):
+                uses.extend((event["active_yarn_id_before"], event["active_yarn_id_after"]))
+                subject = event["subject_ref"]
+                if subject["entity_type"] == "STITCH":
+                    uses.append(stitches[subject["stitch_id"]]["yarn_id"])
+                else:
+                    operation = operations[subject["operation_id"]]
+                    uses.extend(operation["input_yarn_ids"])
+                    uses.extend(operation["output_yarn_ids"])
+            yarns = {item["yarn_id"]: item for item in ir["yarns"]}
+            colors = {item["color_id"]: item for item in ir["colors"]}
+            ordered = dict.fromkeys(yarn_id for yarn_id in uses if yarn_id is not None)
+            bindings = tuple(
+                PatternYarnBinding(
+                    _label(index, "Yarn"),
+                    material,
+                    colors[yarns[yarn_id]["color_id"]]["label"],
+                    colors[yarns[yarn_id]["color_id"]]["srgb_hex"],
+                )
+                for index, yarn_id in enumerate(ordered)
+            )
+            context = PatternParseContext(design, bindings)
+        else:
+            yarn = ir["yarns"][0]
+            color = next(item for item in ir["colors"] if item["color_id"] == yarn["color_id"])
+            context = PatternParseContext(
+                design, (PatternYarnBinding("Yarn A", material, color["label"], color["srgb_hex"]),)
+            )
+        check_round_trip = (
+            verify_semantic_round_trip_m1b
+            if pattern_profile == PATTERN_M1B_PROFILE
+            else verify_semantic_round_trip
+        )
+        export_text = (
+            export_pattern_m1b if pattern_profile == PATTERN_M1B_PROFILE else export_pattern
         )
         diagnostics: list[Diagnostic] = []
         assertions: list[tuple[str, bool]] = []
         produced: list[tuple[str, str]] = []
         for terminology in TerminologyProfile:
-            report = verify_semantic_round_trip(
-                ir, terminology, context=context, validator=validator
-            )
+            report = check_round_trip(ir, terminology, context=context, validator=validator)
             diagnostics.extend(report.diagnostics)
             assertions.append((f"semantic_round_trip.{terminology.value}", report.ok))
             if report.ok:
-                text = export_pattern(ir, terminology, validator=validator)
+                text = export_text(ir, terminology, validator=validator)
                 produced.append(
                     (f"pattern_text.{terminology.value}", sha256(text.encode("utf-8")).hexdigest())
                 )
@@ -1143,7 +1188,11 @@ def verify_artifacts(
             GateOutcome.FAIL if diagnostics else GateOutcome.PASS,
             assertions=tuple(assertions),
             diagnostics=tuple(diagnostics),
-            scope="Single-yarn M1A text DE/US/UK; separate parser and frozen metadata linker",
+            scope=(
+                "M1B visible construction DE/US/UK; external-only frozen metadata linker"
+                if pattern_profile == PATTERN_M1B_PROFILE
+                else "Single-yarn M1A text DE/US/UK; separate parser and frozen metadata linker"
+            ),
             produced_artifact_hashes=tuple(produced),
         )
 
@@ -1203,6 +1252,8 @@ def verify_artifacts(
         for gate in GATES
     }
     implementation_versions.update(numerical_versions)
+    if pattern_profile == PATTERN_M1B_PROFILE:
+        implementation_versions["V9"] = "pattern-m1b-adapter/1.0.0"
     return verify_runners(
         input_hashes=hashes,
         runners=runners,

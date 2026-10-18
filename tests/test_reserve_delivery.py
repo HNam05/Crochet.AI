@@ -47,7 +47,8 @@ def test_wire_compiler_is_structural_and_unchanged_exporter_rejects_it():
         "attachment_locations": 14,
         "frontier_location_references": 45,
     }
-    assert data["visible_export_available"] is False
+    assert data["visible_export_available"] is True
+    assert data["visible_export_profile"] == "PATTERN_M1B_V1"
     assert data["forward_simulation_available"] is False
     design, material = payload["design_spec"], payload["material_profile"]
     validator = SemanticValidator(
