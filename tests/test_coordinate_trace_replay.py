@@ -167,7 +167,7 @@ def test_partial_coordinate_parameter_deletion_fails_claims_and_trace(parameter)
     assert audit.status == "FAIL"
 
 
-def test_truthful_coordinate_sample_failure_is_incomplete_and_false_success_fails():
+def test_truthful_coordinate_sample_failure_is_proved_and_false_success_fails():
     design, material = explicit_design([(0, 0), (3, 0), (3, 4), (0, 4)])
     design["difficulty_constraints"]["allowed_construction_operations"].append("CLOSE")
     design["difficulty_constraints"]["allowed_shaping"] = ["INCREASE", "DECREASE"]
@@ -188,8 +188,18 @@ def test_truthful_coordinate_sample_failure_is_incomplete_and_false_success_fail
     audit = inspect_analytic_search_trace(
         design, material, run_config, trace, [], validator=validator
     )
-    assert audit.status == "INDETERMINATE"
-    assert "coordinate_sampling_numerical_failure" in audit.missing_checks
+    assert audit.status == "PASS"
+    assert audit.missing_checks == ()
+    report = audit.to_dict()
+    assert report["coordinate_failure"] == {
+        "hypothesis_index": 0,
+        "course_count": trace["hypotheses"][0]["course_count"],
+        "stage": "sample",
+        "sample_index": 0,
+        "completed_prior_hypotheses": [],
+        "completed_samples": [],
+        "failing_reason": "meridian.s_conversion",
+    }
 
     false_success = batch.search_trace.to_dict()
     false_success["hypotheses"][0]["outcome"] = "COMPILED"

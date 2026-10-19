@@ -288,6 +288,7 @@ def inspect_analytic_search_trace(
     coordinate_target = None
     meridian: CoordinateMeridianReplay | None = None
     coordinate_scope = False
+    coordinate_failure: dict[str, Any] | None = None
 
     def check(name: str, actual: Any, expected: Any) -> None:
         ok = jcs_bytes(actual) == jcs_bytes(expected)
@@ -331,6 +332,8 @@ def inspect_analytic_search_trace(
                 "roundoff_allowance_mm": config["numerics"]["roundoff_allowance_mm"],
                 "sqrt_bracket_max_steps_per_side": 2,
             }
+        if coordinate_failure is not None:
+            payload["coordinate_failure"] = coordinate_failure
         encoded = jcs_bytes(payload)
         return AnalyticTraceAudit(
             status,
@@ -563,7 +566,7 @@ def inspect_analytic_search_trace(
             windows = []
             if coordinate_scope:
                 rec["stage"] = "sample"
-                sample_rows = []
+                sample_rows: list[dict[str, str]] = []
                 numerical_failure = False
                 for i in range(courses):
                     fraction = Fraction(2 * i + 1, 2 * courses)
@@ -579,7 +582,6 @@ def inspect_analytic_search_trace(
                             "s_conversion",
                             "radius_conversion",
                             "axial_conversion",
-                            "negative_radius",
                         }:
                             diagnostics.append(
                                 ("E_DETERMINISM", "trace_audit.coordinate_sample." + str(exc))
@@ -594,7 +596,15 @@ def inspect_analytic_search_trace(
                             "NUMERICAL_FAILURE",
                             "meridian." + reason,
                         )
-                        missing.append("coordinate_sampling_numerical_failure")
+                        coordinate_failure = {
+                            "hypothesis_index": len(expected_records) - 1,
+                            "course_count": courses,
+                            "stage": "sample",
+                            "sample_index": i,
+                            "completed_prior_hypotheses": expected_records[:-1],
+                            "completed_samples": sample_rows,
+                            "failing_reason": "meridian." + reason,
+                        }
                         numerical_failure = True
                         break
                     sample_rows.append(
@@ -612,6 +622,11 @@ def inspect_analytic_search_trace(
                         for row_radius in (Fraction(row["radius_mm"]) for row in sample_rows)
                     ]
                     if not all(isfinite(value) for value in sampled_circumferences):
+                        failing_circumference = next(
+                            index
+                            for index, value in enumerate(sampled_circumferences)
+                            if not isfinite(value)
+                        )
                         rec.update(
                             stage="circumference",
                             outcome="NUMERICAL_FAILURE",
@@ -622,7 +637,19 @@ def inspect_analytic_search_trace(
                             "NUMERICAL_FAILURE",
                             "solver.circumference",
                         )
-                        missing.append("coordinate_sampling_numerical_failure")
+                        coordinate_failure = {
+                            "hypothesis_index": len(expected_records) - 1,
+                            "course_count": courses,
+                            "stage": "circumference",
+                            "sample_index": failing_circumference,
+                            "completed_prior_hypotheses": expected_records[:-1],
+                            "completed_samples": sample_rows,
+                            "completed_circumferences": [
+                                _rational(Fraction(value))
+                                for value in sampled_circumferences[:failing_circumference]
+                            ],
+                            "failing_reason": "solver.circumference",
+                        }
                         numerical_failure = True
                     else:
                         circumferences = [Fraction(value) for value in sampled_circumferences]

@@ -77,6 +77,23 @@ INDETERMINATE. Structured numerical-failure traces require explicit reached-stag
 reconstruction or a named incomplete scope; they cannot be called false merely
 because the producer's correctly recorded computation failed.
 
+For post-trace course sampling, the audit independently reproduces a first
+failing `s_conversion`, `radius_conversion`, or `axial_conversion` and verifies
+the exact failed hypothesis, midpoint index, stage, trace terminal status and
+reason. It records completed earlier hypotheses and successful samples in
+failure-only `coordinate_failure` evidence. The producer constructs its sample
+tuple atomically, so those successful samples remain absent from the producer
+trace when a later conversion fails; the audit does not insert them into that
+trace reconstruction. A non-finite sampled circumference is supported only at
+the first exact course where `2*pi*radius` becomes non-finite, with prior
+samples and finite circumferences reported. These are numerical failure proofs,
+not successful generation claims. Negative-radius traces contradict admitted
+coordinate geometry. Failures during coordinate admission, segment preparation,
+length/tolerance validation, or square-root bracketing occur before a producer
+search trace exists and remain outside this closure. A failure outside the
+explicit post-trace causes stays `INDETERMINATE` or is rejected when it
+contradicts the independently replayed trace.
+
 ## Evidence and acceptance limits
 
 Coordinate reports add coordinate_sampling evidence: producer/verifier policy

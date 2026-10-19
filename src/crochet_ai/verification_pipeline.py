@@ -41,6 +41,7 @@ from .prototype_final_relation import (
     unique_original_proposal,
 )
 from .schema import validate_schema
+from .schema_session import schema_validation_session
 from .surface_topology import SurfaceTopologyInputError, audit_surface_topology
 from .trace_verification_types import TraceAuditInputError
 from .v0_mesh_preflight import (
@@ -530,6 +531,39 @@ def verify_artifacts(
     software_commit: str | None = None,
     source_snapshot: Mapping[str, str] | None = None,
     pattern_profile: str = "PATTERN_V1A",
+) -> VerificationResult:
+    """Run with bounded schema reuse isolated from generation and other calls."""
+    with schema_validation_session():
+        return _verify_artifacts(
+            design_spec,
+            material_profile,
+            crochet_ir,
+            mesh_json=mesh_json,
+            mesh_budgets=mesh_budgets,
+            diagnostic_mode=diagnostic_mode,
+            search_evidence=search_evidence,
+            profile=profile,
+            numerical_context=numerical_context,
+            software_commit=software_commit,
+            source_snapshot=source_snapshot,
+            pattern_profile=pattern_profile,
+        )
+
+
+def _verify_artifacts(
+    design_spec: Mapping[str, Any],
+    material_profile: Mapping[str, Any],
+    crochet_ir: Mapping[str, Any],
+    *,
+    mesh_json: bytes | None,
+    mesh_budgets: V0MeshBudgets | None,
+    diagnostic_mode: bool,
+    search_evidence: Mapping[str, Any] | None,
+    profile: VerificationProfile,
+    numerical_context: NumericalVerificationContext | None,
+    software_commit: str | None,
+    source_snapshot: Mapping[str, str] | None,
+    pattern_profile: str,
 ) -> VerificationResult:
     """Adapt source validators and optionally register server-owned numerical gates."""
     design = dict(design_spec)

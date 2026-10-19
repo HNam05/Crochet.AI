@@ -26,7 +26,7 @@ not mandatory verification or physical acceptance.
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A and bounded M1B visible topology replay implemented; explicit M1B V9 adapter; detached authenticated certification and broader acceptance remain |
 | B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; closed sphere/ellipsoid and DesignSpec 1.2 simple explicit-coordinate revolution targets have ideal-target V0 admission; arbitrary-axis/open, flat and lace adapters remain open |
-| B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals and independent staged search/final-relation replay implemented; numerical-failure trace coverage, full V5 and domains remain |
+| B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals, independent staged search/final-relation replay and supported reached-stage coordinate numerical-failure proofs implemented; other failure scopes, full V5/physical selection and domains remain |
 | B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Experimental closed SC stretch/closure/pressure/shell/contact, conservative continuous path checks, bounded multistart and independent exact-coordinate optimizer replay implemented; identified material laws, open fixtures, production convergence and physical acceptance remain |
 | B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered checkpoint with optional fresh audited F0, full sampled metric vector and five gauge endpoint scenarios in V6/V7/V8/V10; calibrated physical selection, broader domains, ideal-surface coverage and authenticated release evidence remain |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
@@ -36,6 +36,15 @@ not mandatory verification or physical acceptance.
 | B10 | Garment, flat and lace solvers | Separate domain contracts, semantics, fixtures and acceptance | Bounded rectangular FLAT SC row proposals implemented with API and independent semantic/export checks; flat physics, broader flat, garment and lace generation remain |
 | B11 | Empirical material and acceptance profiles | Real calibration samples, frozen thresholds, separate holdouts, human review | Campaigns, append-only observations/review claims, Type-A drafts, gauge endpoint scenarios and PDF measurement sheets implemented; real fixtures, authenticated reviews, identified model uncertainty and accepted physical profiles remain |
 | B12 | Backend release | Every promised package accepted; compatibility and operational evidence documented | Not ready |
+
+Current implementation checkpoint (2026-10-19): post-trace coordinate sampling
+conversion/circumference failures have independent reached-stage proofs; generator
+terminals remain failures. Verification reuses only identical successful schema
+checks within one bounded invocation. Errors and all semantic/physical gates
+remain checked. Current validation and measured timings are recorded in
+[the handoff](BACKEND_HANDOFF.md). The requested week target and next complete
+integration package are in [R1_WEEK_EXECUTION.md](R1_WEEK_EXECUTION.md); they do
+not waive R1-R4 or any package acceptance requirement.
 
 Latest integration checkpoint (2026-10-09):
 [ADR 0022](adr/0022-bounded-numerical-backend-and-mesh-drafts.md) connects the

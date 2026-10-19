@@ -15,6 +15,7 @@ from referencing import Registry, Resource
 from .canonical import CanonicalizationError, validate_ijson
 from .diagnostics import Diagnostic, FailureCode, ValidationReport
 from .json_types import JSONValue
+from .schema_session import SchemaKey, active_schema_session
 
 SCHEMA_FILENAMES = {
     "design_spec": "design-spec.schema.json",
@@ -85,6 +86,10 @@ def _json_pointer(parts: list[object]) -> str:
 
 
 def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
+    session = active_schema_session()
+    encoded = None
+    if session is not None:
+        value, encoded = session.snapshot(value)
     if kind == "design_spec" and isinstance(value, dict):
         if value.get("schema_version") == "1.1.0":
             kind = "design_spec_1_1"
@@ -126,11 +131,46 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
             ]
         )
     schema = _schemas()[kind]
+    registry = _registry()
+    format_checker = FormatChecker()
     validator = Draft202012Validator(
         schema,
-        registry=_registry(),
-        format_checker=FormatChecker(),
+        registry=registry,
+        format_checker=format_checker,
     )
+    key: SchemaKey | None = None
+    if session is not None and encoded is not None:
+        # Bind the root and the actual resolved resources, not just their URIs.
+        resources = {uri: registry.contents(uri) for uri in registry}
+        schemas = json.dumps(
+            {"root": schema, "resources": resources},
+            ensure_ascii=True,
+            allow_nan=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+        implementation = (
+            type(validator),
+            type(validator).iter_errors,
+            type(validator).descend,
+            type(validator).evolve,
+            type(validator).TYPE_CHECKER,
+            tuple(sorted(type(validator).VALIDATORS.items())),
+            type(format_checker),
+            type(format_checker).check,
+            type(format_checker).conforms,
+            tuple(sorted(format_checker.checkers.items())),
+        )
+        try:
+            hash(implementation)
+        except TypeError:
+            pass  # Unusual native custom checkers use the unchanged cold path.
+        else:
+            key = (kind, schemas, encoded, implementation)
+            if session.contains(key):
+                return ValidationReport()
+    if session is not None:
+        session.evaluations += 1
     diagnostics = []
     errors = sorted(
         validator.iter_errors(value),
@@ -162,7 +202,10 @@ def validate_schema(kind: str, value: JSONValue) -> ValidationReport:
                 observed=error.instance,
             )
         )
-    return ValidationReport.from_iterable(diagnostics)
+    report = ValidationReport.from_iterable(diagnostics)
+    if report.ok and session is not None and key is not None:
+        session.remember(key)
+    return report
 
 
 def schema_documents(

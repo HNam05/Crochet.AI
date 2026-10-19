@@ -18,6 +18,30 @@ runner version was accidentally left unchanged. These names and the predecessor
 hash name are reserved. The existing CLI snapshot algorithm is reused through
 `backend_provenance.py`; compilation contracts and approved goldens are unchanged.
 
+### Invocation-local successful schema reuse (2026-10-19)
+
+`verify_artifacts` owns one fresh `SchemaValidationSession`; nested calls own
+separate sessions. Only a complete successful schema result can be reused.
+I-JSON admission still runs on every lookup. The key contains the artifact kind,
+exact JSON bytes preserving numeric types and insertion order, actual root and
+resolved schema contents, validator/type-checker callbacks and format-checker
+implementation. A cold check validates an owned snapshot of the keyed input.
+Native subclasses and non-string-key mappings use the uncached path.
+Snapshot copying preserves raw Unicode surrogate code points for rejection;
+it must not decode/re-encode them into an admitted scalar before I-JSON checks.
+
+The session retains at most 32 entries and 8 MiB of key payload, evicts oldest
+entries and clears on every exit, including exceptions. These are memory bounds,
+not physical tolerances. Schema resources and implementations remain frozen
+during synchronous validation; concurrent runtime mutation of validator internals
+is unsupported. Errors, semantic validation, search proofs, forward runs and gate
+evidence are never memoized by this optimization. No cross-request state, global
+cache setting, input normalization or acceptance shortcut is introduced. Under
+the same implementation, cold and reused execution must emit identical canonical
+gate payloads and bundle hashes.
+
+## Gate adapters and acceptance
+
 The built-in `BACKEND_SEMANTIC_CHECKPOINT_V1` requires every gate and is explicitly
 uncalibrated. Thus passing available computational checks can at most produce
 `EXPERIMENTAL`; absent, indeterminate, or unrun required gates produce `NOT_VERIFIED`,

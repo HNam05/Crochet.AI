@@ -3,7 +3,87 @@
 Latest checkpoint: 2026-10-19. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
-## Current implementation, 2026-10-18/19
+## Current implementation, 2026-10-19: R1 closure and shorter verification cycles
+
+Baseline: main `74d2a42c5638c0f72d065cd17c75eacd85c49271`. Existing untracked
+`output/` remains user-owned and excluded from publication.
+
+- Independent coordinate trace audit now proves supported post-trace sample
+  conversion and circumference-overflow failures. It reconstructs the exact
+  reached hypothesis/index/stage, prior work and empty/retained proposal set;
+  forged failure reasons/terminals fail. The generation terminal remains
+  `NUMERICAL_FAILURE`; audit PASS means the computation's failure was proved.
+  Failure-only `coordinate_failure` evidence preserves successful native trace
+  bytes. Real producer cases cover s/radius conversion and circumference overflow;
+  axial conversion follows the same exact replay but has no natural positive
+  producer fixture in this checkpoint. Negative radius contradicts admitted
+  nonnegative piecewise-linear geometry. Pre-trace and other unproved failure
+  scopes remain outside this closure. Generator code is unchanged.
+- `schema_session.py` adds bounded, invocation-local reuse of successful schema
+  checks in `verify_artifacts`. Exact input snapshots, actual root/resolved schema
+  contents and validator/checker implementations bind each entry. I-JSON admission
+  runs for every lookup; failures, semantics, search/physics and gates are not
+  cached. Nested/threaded verification scopes do not share entries. Retention is
+  limited to 32 entries / 8 MiB of key payload and cleared on exception/exit.
+  No global cache/configuration, dependency, schema or golden changed.
+  Primary review replaced JSON-round-trip copying with an owned deepcopy: raw
+  surrogate pairs must remain invalid native input. Three regression cases and
+  a second independent review cover that boundary. Frozen synchronous validator
+  internals are assumed; the retention cap does not bound temporary copy/encoding
+  memory for oversized native inputs.
+- [The weekly execution plan](R1_WEEK_EXECUTION.md) records the requested
+  26 October goal, larger integration packages, critical dependencies and exact
+  next task. R1-R4/B0-B12 requirements remain unchanged. A full R4 acceptance
+  within the week is not established by this plan or these software checks.
+
+Measured performance: four alternating cold/reuse runs of the same saved sphere,
+under the same updated implementation, produced identical canonical gate/bundle
+evidence. Median wall time was **43.34 s cold / 13.56 s reuse (3.20x)**;
+process CPU median ratio was **3.19x**. Each reused run recorded 290 schema hits,
+five actual schema evaluations and zero retained entries after exit. The full
+regression was running concurrently, so wall times are local observations, not
+a general latency guarantee or generation/physical speed claim. Exact measurements
+and scope: `artifacts/r1-schema-benchmark.json`. This does not compare unchanged
+hashes across different source revisions: implementation identity changes.
+
+Final integration: **1,652 passed, 2 Windows symlink skips in 549.35 seconds**
+with a fresh workspace basetemp; full log `artifacts/r1-final-full-b.log`.
+The first full attempt was interrupted for the primary Unicode admission fix,
+not accepted as a complete run. After that source change, 25 targeted checks and
+the complete second run passed. Ruff (`src tests tools`), strict mypy (109
+modules), five independent Node canonical vectors and ten frontend tests pass.
+The installed wheel passes isolated smoke with nine exact schema resources and
+dependency checking. All 109 Python module files match source/wheel/installation
+byte-for-byte. Three complete CLI response envelopes (proved failure, forged
+terminal, real saved-project verification) match source and installed execution;
+all three also match reopened durable jobs executed by the installed isolated
+worker. The saved case remains `NOT_VERIFIED` / `UNTESTED`.
+
+Delivery receipts/logs: `artifacts/r1-week-delivery/`,
+`artifacts/r1-week-final-delivery.log`, `artifacts/r1-week-final-installed-smoke.log`.
+Receipts retain their invocation commit; the benchmark and prepublication checks
+ran on the stated baseline plus this working patch. Runtime/publication receipts
+use the actual committed revision. Worker token/cost metadata was unavailable
+and remains null in ignored `artifacts/agent-costs/r1-week-20261019.json`.
+
+Local runtime command: `.venv/Scripts/python.exe -m crochet_ai.prototype_server
+--port 8765 --data-dir artifacts/local-prototype --software-commit <actual HEAD>`.
+Before reusing a server, check process/listener ownership and the current
+`artifacts/r1-week-delivery/runtime.json` and `listener.json` receipts. The runtime
+check covers HTTP verification, six shape entries, exact saved database rows and
+the historical English PDF bytes. Private database/artifacts and user `output/`
+must not be staged. Backend release and physical status remain unaccepted.
+
+Next coherent R1 task: define and implement the additive physical candidate
+evaluation/selection contract, including the V5 versus V6-V8 dependency and the
+partial/total metric-order conflict identified in `R1_WEEK_EXECUTION.md`. Then
+connect fresh server-owned numerical evaluations to API/CLI/durable jobs, with
+positive multicandidate, rejection, manipulation, tie and budget tests. No
+client-supplied PASS evidence or invented calibrated profile. Material laws,
+production convergence, ideal-surface/uncertainty coverage, authenticated source
+and operational acceptance remain real work; broader R2/R3 remain promised.
+
+## Previous implementation checkpoint, 2026-10-18/19
 
 Baseline was main `7d52202145bf34eb02f63f81ef4d937663b701e0`; existing untracked
 `output/` contains user files and is excluded from publication. This checkpoint
@@ -78,7 +158,7 @@ source/certification and full operational/security release acceptance. Real
 material measurements, identified laws, reviewed thresholds and holdouts remain
 external requirements. Do not describe these gaps as only physical testing.
 
-Next bounded R1 software task: verifier-only reached-stage numerical-failure
+The next task at that previous checkpoint was verifier-only reached-stage numerical-failure
 trace replay in `analytic_trace_audit.py` / `coordinate_meridian_replay.py`.
 Start with `test_coordinate_trace_replay.py`'s truthful sample-failure example;
 inventory actual producer-emittable post-trace sample/circumference errors,
