@@ -3,7 +3,93 @@
 Latest checkpoint: 2026-10-19. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
-## Current implementation, 2026-10-19: R1 closure and shorter verification cycles
+## Current implementation, 2026-10-19: end-to-end experimental numerical selection
+
+Baseline: main `019fa258a51459ed82abb9a87f840a40b0520739`. User-owned
+untracked `output/` and private runtime artifacts remain excluded from publication.
+
+- New `analytic_selection.py` independently audits the complete native analytic
+  proposal batch, performs fresh numerical V0–V10 runs and selects only fully
+  passing candidates. Maximum eight proposals and five scenario reservations
+  each; a budget-limited prefix never returns a selected candidate. All rejected,
+  incomplete and unreached members remain visible. Exact rational metric order,
+  raw IR construction costs and canonical IR hash resolve the finite batch.
+  Generator terminal/completeness are retained; no global optimum is claimed.
+- An additive uncalibrated `ANALYTIC_NUMERICAL_CANDIDATE_V1` profile breaks the
+  circular V5/selection dependency explicitly: V5 proves local construction,
+  trace and exact native membership; the later selection artifact owns the batch
+  decision. Physical acceptance is still outside this computational profile.
+  Default verification and the underlying candidate-claims report are unchanged.
+- API/CLI/isolated durable jobs expose `select_analytic_numerical_candidate`.
+  `POST /api/selection/numerical` binds a saved project's original proposals and
+  trace, rechecks selected membership and does not mutate projects or sessions.
+  Clients cannot supply PASS evidence, callbacks, calibration approval or source
+  identity. Numerical context is explicit; the six-shape UI does not invent one.
+- Integration exposed a genuine geometry-comparison bug: V/E/F tessellation
+  counts were part of topological equality. Implementation 1.1.0 compares known
+  connected closed orientable genus-zero invariants independently of resolution,
+  retaining both full diagnostics and an explicit comparison rule in the digest.
+  Outside that narrow scope strict legacy comparison remains. No mesh admission,
+  numerical threshold, solver generation, schema or approved golden changed.
+- Primary and independent reviews corrected the draft's rank-field bindings,
+  eligibility, request ownership and nested telemetry digest projection. The
+  canonical selection digest omits only documented per-gate telemetry paths;
+  returned telemetry stays visible and authoritative observations remain bound.
+  Read-only contract and topology reviews found no remaining scoped blocker.
+
+Contracts: [selection](ANALYTIC_NUMERICAL_SELECTION_V1.md),
+[ADR 0025](adr/0025-experimental-analytic-numerical-selection.md),
+[API/runtime](BACKEND_RUNTIME.md), [pipeline](VERIFICATION_PIPELINE.md).
+
+Final integration: **1,703 passed, 2 Windows symlink skips in 718.43 seconds**
+with a fresh workspace basetemp (`artifacts/selection-full-tests-20261019a`).
+The full run includes every new numerical, transport, digest and topology case.
+Earlier targeted checks were 50 passing tests before the final digest fix and
+27 focused checks after it. Ruff and strict mypy (110 source modules), five
+independent Node canonical vectors and ten frontend tests pass.
+The installed wheel passes isolated external-directory smoke (nine exact schema
+resources) and dependency checking. All 110 Python modules match source/wheel/
+installation byte-for-byte. Four complete source/installed CLI envelopes match:
+two-member selection, evaluation-prefix exhaustion, hard geometry rejection and
+unbound input rejection. The three computational cases also match reopened
+durable jobs run by the installed isolated worker. `SUCCEEDED` describes execution,
+not selection or physical validity. No approved golden, schema, dependency or CI
+configuration changed. Worker token/cost measurements were unavailable and remain
+null in `artifacts/agent-costs/selection-20261019.json`.
+
+Evidence: `artifacts/selection-full.log`, `artifacts/selection-delivery/`,
+`artifacts/selection-delivery-check.log`, `artifacts/selection-installed-smoke-final.log`.
+Prepublication execution uses the stated baseline plus working patch; receipts
+retain that invocation commit. Runtime/publication receipts use the actual new
+commit. Do not rewrite a receipt to imply an earlier invocation used a later HEAD.
+Current Python/schema source snapshot:
+`a28bd1c78e017625e666fc3658593d105aa47afed6af9e0cf8fd542cf29f7dd2`.
+
+Local runtime command: `.venv/Scripts/python.exe -m crochet_ai.prototype_server
+--port 8765 --data-dir artifacts/local-prototype --software-commit <actual HEAD>`.
+The current delivery's process ownership, database/PDF integrity and publication
+receipts belong in `artifacts/selection-delivery/listener.json`, `runtime.json`
+and `publication.json`. Recheck these before reusing any server or commit claim.
+Database baseline is 12 projects / 12 sessions / 1 feedback row, fingerprint
+`9cc381a45fef6771bbb7ff28a38fb61bac211f2663f945b360f353040bc65838`.
+
+Acceptance remains open: `SELECTED` means at most `EXPERIMENTAL` / `UNTESTED`,
+source execution authentication `NOT_ESTABLISHED`. The positive two-member fixture
+uses deliberately compliant synthetic mechanics and permissive diagnostic
+thresholds to prove plumbing. It is not evidence of realistic dimensions,
+production convergence, calibrated material laws or successful physical crochet.
+The larger fixture still retains one rejected member and selects the passing one.
+
+Next bounded implementation package: use existing F0/material contracts to build
+a reproducible closed-SC production-convergence matrix at representative scales,
+retain every reached failure and identify the concrete closure/contact/material
+model blockers before changing one subsystem. Do not transfer permissive fixture
+thresholds into production. Remaining real work includes identified/calibrated
+material laws, ideal-surface and uncertainty coverage, authenticated evidence,
+operational acceptance and broader R2/R3 solvers. R1–R4 are not accepted; see
+[the updated week plan](R1_WEEK_EXECUTION.md).
+
+## Previous implementation, 2026-10-19: R1 closure and shorter verification cycles
 
 Baseline: main `74d2a42c5638c0f72d065cd17c75eacd85c49271`. Existing untracked
 `output/` remains user-owned and excluded from publication.

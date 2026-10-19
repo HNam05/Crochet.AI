@@ -29,8 +29,9 @@ def backend_capability_matrix() -> dict[str, object]:
         (
             "B3",
             "IMPLEMENTED_SUBSET",
-            "Closed-pole SC proposals; independent sphere/coordinate search and final relation",
-            "Full independent V5, numerical-failure replay and full domain acceptance",
+            "Closed SC proposals, independent search/failure replay "
+            "and experimental numerical selection",
+            "Calibrated physical selection, other failure scopes and full domain acceptance",
         ),
         (
             "B4",

@@ -35,7 +35,7 @@ offen und verschiebt abhängige Arbeit; ein Kalendertag schließt kein Gate.
 | Fenster | Zusammenhängendes Ergebnis | Prüfkriterium / Abhängigkeit |
 | --- | --- | --- |
 | 19.10. | Erreichte numerische Fehler unabhängig rekonstruieren; wiederholte Schemaarbeit reduzieren | Tatsächliche Producer-Traces, gefälschte Terminals, spätere Hypothese, identische Prüfbelege mit/ohne Wiederverwendung; Regression und installiertes Paket |
-| 20.–21.10. | Physikalische Kandidatenprüfung und Auswahl über einen verbindlichen Vertrag verbinden | Zuerst V5-Abhängigkeit von späterer V6–V8-Prüfung auflösen; danach Kandidaten frisch serverseitig prüfen, unzulässige ausschließen, deterministisch auswählen und alle Ablehnungsgründe erhalten |
+| 20.–21.10. | Numerische Kandidatenprüfung und Auswahl verbinden; am 19.10. bereits implementiert | Additiver lokaler V5-Vertrag, frische V0–V10-Prüfung, exakte Auswahl über den vollständig erfassten Satz; Integration und installierte Ausführung belegen, keine physikalische Freigabe ableiten |
 | 21.–22.10. | Modell-/Vergleichsgrenzen an repräsentativen geschlossenen SC-Fällen prüfen | Erfolgsfälle und nicht konvergierte/zu teure Fälle; jedes harte Geometriekriterium einzeln; keine nachträgliche Lockerung von Schwellen oder synthetische Kalibrierfreigabe |
 | 22.–23.10. | Gesamtablauf in API/CLI/dauerhaften Jobs abschließen | Gleiche Quell-/Installationsantworten, Wiederanlauf, Abbruch, Ressourcenlimit und unveränderte gespeicherte Projekte/PDFs |
 | 23.–25.10. | Betriebs-/Sicherheitslücken und empirische Evidenz auswerten | Konkrete B7/B8/B11-Checkliste mit positivem Beleg oder offenem Gate; Backup/Restore und Eingabegrenzen; unabhängige reale Mess-/Holdout-Daten erforderlich |
@@ -43,27 +43,27 @@ offen und verschiebt abhängige Arbeit; ein Kalendertag schließt kein Gate.
 
 ## Unmittelbar nächstes Implementierungspaket
 
-Die heutige Pipeline setzt V5 vor V6–V8, lässt V5 aber wegen fehlender physikalischer
-Auswahl unvollständig. Ein Batch-Wrapper, der nur vollständige V5-PASS-Ergebnisse
-annimmt, könnte dadurch niemals positiv abschließen. Diesen Kreis zuerst durch
-einen additiven Vertrag auflösen: lokale V5-Konstruktions-/Suchbeweise von der
-nachgelagerten Batch-Auswahl unterscheiden, ohne die bestehenden Pflichtgates
-oder ihre Reihenfolge umzudeuten. Alte Schnittstellen und Belegidentitäten
-bleiben versioniert kompatibel.
+Der Kreis zwischen lokalem V5-Beweis und späterer numerischer Auswahl ist im
+additiven [Auswahlvertrag](ANALYTIC_NUMERICAL_SELECTION_V1.md) aufgelöst.
+V0–V10 bleiben Pflicht; nur die abschließende Batch-Entscheidung liegt außerhalb
+der lokalen Kandidatenprüfung. Der Standardvertrag bleibt unverändert. Exakte
+lexikografische Metrikordnung und IR-Hash behandeln unvergleichbare Vektoren und
+Gleichstände ohne gewichteten Durchschnitt. API/CLI/Jobs und gespeicherte Projekte
+haben den verbundenen Ablauf. Zwei vollständig bestandene synthetische Fälle
+prüfen die Auswahlmechanik, keine reale Materialkalibrierung.
 
-Auch die Metrikordnung muss vor Implementierung eindeutig sein:
-[VERIFICATION.md](VERIFICATION.md) nennt eine explizite partielle Ordnung,
-[SOLVER_ARCHITECTURE.md](SOLVER_ARCHITECTURE.md) eine totale Ordnung des
-Metrikvektors. Die neue Auswahl braucht einen dokumentierten, versionierten
-Vergleich einschließlich unvergleichbarer Fälle und Hash-Gleichstandsregel.
-Kein versteckter gewichteter Durchschnitt.
-
-Das Paket muss positive Mehrkandidatenfälle, einen physikalisch ungültigen
-strukturell einfachen Kandidaten, Gleichstände, Manipulation, Budgeterschöpfung
-und einen vollständig leeren zulässigen Satz abdecken. API-Clients dürfen keine
-selbst behaupteten PASS-Belege oder Kalibrierfreigaben einschleusen. Eine
-hypothetische numerische Auswahl ist ausdrücklich experimentell; reale
-Kalibrierung und Quellenauthentifizierung bleiben separate Anforderungen.
+Nächstes zusammenhängendes Paket: Produktionskonvergenz an repräsentativen
+geschlossenen SC-Fällen untersuchen und die konkret erreichten Modellgrenzen
+schließen. Dazu die bereits vorhandenen Material-/F0-Verträge und Messpakete
+verwenden, kleine und realistische Skalen getrennt auswerten, Abschluss-/Druck-
+und Kontaktgesetze mit identifizierten Parametern prüfen und fehlende Evidenz
+explizit lassen. Vor Änderungen an Generator oder unabhängiger Prüfung jeweils
+die betroffene Seite begrenzen; keine gemeinsame Anpassung an ein gewünschtes
+Ergebnis. Produktionsschwellen und Kalibrierfreigaben dürfen nicht aus den
+permissiven Integrationsfixtures übernommen werden. Danach folgen
+Idealflächen-/Unsicherheitsabdeckung, authentifizierte Quellen und die konkrete
+Betriebsabnahme. Die übrigen Wochenfenster und R1–R4-Anforderungen bleiben offen,
+bis ihre eigenen positiven Belege vorliegen.
 
 ## Grenzen der Wochenzusage
 

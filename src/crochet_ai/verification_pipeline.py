@@ -120,6 +120,9 @@ class VerificationProfile:
 BACKEND_SEMANTIC_CHECKPOINT_V1 = VerificationProfile(
     PROFILE_ID, PROFILE_VERSION, GATES, calibrated=False, permits_warnings=True
 )
+ANALYTIC_NUMERICAL_CANDIDATE_V1 = VerificationProfile(
+    "ANALYTIC_NUMERICAL_CANDIDATE_V1", "1.0.0", GATES, calibrated=False
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -582,6 +585,11 @@ def _verify_artifacts(
         numerical_enabled = True
     else:
         raise ValueError("numerical verification requires admitted context and server identity")
+    local_numerical_profile = profile == ANALYTIC_NUMERICAL_CANDIDATE_V1
+    if local_numerical_profile and (not numerical_enabled or search_evidence is None):
+        raise ValueError(
+            "analytic numerical candidate profile requires fresh numerical/search inputs"
+        )
     for artifact in (design, material, ir):
         validate_ijson(artifact)
     material_schema = validate_schema("material_profile", material)
@@ -1014,6 +1022,7 @@ def _verify_artifacts(
         )
         evidence_data: dict[str, Any] = claims_data
         trace_failed = False
+        native_proposal_confirmed = False
         relation_data: dict[str, Any] | None = None
         relation_failed = False
         if search_evidence is not None:
@@ -1053,6 +1062,7 @@ def _verify_artifacts(
                 )
                 if native:
                     member = hashes["crochet_ir"] in proposal_hashes
+                    native_proposal_confirmed = member
                     assertions += (("search.candidate_is_emitted_proposal", member),)
                     if not member:
                         trace_failed = True
@@ -1114,14 +1124,49 @@ def _verify_artifacts(
                             )
                 if relation_data is not None:
                     evidence_data["final_relation"] = relation_data
+        local_proof_complete = False
+        if local_numerical_profile:
+            deferred = {
+                "deterministic_candidate_selection_and_tie_break":
+                    "ANALYTIC_NUMERICAL_SELECTION_V1 post-verification artifact",
+                "physical_verification": "outside uncalibrated computational profile; UNTESTED",
+            }
+            evidence_data = {
+                **evidence_data,
+                "local_proof_profile": ANALYTIC_NUMERICAL_CANDIDATE_V1.profile_id,
+                "deferred_obligations": deferred,
+            }
+            missing_checks = tuple(item for item in missing_checks if item not in deferred)
+            if native_proposal_confirmed:
+                not_applicable = {
+                    "prototype.count_schedule", "prototype.final_phases", "prototype.phase_policy"
+                }
+                missing_checks = tuple(
+                    item for item in missing_checks if item not in not_applicable
+                )
+                evidence_data["not_applicable_checks"] = sorted(not_applicable)
+            else:
+                missing_checks += ("native_emitted_analytic_proposal_required",)
+            local_proof_complete = (
+                claims.status == "INDETERMINATE"
+                and not trace_failed
+                and not relation_failed
+                and not missing_checks
+                and not diagnostics
+                and all(passed for _, passed in assertions)
+            )
         return GateResult(
             GateOutcome.FAIL
             if claims.status == "FAIL" or trace_failed or relation_failed
+            else GateOutcome.PASS
+            if local_proof_complete
             else GateOutcome.INDETERMINATE,
             assertions=assertions,
             diagnostics=diagnostics,
             missing_checks=missing_checks,
-            scope=(
+            scope="Independent local analytic construction/search proof; batch selection deferred"
+            if local_numerical_profile
+            else (
                 "Independent analytic schedule and bounded staged search; "
                 "physical selection remains open"
                 + ("; final-relation audit linked" if relation_data is not None else "")
@@ -1286,6 +1331,8 @@ def _verify_artifacts(
         for gate in GATES
     }
     implementation_versions.update(numerical_versions)
+    if local_numerical_profile:
+        implementation_versions["V5"] = "analytic-local-numerical-claims-adapter/1.0.0"
     if pattern_profile == PATTERN_M1B_PROFILE:
         implementation_versions["V9"] = "pattern-m1b-adapter/1.0.0"
     return verify_runners(

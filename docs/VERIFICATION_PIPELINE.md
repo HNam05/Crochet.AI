@@ -18,6 +18,34 @@ runner version was accidentally left unchanged. These names and the predecessor
 hash name are reserved. The existing CLI snapshot algorithm is reused through
 `backend_provenance.py`; compilation contracts and approved goldens are unchanged.
 
+### Additive analytic numerical candidate profile (2026-10-19)
+
+`ANALYTIC_NUMERICAL_CANDIDATE_V1` requires all V0–V10 in their existing order
+and a fresh admitted numerical context plus complete audited search evidence.
+It is uncalibrated. V5 proves local construction/search/native membership and
+explicitly defers batch selection to the separately hashed
+`ANALYTIC_NUMERICAL_SELECTION_V1` result. Physical acceptance stays outside the
+computational profile. Prototype-only schedule metadata is not applicable only
+after exact native emitted membership and a complete independent trace audit.
+No default checkpoint gate or underlying candidate-claims report is promoted.
+
+The batch selector accounts for every emitted member, retains failed/incomplete
+proofs and ranks only candidates with all required gates PASS, no missing checks,
+diagnostics or false assertions. Its exact total order extends coordinatewise
+geometry dominance at equal construction costs. A budget-limited prefix yields
+no selected output. Selection is bounded to the audited emitted set, preserves
+the generator terminal, and remains `EXPERIMENTAL` / `UNTESTED` with source
+execution authentication `NOT_ESTABLISHED`. Exact budgets, metric ordering and
+digest projection: [the selection contract](ANALYTIC_NUMERICAL_SELECTION_V1.md).
+
+Geometry comparison implementation `geometry-comparison/1.1.0` corrects one
+topology predicate: independently admitted connected closed orientable genus-zero
+surfaces compare their topology invariants independently of tessellation counts.
+Both raw topology records remain visible. Other scopes retain strict record
+comparison; this does not establish general topology correspondence. The rule
+and implementation version are included in comparison evidence and downstream
+gate identities. No numerical threshold or mesh admission rule is relaxed.
+
 ### Invocation-local successful schema reuse (2026-10-19)
 
 `verify_artifacts` owns one fresh `SchemaValidationSession`; nested calls own

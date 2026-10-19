@@ -5,7 +5,7 @@ Status: IN UMSETZUNG. Der erste Softwareabschnitt ist implementiert; siehe
 Abschnitt 8. R1-R4 sind nicht abgenommen. Keine Abnahmeregel, kein bestehendes
 Schema oder Golden und kein physischer Prüfstatus wurde dadurch verändert.
 
-Aktueller Fortschritt: 2026-10-18. Die Ausgangslage in Abschnitt 2 ist historisch.
+Aktueller Fortschritt: 2026-10-19. Die Ausgangslage in Abschnitt 2 ist historisch.
 Geschlossene SC-Zellmechanik enthält jetzt Schub/Biegung, Kontaktreaktion,
 konservative kontinuierliche Bewegungsprüfung und begrenzte Mehrfachstarts.
 Ein separater Prüfer rekonstruiert die Optimierung und verlangt exakt dieselben
@@ -26,6 +26,12 @@ Für P17 existiert jetzt ein eigener, begrenzter Rechteck-Solver für flache
 SC-Reihen mit exakten Dimensionsprädikaten, IR-Ausgabe sowie API/CLI/Jobs.
 Sein ungebundener Anker, fehlende Wendeluftmaschen und das Pitch-Modell erlauben
 noch keine physische oder allgemeine Flächenfreigabe.
+Die experimentelle numerische Batch-Auswahl ist jetzt über einen additiven
+lokalen V5-Vertrag mit frischen V0–V10-Läufen, exakter Rangfolge, vollständiger
+Kandidatenbuchführung und API/CLI/Jobs/gespeicherten Projekten verbunden.
+Ein Topologievergleichsfehler bei unterschiedlich aufgelösten geschlossenen
+genus-null Oberflächen ist korrigiert. Positive Mehrkandidatenfixtures belegen
+den Ablauf unter synthetischen Regeln, keine realistische Materialfreigabe.
 P15-P19, kalibrierte Auswahl, vollständige Betriebsabnahme und R1-R4 bleiben offen.
 Aktuelle Validierung und konkrete Fortsetzung stehen in
 [BACKEND_HANDOFF.md](BACKEND_HANDOFF.md). Alle ursprünglichen Anforderungen

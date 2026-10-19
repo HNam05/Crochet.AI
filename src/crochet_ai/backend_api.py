@@ -14,6 +14,7 @@ from .analytic_compile import CompileProvenance
 from .analytic_counts import CountSearchBudget
 from .analytic_geometry import MeridianNumerics
 from .analytic_placement import PlacementBudget
+from .analytic_selection import AnalyticSelectionError, select_analytic_numerical_candidate
 from .analytic_solver import AnalyticRunConfig, generate_analytic
 from .analytic_target import AnalyticTargetError, admit_analytic_target
 from .analytic_target_surface import AnalyticTargetSurfaceError, sample_analytic_target_surface
@@ -88,6 +89,7 @@ from .v0_mesh_preflight import (
 )
 from .validation import SemanticValidator
 from .verification_pipeline import (
+    ANALYTIC_NUMERICAL_CANDIDATE_V1,
     BACKEND_SEMANTIC_CHECKPOINT_V1,
     verify_artifacts,
 )
@@ -244,6 +246,7 @@ class BackendAPI:
                         "verify_candidate",
                         "verify_m1b_candidate",
                         "verify_numerical_candidate",
+                        "select_analytic_numerical_candidate",
                         "inspect_analytic_search_trace",
                         "calibration_protocol",
                         "inspect_calibration_campaign",
@@ -271,10 +274,43 @@ class BackendAPI:
                             "sha256": BACKEND_SEMANTIC_CHECKPOINT_V1.content_hash,
                             "calibrated": False,
                             "required_gates": list(BACKEND_SEMANTIC_CHECKPOINT_V1.required_gates),
-                        }
+                        },
+                        {
+                            "profile_id": ANALYTIC_NUMERICAL_CANDIDATE_V1.profile_id,
+                            "version": ANALYTIC_NUMERICAL_CANDIDATE_V1.version,
+                            "sha256": ANALYTIC_NUMERICAL_CANDIDATE_V1.content_hash,
+                            "calibrated": False,
+                            "required_gates": list(ANALYTIC_NUMERICAL_CANDIDATE_V1.required_gates),
+                        },
                     ],
+                    "numerical_selection": {
+                        "profile": "ANALYTIC_NUMERICAL_SELECTION_V1",
+                        "schema_version": "1.0.0",
+                        "max_candidates": 8,
+                        "max_reserved_scenario_runs": 40,
+                        "physical_status": "UNTESTED",
+                    },
                     "capability_matrix": backend_capability_matrix(),
                 }
+            elif operation == "select_analytic_numerical_candidate":
+                names = (
+                    "design_spec", "material_profile", "search_evidence",
+                    "numerical_run", "selection_policy",
+                )
+                _object(request, {"api_version", "operation"} | set(names), "request")
+                for name in names:
+                    if not isinstance(request[name], dict):
+                        raise ApiInputError("request." + name)
+                data = select_analytic_numerical_candidate(
+                    request["design_spec"], request["material_profile"],
+                    request["search_evidence"], request["numerical_run"],
+                    request["selection_policy"],
+                    software_commit=self.provenance.software_commit,
+                    source_snapshot={
+                        "source_snapshot_sha256": self.provenance.source_snapshot_sha256,
+                        "implementation_identity": implementation_identity_hash(),
+                    },
+                )
             elif operation in {"export_m1b", "import_m1b"}:
                 expected = {"api_version", "operation", "design_spec", "yarn_bindings"}
                 expected |= (
@@ -1088,6 +1124,7 @@ class BackendAPI:
             GeometryComparisonError,
             ProvenanceChainError,
             NumericalVerificationError,
+            AnalyticSelectionError,
             AnalyticTargetSurfaceError,
             MeshImportError,
         ) as error:

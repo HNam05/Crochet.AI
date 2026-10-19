@@ -723,6 +723,22 @@ def _topology(mesh: DecodedIndexedTriangleMesh) -> dict[str, int | bool]:
     }
 
 
+def _topology_match(
+    predicted: dict[str, int | bool], target: dict[str, int | bool]
+) -> tuple[bool, str]:
+    # _topology has already proved the manifold/link conditions for both meshes.
+    sphere_invariants = {
+        "components": 1, "boundary_edges": 0, "orientable": True,
+        "euler_characteristic": 2, "betti_0": 1, "betti_1": 0, "betti_2": 1,
+    }
+    if all(
+        all(record[key] == expected for key, expected in sphere_invariants.items())
+        for record in (predicted, target)
+    ):
+        return True, "CONNECTED_CLOSED_ORIENTABLE_GENUS_ZERO_V1"
+    return predicted == target, "STRICT_TOPOLOGY_RECORD_V1"
+
+
 def _face_components(graph: list[set[int]]) -> list[set[int]]:
     components: list[set[int]] = []
     seen: set[int] = set()
@@ -1099,6 +1115,7 @@ def _compare_geometry(
     )
     pred_top = _topology(predicted)
     target_top = _topology(target)
+    topology_matches, topology_comparison_rule = _topology_match(pred_top, target_top)
     predicted_curvature = _vertex_gaussian_curvature(predicted, pa, pred_top)
     target_curvature = _vertex_gaussian_curvature(target, ta, target_top)
     curvature = _curvature_comparison(
@@ -1249,7 +1266,8 @@ def _compare_geometry(
         "topology": {
             "predicted": predicted_topology,
             "target": target_topology,
-            "matches": pred_top == target_top,
+            "matches": topology_matches,
+            "comparison_rule": topology_comparison_rule,
         },
     }
     evaluations: dict[str, JSONValue] = {}
@@ -1289,7 +1307,7 @@ def _compare_geometry(
         "diagnostic thresholds are hypotheses",
     ]
     payload: dict[str, JSONValue] = {
-        "implementation_version": "geometry-comparison/1.0.0",
+        "implementation_version": "geometry-comparison/1.1.0",
         "profile_id": PROFILE,
         "status": "HYPOTHESIS",
         "outcome": "FAIL" if failed else "INDETERMINATE" if "INDETERMINATE" in outcomes else "PASS",

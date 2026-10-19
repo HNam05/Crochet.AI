@@ -26,9 +26,9 @@ not mandatory verification or physical acceptance.
 | B0 | Canonical runtime and semantic validator | Python and independent Node conformance | Implemented 1.0 and additive 1.1; recheck at release |
 | B1 | Visible parser, binder, exporter, detached certification | Independent fixtures; order, anchors, colors, malformed text, semantic round trips, strict typing | M1A and bounded M1B visible topology replay implemented; explicit M1B V9 adapter; detached authenticated certification and broader acceptance remain |
 | B2 | Input/material resolution and geometry adapters | Immutable references, units, semantic negatives, robust predicates and boundary tests | Supported DesignSpec 1.1 mesh profiles have bounded V0 admission, exact adjacent and nonadjacent pair decisions, opening binding and normalized mesh evidence; closed sphere/ellipsoid and DesignSpec 1.2 simple explicit-coordinate revolution targets have ideal-target V0 admission; arbitrary-axis/open, flat and lace adapters remain open |
-| B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals, independent staged search/final-relation replay and supported reached-stage coordinate numerical-failure proofs implemented; other failure scopes, full V5/physical selection and domains remain |
+| B3 | Analytic solver and independent candidate checks | Reachability proof, bounded global count search, reproducible traces, adversarial fixtures | Narrow closed-pole and explicit-coordinate SC proposals, independent staged search/final-relation replay, supported reached-stage coordinate numerical-failure proofs and additive experimental fresh numerical batch selection implemented; other failure scopes, calibrated physical selection and domains remain |
 | B4 | Target-independent F0 simulation | Dimensioned energies, target-leakage tests, convergence and collision evidence | Experimental closed SC stretch/closure/pressure/shell/contact, conservative continuous path checks, bounded multistart and independent exact-coordinate optimizer replay implemented; identified material laws, open fixtures, production convergence and physical acceptance remain |
-| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered checkpoint with optional fresh audited F0, full sampled metric vector and five gauge endpoint scenarios in V6/V7/V8/V10; calibrated physical selection, broader domains, ideal-surface coverage and authenticated release evidence remain |
+| B5 | Geometry, robustness and V0-V10 orchestration | Independent synthetic metrics, bounded scenarios, fail-closed outcomes, provenance | Ordered checkpoint with fresh audited F0, full sampled metric vector, five gauge endpoint scenarios and additive all-gate analytic selection; genus-zero topology comparison independent of tessellation counts; calibrated physical selection, broader domains, ideal-surface coverage and authenticated release evidence remain |
 | B6 | Versioned API and CLI | Contract tests, structured errors, deterministic artifact retrieval | Local transport-independent API/CLI subset implemented; release contract open |
 | B7 | Durable jobs and artifacts | Atomicity, idempotency, cancellation, resource limits, concurrency and recovery tests | Local SQLite jobs subset implemented; operational gates open |
 | B8 | Security, packaging and operation | Untrusted input limits, path safety, isolation, diagnostics, install and end-to-end tests | Request limits, isolation, wheel and WAL-safe new-path project backup/restore implemented; complete operational/security acceptance remains |
@@ -45,6 +45,15 @@ remain checked. Current validation and measured timings are recorded in
 [the handoff](BACKEND_HANDOFF.md). The requested week target and next complete
 integration package are in [R1_WEEK_EXECUTION.md](R1_WEEK_EXECUTION.md); they do
 not waive R1-R4 or any package acceptance requirement.
+
+The additive [numerical selection contract](ANALYTIC_NUMERICAL_SELECTION_V1.md)
+now connects complete trace admission, fresh V0–V10 candidate runs, exact ranking
+and API/CLI/durable-job/saved-project delivery. It resolves the local V5 versus
+later selection dependency without changing the default profile. Only fully
+passing candidates are eligible; a prefix budget yields no selection. Native
+membership and server source identity are checked. Two-member positive synthetic
+fixtures prove orchestration, not production material accuracy. Selection remains
+`EXPERIMENTAL`, physical status `UNTESTED`, source authentication unestablished.
 
 Latest integration checkpoint (2026-10-09):
 [ADR 0022](adr/0022-bounded-numerical-backend-and-mesh-drafts.md) connects the

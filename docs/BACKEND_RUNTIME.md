@@ -51,6 +51,7 @@ filesystem paths to follow, executable code or URLs to retrieve.
 | generate_geodesic_draft | design_spec, material_profile, mesh_json, run_config |
 | compile_reserve_schedule | design_spec, material_profile, schedule |
 | verify_numerical_candidate | design_spec, material_profile, crochet_ir, mesh_json, diagnostic_mode, numerical_run; optional search_evidence |
+| select_analytic_numerical_candidate | design_spec, material_profile, search_evidence, numerical_run, selection_policy |
 | inspect_provenance_chain | evidence_bundle |
 | inspect_mesh_openings | design_spec, material_profile, mesh_json |
 | inspect_analytic_target | design_spec, material_profile |
@@ -109,6 +110,25 @@ They bind server-stored DesignSpec/material/IR, enforce existing origin/token,
 Host and request limits, and do not update projects or sessions. Numerical
 verification remains diagnostic. Existing `/api/forward/closed` and `/api/verify`
 retain their behavior. The browser layout and English PDF are unchanged.
+
+`select_analytic_numerical_candidate` uses the additive experimental contract in
+[ANALYTIC_NUMERICAL_SELECTION_V1.md](ANALYTIC_NUMERICAL_SELECTION_V1.md).
+It independently audits the full native analytic proposal batch and freshly runs
+V0–V10 for each reached member. Only a fully accounted batch can return a selected
+IR; incomplete evaluation budgets return no selection. Failed/incomplete members
+retain their diagnostics. Exact metric ordering and the canonical IR hash resolve
+ties. The server owns source provenance; requests cannot supply gate evidence,
+runner implementations, calibration approval or a separate candidate IR.
+
+The saved-project route `POST /api/selection/numerical` accepts exactly
+`{project_id, numerical_run, selection_policy}` under the existing origin/CSRF
+and body limits. It reads the retained original proposals and complete search
+trace, verifies selected membership again and does not write projects/sessions.
+The operation also runs through generic CLI requests and isolated durable jobs.
+Its local proof profile is `ANALYTIC_NUMERICAL_CANDIDATE_V1`; the default semantic
+checkpoint is unchanged. `SELECTED` means at most `EXPERIMENTAL` / `UNTESTED`,
+never calibrated or physically accepted. Numerical policies must be supplied
+explicitly; the six-shape UI does not invent material laws or a validated policy.
 
 Local operational backup/restore uses
 [tools/prototype_backup.py](../tools/prototype_backup.py) and

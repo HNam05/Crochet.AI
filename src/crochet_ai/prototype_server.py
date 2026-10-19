@@ -289,12 +289,15 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         raise ValueError("request.fields")
                     project = service.generate(body)
                     self._send(200, {"ok": True, "data": project})
-                elif path in {"/api/verify", "/api/verification/numerical"}:
-                    expected_fields = (
-                        {"project_id", "numerical_run"}
-                        if path == "/api/verification/numerical"
-                        else {"project_id"}
-                    )
+                elif path in {
+                    "/api/verify", "/api/verification/numerical", "/api/selection/numerical"
+                }:
+                    selection = path == "/api/selection/numerical"
+                    expected_fields = {"project_id"}
+                    if path != "/api/verify":
+                        expected_fields.add("numerical_run")
+                    if selection:
+                        expected_fields.add("selection_policy")
                     if set(body) != expected_fields or not isinstance(body["project_id"], str):
                         raise ValueError("verification.project_id")
                     if re.fullmatch(r"[0-9a-f]{64}", body["project_id"]) is None:
@@ -315,7 +318,16 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         "mesh_json": None,
                         "diagnostic_mode": path == "/api/verification/numerical",
                     }
-                    if path == "/api/verification/numerical":
+                    if selection:
+                        verification_request = {
+                            "api_version": "1.0.0",
+                            "operation": "select_analytic_numerical_candidate",
+                            "design_spec": verification_project["design_spec"],
+                            "material_profile": verification_project["material_profile"],
+                            "numerical_run": body["numerical_run"],
+                            "selection_policy": body["selection_policy"],
+                        }
+                    elif path == "/api/verification/numerical":
                         verification_request["numerical_run"] = body["numerical_run"]
                     generation = verification_project.get("generation", {})
                     if generation.get("search_trace") is not None:
@@ -328,10 +340,20 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                             "search_trace": generation["search_trace"],
                             "candidate_proposals": candidate_proposals,
                         }
+                    elif selection:
+                        self._error(422, "E_PROVENANCE", "selection.retained_search_trace_required")
+                        return
                     if len(rfc8785.dumps(verification_request)) > MAX_REQUEST_BYTES:
                         raise OverflowError("verification.request_size")
                     response = backend.handle(verification_request)
-                    if response["ok"] and response["data"]["input_hashes"]["crochet_ir"] != (
+                    if selection and response["ok"]:
+                        selected = response["data"].get("selected_crochet_ir")
+                        if selected is not None and rfc8785.dumps(selected) not in {
+                            rfc8785.dumps(proposal) for proposal in candidate_proposals
+                        }:
+                            self._error(422, "E_PROVENANCE", "selection.saved_proposal_mismatch")
+                            return
+                    elif response["ok"] and response["data"]["input_hashes"]["crochet_ir"] != (
                         verification_project.get("source_crochet_ir_sha256")
                     ):
                         self._error(422, "E_PROVENANCE", "verification.saved_source_hash_mismatch")
