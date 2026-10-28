@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Crochet.AI · Figur</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/figure.css">
+  <script type="module" src="/figure.mjs"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="/figure.html">Crochet.AI <span>Figuren</span></a>
+    <nav aria-label="Bereiche"><a href="/">Einzelform-Test</a><a href="/figure.html" aria-current="page">Figur</a></nav>
+  </header>
+  <main class="figure-bench">
+    <aside class="figure-rail" aria-label="Figur bearbeiten">
+      <p class="eyebrow">AMIGURUMI · TEILE + MONTAGE · EXPERIMENTELL</p>
+      <h1>Figur entwerfen</h1>
+      <p class="intro">Wähle eine Vorlage, passe Teile, Maße und Farben an. Muster und Vorschau rechnen sich sofort neu.</p>
+      <label>Vorlage<select id="template"></select></label>
+      <label>Name<input id="name" maxlength="80"></label>
+      <fieldset><legend>Maschenprobe <span>pro 10 cm, feste Maschen in Runden</span></legend>
+        <div class="field-row"><label>Maschen<input id="g-stitches" type="number" min="5" max="60" step="0.5"></label><label>Runden<input id="g-rows" type="number" min="5" max="60" step="0.5"></label></div>
+        <div class="field-row"><label>Nadel <span>(mm)</span><input id="g-hook" type="number" min="0.5" max="15" step="0.25"></label><label>Garn<input id="g-yarn" maxlength="120"></label></div>
+      </fieldset>
+      <fieldset><legend>Farben</legend><div id="colors" class="stack"></div><button type="button" id="add-color" class="ghost">+ Farbe</button></fieldset>
+      <fieldset><legend>Teile <span>das erste Teil ist der Grundkörper</span></legend><div id="parts" class="stack"></div><button type="button" id="add-part" class="ghost">+ Teil</button></fieldset>
+      <fieldset><legend>Details <span>Augen, Nase</span></legend><div id="features" class="stack"></div><button type="button" id="add-feature" class="ghost">+ Detail</button></fieldset>
+      <details class="json-box"><summary>Als JSON bearbeiten</summary><textarea id="json" rows="14" spellcheck="false"></textarea><button type="button" id="apply-json">JSON übernehmen</button></details>
+    </aside>
+    <section class="figure-main" aria-live="polite">
+      <div class="object-heading"><div><p class="eyebrow">SCHEMATISCHE VORSCHAU</p><h2 id="figure-title">Figur</h2></div><span class="status" id="figure-status">NOT_VERIFIED · UNTESTED</span></div>
+      <div id="error" class="error-box" hidden></div>
+      <div class="viewer-wrap"><canvas id="figure-canvas" tabindex="0" aria-label="3D-Vorschau der Figur, mit der Maus drehen"></canvas><div class="viewer-hint">Ziehen = drehen · Mausrad = zoomen · Doppelklick = zurücksetzen</div></div>
+      <div class="figure-actions"><button type="button" class="primary" id="download-pdf">Anleitung als PDF</button><button type="button" id="download-text">Als Text</button><button type="button" id="verify">Struktur prüfen</button><span id="summary" class="small-note"></span></div>
+      <div id="verify-result" class="small-note" hidden></div>
+      <nav id="part-tabs" class="part-tabs" aria-label="Teile"></nav>
+      <div id="part-detail"></div>
+      <section class="assembly"><h2>Montage</h2><p class="small-note">Positionen zählen ab Rundenanfang (Markierung = Rückseite) in Häkelrichtung, für Rechtshänder. Vor dem Annähen feststecken.</p><ol id="assembly"></ol></section>
+    </section>
+  </main>
+</body>
+</html>

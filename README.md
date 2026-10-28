@@ -19,6 +19,17 @@ SQLite jobs, and a target-free physical-semantic projection. Read
 components, not a production solver or physical simulator. See the
 [backend acceptance plan](docs/BACKEND_ACCEPTANCE_PLAN.md) for remaining packages.
 
+## Figures (new)
+
+Open `Start-CrochetPrototype.cmd` and visit <http://127.0.0.1:8765/figure.html>.
+Design multi-part amigurumi (teddy, bunny, chick templates) or a beanie from
+parts with open, flattened or closed ends, colour stripes, sewn attachments and
+safety eyes. Patterns, assembly positions ("sew along round 21, stitches 4-9")
+and a schematic 3D preview update live; PDF export and "Struktur prüfen" compile
+every part to CrochetIR and run the independent semantic validator. See
+[FIGURES_V1](docs/FIGURES_V1.md) and [ADR 0026](docs/adr/0026-multi-part-figures.md).
+Results remain **NOT_VERIFIED / UNTESTED** until crocheted.
+
 ## Local crochet test
 
 Open `Start-CrochetPrototype.cmd` (prefers the existing `.venv`) or run
