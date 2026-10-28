@@ -18,6 +18,11 @@ import rfc8785
 
 from .backend_api import MAX_REQUEST_BYTES, BackendAPI, bounded_json
 from .calibration_pdf import render_calibration_packet
+from .figure import FigureError, figure_text, solve_figure
+from .figure_ir import verify_figure
+from .figure_parts import SHAPE_ENDS
+from .figure_pdf import render_figure_pdf
+from .figure_templates import template_catalog
 from .prototype_backend import LocalPrototype
 from .prototype_input import PROTOTYPE_VERSION, REQUEST_FIELDS
 from .prototype_pdf import PrototypePdfError, render_project_pdf
@@ -34,6 +39,20 @@ ASSETS = {
     "state.mjs",
     "privacy.html",
     "terms.html",
+    "figure.html",
+    "figure.css",
+    "figure.mjs",
+}
+FIGURE_SHAPE_LABELS = {
+    "sphere": "Kugel",
+    "ellipsoid": "Ellipsoid",
+    "egg": "Ei",
+    "pear": "Birne",
+    "capsule": "Kapsel",
+    "tube": "Schlauch (Arm/Bein)",
+    "dome": "Halbkugel/Kuppel",
+    "cone": "Kegel",
+    "cylinder": "Zylinder/Becher",
 }
 
 
@@ -186,6 +205,21 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                         },
                     },
                 )
+            elif path == "/api/figure/templates":
+                self._send(
+                    200,
+                    {
+                        "ok": True,
+                        "data": {
+                            "templates": template_catalog(),
+                            "shapes": [
+                                {"id": key, "label_de": FIGURE_SHAPE_LABELS[key],
+                                 "ends": list(ends)}
+                                for key, ends in SHAPE_ENDS.items()
+                            ],
+                        },
+                    },
+                )
             elif path == "/api/capabilities":
                 self._send(
                     200, backend.handle({"api_version": "1.0.0", "operation": "capabilities"})
@@ -284,7 +318,44 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
             try:
                 body = self._body()
                 path = urlsplit(self.path).path
-                if path == "/api/generate":
+                if path in {
+                    "/api/figure/solve", "/api/figure/pdf", "/api/figure/text",
+                    "/api/figure/verify",
+                }:
+                    if set(body) != {"spec"}:
+                        raise ValueError("figure.fields")
+                    try:
+                        figure = solve_figure(body["spec"])
+                    except FigureError as error:
+                        self._send(
+                            400,
+                            {
+                                "ok": False,
+                                "error": {
+                                    "code": "E_INPUT",
+                                    "reason": error.code,
+                                    "message_de": error.message_de,
+                                },
+                            },
+                        )
+                        return
+                    if path == "/api/figure/solve":
+                        self._send(200, {"ok": True, "data": figure})
+                    elif path == "/api/figure/verify":
+                        checks = verify_figure(
+                            body["spec"], software_commit=service.provenance.software_commit
+                        )
+                        self._send(200, {"ok": True, "data": {"parts": checks}})
+                    elif path == "/api/figure/pdf":
+                        checks = verify_figure(
+                            body["spec"], software_commit=service.provenance.software_commit
+                        )
+                        self._send(200, render_figure_pdf(figure, checks), "application/pdf",
+                                   "crochet-figure.pdf")
+                    else:
+                        self._send(200, figure_text(figure).encode(),
+                                   "text/plain; charset=utf-8", "crochet-figure.txt")
+                elif path == "/api/generate":
                     if set(body) != REQUEST_FIELDS:
                         raise ValueError("request.fields")
                     project = service.generate(body)

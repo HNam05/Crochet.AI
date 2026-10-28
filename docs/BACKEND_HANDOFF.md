@@ -3,7 +3,30 @@
 Latest checkpoint: 2026-10-19. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
-## Current implementation, 2026-10-19: end-to-end experimental numerical selection
+## Current implementation, 2026-10-28: multi-part figures
+
+Product-direction change requested by the user: make visible progress towards
+"describe a figure, get a pattern". New modules `figure_parts.py`, `figure.py`,
+`figure_ir.py`, `figure_pdf.py`, `figure_templates.py`, browser editor
+`prototype_static/figure.{html,css,mjs}` and routes `GET /api/figure/templates`,
+`POST /api/figure/{solve,verify,pdf,text}` (CSRF-protected like the others).
+
+- Parts: sphere, ellipsoid, egg, pear, capsule, dome, tube, cone, cylinder with
+  closed/open/flat ends, colour stripes, readable staggered shaping, structural
+  replay of every round. Upper-edge round model reproduces the 6/12/18 disc.
+- Figures: strict `FigureSpec`, sewn attachments as (round fraction, angle,
+  tilt), safety eyes/nose, round/stitch assembly instructions, schematic 3D.
+- Every template part (18) compiles to DesignSpec 1.2 + CrochetIR with
+  `COLOR_CHANGE` / `DECLARE_OPENING` and passes the unchanged validator.
+- Existing solver, verifier, schemas, goldens and saved projects are unchanged;
+  `prototype_server.py` and `index.html` only gained routes/assets and a link.
+
+Contract: [FIGURES_V1](FIGURES_V1.md), [ADR 0026](adr/0026-multi-part-figures.md).
+Tests: `tests/test_figure.py` (33 cases). Open: sewing as an IR operation,
+join-as-you-go, oval starts, calibration of the round hypothesis and
+readability weights, LLM text → FigureSpec, physical test of a figure.
+
+## Previous implementation, 2026-10-19: end-to-end experimental numerical selection
 
 Baseline: main `019fa258a51459ed82abb9a87f840a40b0520739`. User-owned
 untracked `output/` and private runtime artifacts remain excluded from publication.

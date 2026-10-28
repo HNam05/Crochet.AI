@@ -23,6 +23,26 @@ diesem Rechner werden die vorhandenen Abhängigkeiten verwendet. Es gibt keine
 Anmeldung und keine Cloudübertragung. Für einen anderen Rechner gilt die
 Installationsanleitung in `BACKEND_RUNTIME.md`.
 
+## Figuren entwerfen (neu)
+
+Nach dem Start `http://127.0.0.1:8765/figure.html` öffnen (Link „Figur
+entwerfen“ oben rechts). Vorlage wählen (Teddy, Hase, Küken, Mütze), dann Teile,
+Maße, Farben, Befestigung und Augen anpassen. Vorschau und Runden rechnen sich
+sofort neu. „Struktur prüfen“ rechnet jedes Teil unabhängig als CrochetIR nach;
+„Anleitung als PDF“ macht dasselbe und erzeugt die druckbare Anleitung mit
+Montage („Arm entlang R21 von Masche 4 bis 9 annähen“).
+
+- Höhe 0 % = Fadenring, 100 % = letzte Runde des Teils, an das genäht wird.
+- Winkel 0 = vorne, 90 = rechts, 180 = hinten, 270 = links (vom Betrachter).
+  Mehrere Winkel ergeben mehrere Exemplare, z. B. `80, 280` für zwei Arme.
+- Positionen zählen ab Rundenanfang; die Markierung gilt als Rückseite.
+- Eigene Entwürfe bleiben im Browser gespeichert; „Als JSON bearbeiten“ zeigt
+  das vollständige Format.
+
+Auch Figuren sind NOT_VERIFIED / UNTESTED, bis sie gehäkelt und gemessen sind.
+Ein erster sinnvoller Test: ein Arm und ein Ohr des Teddys häkeln und Breite
+sowie Rundenzahl mit der Anleitung vergleichen.
+
 ## Einen Häkeltest durchführen
 
 1. Erzeuge zuerst eine kleine Kugel, zum Beispiel 40 mm Durchmesser. Die
