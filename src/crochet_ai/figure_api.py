@@ -12,6 +12,7 @@ from typing import Any
 from .figure import FigureError, calibrate_gauge, figure_text, solve_figure
 from .figure_compose import claude_available, compose
 from .figure_ir import verify_figure
+from .figure_mesh import mesh_part
 from .figure_parts import SHAPE_ENDS
 from .figure_pdf import render_figure_pdf
 from .figure_templates import template_catalog
@@ -28,12 +29,37 @@ FIGURE_SHAPE_LABELS = {
     "cylinder": "Zylinder/Becher",
     "disc": "Scheibe (flach)",
     "rectangle": "Rechteck in Reihen (flach)",
+    "custom": "Eigenes Profil (3D-Modell)",
 }
 
 SPEC_PATHS = frozenset(
     {"/api/figure/solve", "/api/figure/pdf", "/api/figure/text", "/api/figure/verify"}
 )
 TOOL_PATHS = frozenset({"/api/figure/compose", "/api/figure/calibrate"})
+# 3D model upload: raw file bytes plus these options (see figure_mesh).
+MESH_PATH = "/api/figure/mesh"
+MESH_OPTIONS = frozenset({"filename", "up", "flip", "end", "height_mm", "color", "label"})
+
+
+def figure_mesh(data: bytes, options: dict[str, Any]) -> dict[str, Any]:
+    """Slice an uploaded STL/OBJ into a custom part proposal; FigureError on bad input."""
+    if not isinstance(options, dict) or set(options) != MESH_OPTIONS:
+        raise FigureError("mesh.fields", "Unvollständige Angaben zum Modell.")
+    texts = ("filename", "up", "end", "color", "label")
+    if not all(isinstance(options[key], str) and len(options[key]) <= 200 for key in texts):
+        raise FigureError("mesh.fields", "Ungültige Angaben zum Modell.")
+    if not isinstance(options["flip"], bool) or type(options["height_mm"]) not in {int, float}:
+        raise FigureError("mesh.fields", "Ungültige Angaben zum Modell.")
+    return mesh_part(
+        data,
+        options["filename"],
+        height_mm=float(options["height_mm"]),
+        up=options["up"],
+        flip=options["flip"],
+        end=options["end"],
+        color=options["color"],
+        label=options["label"],
+    )
 
 
 def templates_payload(*, allow_claude: bool = True) -> dict[str, Any]:

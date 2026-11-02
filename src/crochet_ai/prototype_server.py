@@ -12,14 +12,22 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 import rfc8785
 
 from .backend_api import MAX_REQUEST_BYTES, BackendAPI, bounded_json
 from .calibration_pdf import render_calibration_packet
 from .figure import FigureError
-from .figure_api import SPEC_PATHS, TOOL_PATHS, figure_spec_call, figure_tool, templates_payload
+from .figure_api import (
+    MESH_PATH,
+    SPEC_PATHS,
+    TOOL_PATHS,
+    figure_mesh,
+    figure_spec_call,
+    figure_tool,
+    templates_payload,
+)
 from .prototype_backend import LocalPrototype
 from .prototype_input import PROTOTYPE_VERSION, REQUEST_FIELDS
 from .prototype_pdf import PrototypePdfError, render_project_pdf
@@ -28,6 +36,8 @@ from .prototype_shapes import SHAPE_CATALOG
 from .prototype_storage import PrototypeStore, PrototypeStoreError
 
 MAX_BODY = 65_536
+# 3D model uploads (figure_mesh.MAX_BYTES) arrive as raw bytes, not JSON.
+MAX_MESH_BYTES = 12 * 1024 * 1024
 ASSETS = {
     "index.html",
     "styles.css",
@@ -165,6 +175,30 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                 raise ValueError("request.truncated")
             return bounded_json(raw)
 
+        def _mesh_upload(self, query: str) -> None:
+            """3D model upload: raw file bytes, options as URL-encoded JSON header."""
+            lengths = self.headers.get_all("Content-Length", [])
+            if self.headers.get("Transfer-Encoding") is not None:
+                raise ValueError("request.transfer_encoding")
+            if len(lengths) != 1 or not lengths[0].isascii() or not lengths[0].isdecimal():
+                raise ValueError("request.content_length")
+            if self.headers.get("Content-Type", "").lower() != "application/octet-stream":
+                raise ValueError("request.content_type")
+            size = int(lengths[0])
+            if size > MAX_MESH_BYTES:
+                raise OverflowError("request.size")
+            raw_options = self.headers.get_all("X-Mesh-Options", [])
+            if query or len(raw_options) != 1 or len(raw_options[0]) > 4096:
+                raise ValueError("mesh.options")
+            options = bounded_json(unquote(raw_options[0]))
+            data = self.rfile.read(size)
+            if len(data) != size:
+                raise ValueError("request.truncated")
+            try:
+                self._send(200, {"ok": True, "data": figure_mesh(data, options)})
+            except FigureError as error:
+                self._figure_error(error)
+
         def do_GET(self) -> None:
             try:
                 self._do_get()
@@ -301,8 +335,12 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                 self._error(403, "E_CSRF", "request.origin_or_token")
                 return
             try:
+                url = urlsplit(self.path)
+                if url.path == MESH_PATH:
+                    self._mesh_upload(url.query)
+                    return
                 body = self._body()
-                path = urlsplit(self.path).path
+                path = url.path
                 if path in TOOL_PATHS:
                     try:
                         self._send(200, {"ok": True, "data": figure_tool(path, body)})

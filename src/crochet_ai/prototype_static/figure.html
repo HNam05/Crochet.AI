@@ -18,11 +18,27 @@
     <div class="figure-rail">
       <section class="compose" aria-labelledby="compose-title">
         <h1 id="compose-title">Was möchtest du machen?</h1>
-        <p class="intro">Beschreib es in einem Satz. Daraus werden Teile, Runden und Maschenzahlen berechnet.</p>
-        <textarea id="compose-text" rows="3" maxlength="2000" aria-labelledby="compose-title" placeholder="z. B. ein kleiner grauer Hase, 12 cm"></textarea>
-        <label class="inline-check" id="claude-row" hidden><input type="checkbox" id="use-claude"> Mit Claude entwerfen (sendet den Text an Anthropic)</label>
-        <button type="button" class="primary" id="compose">Entwurf erstellen</button>
-        <p id="compose-notes" class="small-note" role="status" hidden></p>
+        <p class="intro">Beschreib es in einem Satz oder lade ein 3D-Modell hoch. Daraus werden Teile, Runden und Maschenzahlen berechnet.</p>
+        <div class="segmented compose-mode" role="group" aria-label="Eingabe"><button type="button" id="mode-text" aria-pressed="true">Beschreiben</button><button type="button" id="mode-mesh" aria-pressed="false">3D-Modell hochladen</button></div>
+        <div id="panel-text" class="compose-panel">
+          <textarea id="compose-text" rows="3" maxlength="2000" aria-labelledby="compose-title" placeholder="z. B. ein kleiner grauer Hase, 12 cm"></textarea>
+          <label class="inline-check" id="claude-row" hidden><input type="checkbox" id="use-claude"> Mit Claude entwerfen (sendet den Text an Anthropic)</label>
+          <button type="button" class="primary" id="compose">Entwurf erstellen</button>
+          <p id="compose-notes" class="small-note" role="status" hidden></p>
+        </div>
+        <div id="panel-mesh" class="compose-panel" hidden>
+          <label class="drop" id="mesh-drop"><input type="file" id="mesh-file" accept=".stl,.obj"><span class="drop-title" id="mesh-name">STL- oder OBJ-Datei wählen oder hierher ziehen</span><span class="small-note">Die Datei bleibt auf deinem Gerät. Am besten eignen sich rundliche, einteilige Formen.</span></label>
+          <div class="field-row">
+            <label>Höhe <span>cm</span><input id="mesh-height" type="number" min="1" max="40" step="0.5" value="12"></label>
+            <label>Oben ist<select id="mesh-up"><option value="auto">automatisch</option><option value="z">die Z-Achse</option><option value="y">die Y-Achse</option><option value="x">die X-Achse</option></select></label>
+          </div>
+          <div class="field-row">
+            <label>Oberes Ende<select id="mesh-end"><option value="closed">geschlossen</option><option value="open">offen mit Rand</option></select></label>
+            <label class="inline-check mesh-flip"><input type="checkbox" id="mesh-flip"> auf den Kopf stellen</label>
+          </div>
+          <button type="button" class="primary" id="mesh-go">Muster aus dem Modell</button>
+          <p id="mesh-notes" class="small-note" role="status" hidden></p>
+        </div>
         <div class="templates">
           <h2 class="minor" id="templates-title">Oder mit einer Vorlage beginnen</h2>
           <div id="templates" class="gallery" role="group" aria-labelledby="templates-title"></div>

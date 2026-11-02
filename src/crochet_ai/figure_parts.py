@@ -43,7 +43,10 @@ SHAPE_ENDS: dict[str, tuple[str, ...]] = {
     "cylinder": ("closed", "open"),
     "disc": ("open",),
     "rectangle": ("open",),
+    # A measured meridian, e.g. sliced from an uploaded 3D model (figure_mesh).
+    "custom": ("closed", "open"),
 }
+CUSTOM_PROFILE_POINTS = (3, 120)
 # Flat shapes are worked flat (disc in rounds, rectangle in turned rows); they
 # cannot host or be sewn onto other parts in V1.
 FLAT_SHAPES = frozenset({"disc", "rectangle"})
@@ -130,16 +133,36 @@ def _arc(cy: float, ry: float, rr: float, start: float, stop: float) -> list[tup
     ]
 
 
-def build_profile(shape: str, width_mm: float, height_mm: float, end: str) -> Profile:
-    """Target meridian for a part. ``width`` is the widest diameter."""
+def build_profile(
+    shape: str,
+    width_mm: float,
+    height_mm: float,
+    end: str,
+    custom: tuple[tuple[float, float], ...] | None = None,
+) -> Profile:
+    """Target meridian for a part. ``width`` is the widest diameter.
+
+    ``custom`` (shape "custom" only) holds normalized ``(axial, radius)`` pairs:
+    axial runs 0..1 over the height, radius 0..1 relative to ``width / 2``.
+    """
     if shape not in SHAPE_ENDS:
         raise PartError("part.shape", f"Unbekannte Form „{shape}“.")
     if end not in SHAPE_ENDS[shape]:
         allowed = ", ".join(SHAPE_ENDS[shape])
         raise PartError("part.end", f"Form „{shape}“ erlaubt als Ende nur: {allowed}.")
+    if (shape == "custom") != (custom is not None):
+        raise PartError("part.profile", "Ein eigenes Profil gibt es nur bei Form „custom“.")
     r, h = width_mm / 2, height_mm
     points: list[tuple[float, float]]
-    if shape == "sphere":
+    if custom is not None:
+        points = [(h * t, r * radius) for t, radius in custom]
+        if end == "closed" and points[-1][1] > 0:
+            points.append((h, 0.0))
+        elif end == "open" and points[-1][1] <= 0:
+            raise PartError(
+                "part.profile", "Ein offenes Ende braucht oben einen Rand (Radius > 0)."
+            )
+    elif shape == "sphere":
         points = _arc(r, r, r, 0, pi)
     elif shape == "ellipsoid":
         points = _arc(h / 2, h / 2, r, 0, pi)
@@ -338,9 +361,10 @@ def solve_part(
     color: str = "main",
     stripes: tuple[tuple[float, float, str], ...] = (),
     stuffing: str | None = None,
+    custom_profile: tuple[tuple[float, float], ...] | None = None,
 ) -> PartSchedule:
     """Compute a complete round schedule; raises :class:`PartError` on failure."""
-    profile = build_profile(shape, width_mm, height_mm, end)
+    profile = build_profile(shape, width_mm, height_mm, end, custom_profile)
     p_s, p_c = gauge.stitch_pitch_mm, gauge.course_pitch_mm
     if shape == "rectangle":
         return _solve_rows(profile, width_mm, height_mm, gauge, color, stripes)

@@ -139,8 +139,8 @@ function renderParts() {
           el("button", { type: "button", class: "quiet", text: "Entfernen", onclick: () => removePart(index) })),
       el("div", { class: "field-row" },
         field("Name", textInput(part.label, v => { part.label = v; changed(false); })),
-        field("Form", select(meta.shapes.map(s => [s.id, s.label_de]), part.shape, v => {
-          part.shape = v; const s = meta.shapes.find(x => x.id === v); part.end = s.ends[0]; changed(true);
+        field("Form", select(meta.shapes.filter(s => s.id !== "custom" || part.shape === "custom").map(s => [s.id, s.label_de]), part.shape, v => {
+          part.shape = v; delete part.profile; const s = meta.shapes.find(x => x.id === v); part.end = s.ends[0]; changed(true);
         }))),
       el("div", { class: "field-row" },
         field(part.circumference_mm !== undefined ? "Umfang" : "Breite Ø",
@@ -310,6 +310,42 @@ async function composeFromText() {
     activeTemplate = null; renderTemplates();
     playNext = true; renderForm(); saveLocal(); solve();
     notes.textContent = `${data.source === "claude" ? "Entwurf von Claude" : "Erkannt"}: ${data.notes_de.join(" ")} Unter „Feinarbeit“ lässt sich alles anpassen.`;
+  } catch (error) {
+    notes.textContent = error.message || String(error);
+  } finally { button.disabled = false; }
+}
+
+// 3D model upload: the model is sliced into rounds (figure_mesh) and becomes a
+// one-part figure with a "custom" profile. Nothing is uploaded anywhere.
+function setComposeMode(mesh) {
+  $("mode-text").setAttribute("aria-pressed", String(!mesh));
+  $("mode-mesh").setAttribute("aria-pressed", String(mesh));
+  $("panel-text").hidden = mesh; $("panel-mesh").hidden = !mesh;
+}
+
+function chooseMesh(file) {
+  if (!file) return;
+  $("mesh-name").textContent = `${file.name} · ${(file.size / 1e6).toLocaleString("de-DE", { maximumFractionDigits: 1 })} MB`;
+}
+
+async function meshUpload() {
+  const file = $("mesh-file").files[0]; const notes = $("mesh-notes"); const button = $("mesh-go");
+  notes.hidden = false;
+  if (!file) { notes.textContent = "Bitte zuerst eine STL- oder OBJ-Datei wählen."; return; }
+  const height = parseFloat($("mesh-height").value);
+  if (!Number.isFinite(height)) { notes.textContent = "Bitte die gewünschte Höhe in cm eintragen."; return; }
+  button.disabled = true; notes.textContent = "Das Modell wird in Runden zerlegt …";
+  const label = file.name.replace(/\.[^.]+$/, "").slice(0, 40) || "Modell";
+  const color = spec?.colors?.[0] ?? { id: "main", label: "Hauptfarbe", hex: "#C9B79C" };
+  try {
+    const data = await backend.mesh(file, { filename: file.name, up: $("mesh-up").value, flip: $("mesh-flip").checked,
+      end: $("mesh-end").value, height_mm: height * 10, color: color.id, label });
+    spec = { name: label, gauge: spec?.gauge ?? { stitches_per_100mm: 25, rows_per_100mm: 28, hook_mm: 3 },
+      colors: [color], parts: [data.part], features: [], ...(spec?.technique ? { technique: spec.technique } : {}) };
+    activeTemplate = null; renderTemplates();
+    playNext = true; renderForm(); saveLocal(); solve();
+    const triangles = data.slicing.triangles.toLocaleString("de-DE");
+    notes.textContent = [`${triangles} Dreiecke in Runden umgerechnet. Gehäkelt wird der Umfang auf jeder Höhe, Details wie Gesichter kommen danach.`, ...data.notes_de].join(" ");
   } catch (error) {
     notes.textContent = error.message || String(error);
   } finally { button.disabled = false; }
@@ -637,6 +673,18 @@ async function start() {
   $("size").addEventListener("input", e => { $("size-value").textContent = cm(Number(e.target.value)); });
   $("size").addEventListener("change", e => { sizeControl().apply(Number(e.target.value)); renderParts(); renderFeatures(); changed(false); });
   $("start-making").addEventListener("click", openMaking);
+  $("mode-text").addEventListener("click", () => setComposeMode(false));
+  $("mode-mesh").addEventListener("click", () => setComposeMode(true));
+  $("mesh-file").addEventListener("change", e => chooseMesh(e.target.files[0]));
+  $("mesh-go").addEventListener("click", meshUpload);
+  const drop = $("mesh-drop");
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", e => {
+    e.preventDefault(); drop.classList.remove("over");
+    const file = e.dataTransfer.files[0]; if (!file) return;
+    const list = new DataTransfer(); list.items.add(file); $("mesh-file").files = list.files; chooseMesh(file);
+  });
   $("replay").addEventListener("click", () => { if (result) playBuild(); });
   $("making-close").addEventListener("click", closeMaking);
   $("making-prev").addEventListener("click", () => moveMaking(-1));

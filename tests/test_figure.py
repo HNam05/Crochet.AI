@@ -37,7 +37,10 @@ def _replay(counts_tokens: list[tuple[int, tuple[str, ...]]]) -> None:
     ("shape", "end"), [(shape, end) for shape, ends in SHAPE_ENDS.items() for end in ends]
 )
 def test_every_shape_and_end_produces_a_consistent_schedule(shape: str, end: str) -> None:
-    schedule = solve_part(shape, 30, 30, end, GAUGE)
+    # "custom" takes a measured meridian; a vase-like one exercises widening and narrowing.
+    vase = ((0.0, 0.0), (0.05, 0.6), (0.4, 1.0), (0.75, 0.55), (1.0, 0.7))
+    schedule = solve_part(shape, 30, 30, end, GAUGE,
+                          custom_profile=vase if shape == "custom" else None)
     rounds = schedule.rounds
     assert rounds[0].tokens == ("sc",) * rounds[0].count
     assert 4 <= rounds[0].count <= 8

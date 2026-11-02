@@ -22,14 +22,19 @@ worker.onmessage = ({ data }) => {
   else resolve(data.bytes ? new Blob([data.bytes], { type: reply.content_type }) : reply.data);
 };
 
-function api(path, body) {
+function api(path, body, _binary, bytes = null) {
   return new Promise((resolve, reject) => {
     const id = ++seq; pending.set(id, { resolve, reject });
-    worker.postMessage({ id, path, body });
+    worker.postMessage({ id, path, body, bytes }, bytes ? [bytes] : []);
   });
 }
 
+// 3D model upload: the file bytes are handed to the worker, never sent anywhere.
+async function mesh(file, options) {
+  return api("/api/figure/mesh", options, false, await file.arrayBuffer());
+}
+
 export const backend = {
-  name: "browser", ready, api,
+  name: "browser", ready, api, mesh,
   onStatus(callback) { onStatus = callback; if (lastStatus) callback(lastStatus); },
 };

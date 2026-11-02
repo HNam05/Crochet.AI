@@ -29,11 +29,17 @@ const ready = (async () => {
   status("", { ready: true });
 })().catch(error => status(`Der Rechenkern konnte nicht starten: ${error.message}`, { failed: true }));
 
-onmessage = async ({ data: { id, path, body } }) => {
+onmessage = async ({ data: { id, path, body, bytes: upload } }) => {
   try {
     await ready;
     if (!handle) throw new Error("Rechenkern nicht verfügbar.");
-    const reply = JSON.parse(handle(path, body === undefined ? "" : JSON.stringify(body), commit));
+    let reply;
+    if (upload) {
+      const data = py.toPy(new Uint8Array(upload));
+      try { reply = JSON.parse(py.globals.get("mesh")(data, JSON.stringify(body))); } finally { data.destroy(); }
+    } else {
+      reply = JSON.parse(handle(path, body === undefined ? "" : JSON.stringify(body), commit));
+    }
     let bytes = null;
     if (reply.binary) {
       const proxy = py.globals.get("LAST_BYTES"); const buffer = proxy.getBuffer("u8");

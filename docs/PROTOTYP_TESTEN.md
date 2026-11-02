@@ -39,7 +39,7 @@ Montage („Arm entlang R21 von Masche 4 bis 9 annähen“).
 - Eigene Entwürfe bleiben im Browser gespeichert; „Als JSON bearbeiten“ zeigt
   das vollständige Format.
 
-Neu: Oben im Feld „Was möchtest du machen?“ einfach beschreiben, z. B. „ein kleiner grauer Hase, 12 cm“, „Fuchs“, „Strickmütze Kopfumfang 54 cm in Petrol“, „Schal 180 cm blau“ oder „Babydecke 80 x 90 cm“. Alternativ eine Vorlage aus der Galerie anklicken. Unter der Figur lassen sich Größe, Garnfarben und Technik (Häkeln/Stricken) direkt ändern; Details stehen unter „Feinarbeit“. „Jetzt loslegen“ öffnet den Arbeitsmodus: eine Runde nach der anderen mit Maschenzahl, Fortschritt bleibt im Browser gespeichert. Nach dem ersten Testteil unter „Nach dem Testteil“ die gemessenen Maße eintragen und die neue Maschenprobe übernehmen.
+Neu: Oben im Feld „Was möchtest du machen?“ einfach beschreiben, z. B. „ein kleiner grauer Hase, 12 cm“, „Fuchs“, „Strickmütze Kopfumfang 54 cm in Petrol“, „Schal 180 cm blau“ oder „Babydecke 80 x 90 cm“. Alternativ eine Vorlage aus der Galerie anklicken oder unter „3D-Modell hochladen“ eine STL- oder OBJ-Datei wählen (Höhe in cm, welche Achse oben ist); rundliche, einteilige Modelle eignen sich am besten. Unter der Figur lassen sich Größe, Garnfarben und Technik (Häkeln/Stricken) direkt ändern; Details stehen unter „Feinarbeit“. „Jetzt loslegen“ öffnet den Arbeitsmodus: eine Runde nach der anderen mit Maschenzahl, Fortschritt bleibt im Browser gespeichert. Nach dem ersten Testteil unter „Nach dem Testteil“ die gemessenen Maße eintragen und die neue Maschenprobe übernehmen.
 
 Auch Figuren sind NOT_VERIFIED / UNTESTED, bis sie gehäkelt und gemessen sind.
 Ein erster sinnvoller Test: ein Arm und ein Ohr des Teddys häkeln und Breite

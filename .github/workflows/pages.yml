@@ -27,7 +27,9 @@ jobs:
       - name: Install
         run: python -m pip install -e ".[test]"
       - name: Figure and web tests
-        run: python -m pytest -q tests/test_figure.py tests/test_figure_compose.py tests/test_web_build.py
+        run: >-
+          python -m pytest -q tests/test_figure.py tests/test_figure_compose.py
+          tests/test_figure_mesh.py tests/test_web_build.py
       - name: Build site
         run: python tools/build_web.py --commit "$GITHUB_SHA"
       - uses: actions/configure-pages@v6

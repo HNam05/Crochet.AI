@@ -42,6 +42,10 @@ workflow `.github/workflows/pages.yml` tests, builds and publishes it on every
 push to `main`; enable it once under Settings → Pages → Source "GitHub Actions".
 Details: [ADR 0028](docs/adr/0028-static-web-build-pyodide.md).
 
+Both versions accept an uploaded 3D model (STL or OBJ). It is sliced into
+rounds on the device and becomes a part with a custom profile; rounded,
+single-piece models work best. See [ADR 0029](docs/adr/0029-3d-model-upload.md).
+
 ## Local crochet test
 
 Open `Start-CrochetPrototype.cmd` (prefers the existing `.venv`) or run

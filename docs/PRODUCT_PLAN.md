@@ -21,7 +21,7 @@ rechnet der deterministische Solver, jede Anleitung ist bis zum echten Test
 | 6 | Physischer Abgleich | Testserie Kugel/Arm/Ohr/Mütze, Modellgewichte anpassen | offen – braucht echte Häkelstücke |
 | 7 | Konstruktions-Ausbau | ovaler Anfang (Lm-Kette), Farbflächen, Teile direkt anhäkeln, Ripp-/Bündchenmuster, halbe Stäbchen/Stäbchen | offen |
 | 8 | Kleidung mit Verzweigung | Handschuhe (Daumen), Socken (Ferse), Pullover (Raglan) nach Körpermaßen | offen, eigener Solver |
-| 9 | Hochladen als Vorlage | Foto/Umriss oder 3D-Modell hochladen → Bauplan, ohne KI, im Browser | offen |
+| 9 | Hochladen als Vorlage | 3D-Modell (STL/OBJ) → Bauplan, ohne KI, im Browser (ADR 0029); Foto/Umriss | 3D-Modell erledigt (einteilig), Foto offen |
 | 10 | Für alle nutzbar | kostenlose Web-Version auf GitHub Pages, Python im Browser (ADR 0028); später Teilen, Muster-Bibliothek | Web-Version erledigt |
 
 ## Was in diesem Stand umgesetzt ist
@@ -52,9 +52,9 @@ rechnet der deterministische Solver, jede Anleitung ist bis zum echten Test
    vorhandene `flat_solver` ist die Basis); für Stricken eine eigene,
    versionierte Semantik statt Häkel-IR.
 4. **Handschuhe/Socken** als erster verzweigter Kleidungs-Solver.
-5. **Hochladen** (Phase 9): Foto oder Umriss eines rundlichen Objekts bzw. ein
-   3D-Modell (STL/OBJ) in ein Rundenprofil umrechnen und an den vorhandenen
-   Solver geben – vollständig im Browser, ohne KI-Dienst.
+5. **Hochladen ausbauen** (Phase 9): 3D-Modelle mit Armen/Beinen automatisch
+   in Teile zerlegen bzw. hochgeladene Teile annähen; Foto oder Umriss eines
+   rundlichen Objekts als Profil – vollständig im Browser, ohne KI-Dienst.
 
 Die Web-Version ist kostenlos und braucht keinen Server: GitHub Pages liefert
 nur Dateien aus, gerechnet wird mit Pyodide im Browser der Besucher

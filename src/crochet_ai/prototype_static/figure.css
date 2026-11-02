@@ -12,6 +12,14 @@
 .compose .intro{margin-bottom:var(--s2)}
 .compose textarea{min-height:96px;resize:vertical;font-size:var(--t-lg)}
 .templates{display:grid;gap:var(--s3);margin-top:var(--s4)}
+.compose-mode{justify-self:start}
+.compose-panel{display:grid;gap:var(--s4)}
+.drop{position:relative;display:grid;gap:var(--s1);justify-items:center;text-align:center;padding:var(--s6) var(--s4);border:1px dashed var(--field);border-radius:var(--r-lg);background:var(--surface);cursor:pointer;font-weight:400}
+.drop.over{border-color:var(--accent);background:var(--accent-wash)}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.drop-title{font-weight:500;color:var(--ink);overflow-wrap:anywhere}
+.mesh-flip{align-self:end;min-height:44px}
 h2.minor{font-family:var(--sans);font-size:var(--t-sm);font-weight:500;color:var(--ink-2)}
 
 /* Template gallery with real previews */

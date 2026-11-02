@@ -463,6 +463,7 @@ def verify_figure(value: object, *, software_commit: str) -> list[dict[str, Any]
         schedule = solve_part(
             part.shape, part.width_mm, part.height_mm, part.end, spec.gauge,
             color=part.color, stripes=part.stripes, stuffing=part.stuffing,
+            custom_profile=part.profile,
         )
         record: dict[str, Any] = {"part": part.id, "label": part.label,
                                   "stitches": schedule.total_stitches}

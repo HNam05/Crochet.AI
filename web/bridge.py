@@ -10,6 +10,7 @@ from crochet_ai.figure import FigureError
 from crochet_ai.figure_api import (
     SPEC_PATHS,
     TOOL_PATHS,
+    figure_mesh,
     figure_spec_call,
     figure_tool,
     templates_payload,
@@ -21,6 +22,21 @@ CONTENT_TYPES = {"pdf": "application/pdf", "text": "text/plain; charset=utf-8"}
 
 def _ok(data):
     return json.dumps({"ok": True, "data": data})
+
+
+def _error(error):
+    if isinstance(error, FigureError):
+        return json.dumps({"ok": False, "error": {
+            "code": "E_INPUT", "reason": error.code, "message_de": error.message_de}})
+    return json.dumps({"ok": False, "error": {"code": "E_INPUT", "reason": str(error)}})
+
+
+def mesh(data, options_json):
+    """3D model upload: raw file bytes (from the worker) plus JSON options."""
+    try:
+        return _ok(figure_mesh(bytes(data), json.loads(options_json)))
+    except (FigureError, ValueError, KeyError, TypeError) as error:
+        return _error(error)
 
 
 def handle(path, body_json, commit):
@@ -38,8 +54,5 @@ def handle(path, body_json, commit):
             LAST_BYTES = data
             return json.dumps({"ok": True, "binary": True, "content_type": CONTENT_TYPES[kind]})
         return json.dumps({"ok": False, "error": {"code": "E_NOT_FOUND", "reason": path}})
-    except FigureError as error:
-        return json.dumps({"ok": False, "error": {
-            "code": "E_INPUT", "reason": error.code, "message_de": error.message_de}})
-    except (ValueError, KeyError, TypeError) as error:
-        return json.dumps({"ok": False, "error": {"code": "E_INPUT", "reason": str(error)}})
+    except (FigureError, ValueError, KeyError, TypeError) as error:
+        return _error(error)

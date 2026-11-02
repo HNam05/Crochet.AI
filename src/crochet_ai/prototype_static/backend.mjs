@@ -22,4 +22,16 @@ async function call(path, body, binary = false) {
   return data.data;
 }
 
-export const backend = { name: "server", ready: Promise.resolve(), api: call };
+// 3D model upload: the file goes as raw bytes, the options as a header.
+async function mesh(file, options) {
+  const response = await fetch("/api/figure/mesh", {
+    method: "POST", body: file, credentials: "same-origin", cache: "no-store",
+    headers: { "Content-Type": "application/octet-stream", "X-CSRF-Token": await token(),
+      "X-Mesh-Options": encodeURIComponent(JSON.stringify(options)) },
+  });
+  const data = await response.json();
+  if (!data.ok) throw Object.assign(new Error(data.error.message_de || data.error.reason), data.error);
+  return data.data;
+}
+
+export const backend = { name: "server", ready: Promise.resolve(), api: call, mesh };

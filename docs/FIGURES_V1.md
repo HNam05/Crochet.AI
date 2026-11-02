@@ -50,6 +50,19 @@ stockinette.
   server-side refusal fallbacks; the reply must pass `parse_figure`, gets one
   repair round, then fails closed. No stitch counts ever come from the model.
 
+## Additions 2026-11-02 (ADR 0028, 0029)
+
+- Browser build: the editor runs on GitHub Pages with the same package in
+  Pyodide (`tools/build_web.py`, `web/`); shared operations live in
+  `figure_api`. Claude is disabled there and the web PDF omits the CrochetIR
+  summary (the check stays available on request).
+- Shape `custom` with `profile: [[axial, radius], ...]` (normalized 0..1,
+  3-120 points, axial rising from 0 to 1, widest radius exactly 1), ends
+  `closed`/`open`; `width_mm`/`height_mm` scale it. Not allowed on other shapes.
+- `POST /api/figure/mesh` (raw `application/octet-stream`, options as
+  URL-encoded JSON in `X-Mesh-Options`: filename, up, flip, end, height_mm,
+  color, label) slices STL/OBJ into such a part; branching or gaps fail closed.
+
 ## Part model
 
 Shapes and allowed ends (first is the default):

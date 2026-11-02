@@ -16,10 +16,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from itertools import pairwise
 from math import cos, floor, isfinite, pi, radians, sin, sqrt
 from typing import Any
 
 from .figure_parts import (
+    CUSTOM_PROFILE_POINTS,
     END_MODES,
     FLAT_SHAPES,
     PART_SOLVER_VERSION,
@@ -173,6 +175,37 @@ def _angles(value: object, where: str) -> tuple[float, ...]:
     return tuple(_number(a, -360, 360, f"{where}.angles") % 360 for a in value)
 
 
+def _custom_profile(
+    value: object, shape: str, where: str
+) -> tuple[tuple[float, float], ...] | None:
+    """Normalized meridian ``[[axial 0..1, radius 0..1], ...]`` for shape "custom"."""
+    if shape != "custom":
+        if value is not None:
+            raise FigureError("parts.profile", f"{where}: profile gibt es nur bei Form custom.")
+        return None
+    low, high = CUSTOM_PROFILE_POINTS
+    if not isinstance(value, list) or not low <= len(value) <= high:
+        raise FigureError(
+            "parts.profile", f"{where}: profile braucht {low} bis {high} Punkte [Höhe, Radius]."
+        )
+    points: list[tuple[float, float]] = []
+    for pair in value:
+        if not isinstance(pair, list) or len(pair) != 2:
+            raise FigureError("parts.profile", f"{where}: jeder Profilpunkt ist [Höhe, Radius].")
+        points.append((_number(pair[0], 0, 1, f"{where}.profile"),
+                       _number(pair[1], 0, 1, f"{where}.profile")))
+    axial = [t for t, _ in points]
+    if axial[0] != 0 or axial[-1] != 1 or any(b < a for a, b in pairwise(axial)):
+        raise FigureError(
+            "parts.profile", f"{where}: Profilhöhen steigen von 0 bis 1 (unten nach oben)."
+        )
+    if max(r for _, r in points) < 0.999:
+        raise FigureError(
+            "parts.profile", f"{where}: der breiteste Profilpunkt muss Radius 1 haben."
+        )
+    return tuple(points)
+
+
 @dataclass(frozen=True, slots=True)
 class Attachment:
     to: str
@@ -195,6 +228,7 @@ class PartSpec:
     note: str
     attach: Attachment | None
     start_top: bool
+    profile: tuple[tuple[float, float], ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,7 +304,7 @@ def parse_figure(value: object) -> FigureSpec:
         entry = _fields(
             item,
             {"id", "label", "shape", "width_mm", "circumference_mm", "height_mm", "end",
-             "color", "stripes", "stuffing", "note", "attach", "start"},
+             "color", "stripes", "stuffing", "note", "attach", "start", "profile"},
             {"id", "label", "shape", "height_mm", "color"},
             "Teil",
         )
@@ -315,6 +349,7 @@ def parse_figure(value: object) -> FigureSpec:
             if stop <= start:
                 raise FigureError("parts.stripes", f"{where}: Streifen braucht from < to.")
             stripes.append((start, stop, color_ref(band["color"], f"{where}.Streifen")))
+        profile = _custom_profile(entry.get("profile"), shape, where)
         start = entry.get("start", "bottom")
         if start not in {"bottom", "top"} or ("start" in entry and "attach" in entry):
             raise FigureError(
@@ -364,6 +399,7 @@ def parse_figure(value: object) -> FigureSpec:
             _text(entry.get("note"), f"{where}.note", 300, required=False),
             attach,
             start_top,
+            profile,
         )
         parts.append(spec)
         seen[part_id] = spec
@@ -541,6 +577,7 @@ def solve_figure(value: object) -> dict[str, Any]:
             schedules[part.id] = solve_part(
                 part.shape, part.width_mm, part.height_mm, part.end, spec.gauge,
                 color=part.color, stripes=part.stripes, stuffing=part.stuffing,
+                custom_profile=part.profile,
             )
         except PartError as error:
             raise FigureError(error.code, f"Teil „{part.label}“: {error.message_de}") from error
