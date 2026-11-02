@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>Figur entwerfen · Crochet.AI</title>
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/figure.css">
-  <script type="module" src="/figure.mjs"></script>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="figure.css">
+  <script type="module" src="figure.mjs"></script>
 </head>
 <body>
   <header class="topbar">
@@ -69,7 +69,10 @@
       <div id="error" class="error-box" role="alert" hidden></div>
       <div class="viewer-wrap">
         <canvas id="figure-canvas" tabindex="0" aria-label="Vorschau der Figur. Ziehen oder Pfeiltasten zum Drehen."></canvas>
+        <p id="viewer-status" class="viewer-status" role="status" hidden></p>
+        <p id="build-label" class="build-label num" aria-hidden="true" hidden></p>
         <p class="viewer-hint">Ziehen zum Drehen · Mausrad zum Zoomen · Doppelklick setzt zurück</p>
+        <button type="button" class="replay" id="replay">Entstehen ansehen</button>
       </div>
       <p id="summary" class="stage-facts num" aria-live="polite"></p>
       <div class="quick" aria-label="Schnell anpassen" role="group">

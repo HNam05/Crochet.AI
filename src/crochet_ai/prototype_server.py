@@ -18,12 +18,8 @@ import rfc8785
 
 from .backend_api import MAX_REQUEST_BYTES, BackendAPI, bounded_json
 from .calibration_pdf import render_calibration_packet
-from .figure import FigureError, calibrate_gauge, figure_text, solve_figure
-from .figure_compose import claude_available, compose
-from .figure_ir import verify_figure
-from .figure_parts import SHAPE_ENDS
-from .figure_pdf import render_figure_pdf
-from .figure_templates import template_catalog
+from .figure import FigureError
+from .figure_api import SPEC_PATHS, TOOL_PATHS, figure_spec_call, figure_tool, templates_payload
 from .prototype_backend import LocalPrototype
 from .prototype_input import PROTOTYPE_VERSION, REQUEST_FIELDS
 from .prototype_pdf import PrototypePdfError, render_project_pdf
@@ -43,45 +39,8 @@ ASSETS = {
     "figure.html",
     "figure.css",
     "figure.mjs",
+    "backend.mjs",
 }
-FIGURE_SHAPE_LABELS = {
-    "sphere": "Kugel",
-    "ellipsoid": "Ellipsoid",
-    "egg": "Ei",
-    "pear": "Birne",
-    "capsule": "Kapsel",
-    "tube": "Schlauch (Arm/Bein)",
-    "dome": "Halbkugel/Kuppel",
-    "cone": "Kegel",
-    "cylinder": "Zylinder/Becher",
-    "disc": "Scheibe (flach)",
-    "rectangle": "Rechteck in Reihen (flach)",
-}
-
-
-def _figure_tool(path: str, body: dict[str, Any]) -> dict[str, Any]:
-    """Text-to-figure proposals and gauge correction; FigureError on bad input."""
-    if path == "/api/figure/compose":
-        if set(body) != {"text", "use_claude"} or not isinstance(body["use_claude"], bool):
-            raise FigureError("compose.fields", "Felder text und use_claude erwartet.")
-        return compose(body["text"], use_claude=body["use_claude"])
-    fields = {"spec", "part", "measured_mm", "measure_mode", "measured_height_mm"}
-    if set(body) != fields or not isinstance(body["part"], str):
-        raise FigureError("calibrate.fields", "Unvollständige Messangaben.")
-    figure = solve_figure(body["spec"])
-    part = next((p for p in figure["parts"] if p["id"] == body["part"]), None)
-    if part is None:
-        raise FigureError("calibrate.part", "Unbekanntes Teil.")
-    return calibrate_gauge(
-        figure["gauge"],
-        planned_width_mm=part["predicted_width_mm"],
-        planned_height_mm=part["predicted_height_mm"],
-        measured_mm=body["measured_mm"],
-        measure_mode=body["measure_mode"],
-        measured_height_mm=body["measured_height_mm"],
-    )
-
-
 class PrototypeHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
@@ -245,21 +204,7 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     },
                 )
             elif path == "/api/figure/templates":
-                self._send(
-                    200,
-                    {
-                        "ok": True,
-                        "data": {
-                            "templates": template_catalog(),
-                            "shapes": [
-                                {"id": key, "label_de": FIGURE_SHAPE_LABELS[key],
-                                 "ends": list(ends)}
-                                for key, ends in SHAPE_ENDS.items()
-                            ],
-                            "claude_available": claude_available(),
-                        },
-                    },
-                )
+                self._send(200, {"ok": True, "data": templates_payload()})
             elif path == "/api/capabilities":
                 self._send(
                     200, backend.handle({"api_version": "1.0.0", "operation": "capabilities"})
@@ -358,38 +303,25 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
             try:
                 body = self._body()
                 path = urlsplit(self.path).path
-                if path in {"/api/figure/compose", "/api/figure/calibrate"}:
+                if path in TOOL_PATHS:
                     try:
-                        self._send(200, {"ok": True, "data": _figure_tool(path, body)})
+                        self._send(200, {"ok": True, "data": figure_tool(path, body)})
                     except FigureError as error:
                         self._figure_error(error)
-                elif path in {
-                    "/api/figure/solve", "/api/figure/pdf", "/api/figure/text",
-                    "/api/figure/verify",
-                }:
-                    if set(body) != {"spec"}:
-                        raise ValueError("figure.fields")
+                elif path in SPEC_PATHS:
                     try:
-                        figure = solve_figure(body["spec"])
+                        kind, data = figure_spec_call(
+                            path, body, software_commit=service.provenance.software_commit
+                        )
                     except FigureError as error:
                         self._figure_error(error)
                         return
-                    if path == "/api/figure/solve":
-                        self._send(200, {"ok": True, "data": figure})
-                    elif path == "/api/figure/verify":
-                        checks = verify_figure(
-                            body["spec"], software_commit=service.provenance.software_commit
-                        )
-                        self._send(200, {"ok": True, "data": {"parts": checks}})
-                    elif path == "/api/figure/pdf":
-                        checks = verify_figure(
-                            body["spec"], software_commit=service.provenance.software_commit
-                        )
-                        self._send(200, render_figure_pdf(figure, checks), "application/pdf",
-                                   "crochet-figure.pdf")
+                    if kind == "json":
+                        self._send(200, {"ok": True, "data": data})
+                    elif kind == "pdf":
+                        self._send(200, data, "application/pdf", "crochet-figure.pdf")
                     else:
-                        self._send(200, figure_text(figure).encode(),
-                                   "text/plain; charset=utf-8", "crochet-figure.txt")
+                        self._send(200, data, "text/plain; charset=utf-8", "crochet-figure.txt")
                 elif path == "/api/generate":
                     if set(body) != REQUEST_FIELDS:
                         raise ValueError("request.fields")

@@ -32,6 +32,16 @@ Results remain **NOT_VERIFIED / UNTESTED** until crocheted.
 
 Since 2026-11-02 the editor also takes a German description ("kleiner grauer Hase, 12 cm", "Strickmütze Kopfumfang 54 cm", "Schal 180 cm"), supports knitting, flat projects (scarf, blanket, coaster) and gauge correction from a measured test piece. Optional Claude interpretation: `pip install anthropic` plus an Anthropic API key. Roadmap: [PRODUCT_PLAN](docs/PRODUCT_PLAN.md), [ADR 0027](docs/adr/0027-text-input-knitting-flat-calibration.md).
 
+## Free web version (GitHub Pages)
+
+The figure editor also runs without any server: `python tools/build_web.py`
+writes a static site to `build/web/` in which the same Python package runs in
+the visitor's browser (Pyodide, self-hosted, no external requests, no AI).
+Preview it with `python -m http.server 8777 --directory build/web`. The
+workflow `.github/workflows/pages.yml` tests, builds and publishes it on every
+push to `main`; enable it once under Settings → Pages → Source "GitHub Actions".
+Details: [ADR 0028](docs/adr/0028-static-web-build-pyodide.md).
+
 ## Local crochet test
 
 Open `Start-CrochetPrototype.cmd` (prefers the existing `.venv`) or run

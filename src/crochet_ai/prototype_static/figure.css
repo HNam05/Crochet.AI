@@ -22,7 +22,10 @@ h2.minor{font-family:var(--sans);font-size:var(--t-sm);font-weight:500;color:var
 .template-card[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--ink)}
 
 /* Quick adjust under the figure */
-.quick{display:grid;grid-template-columns:minmax(180px,1.3fr) minmax(0,1.4fr) auto;gap:var(--s4) var(--s5);align-items:start;background:var(--surface);border-radius:var(--r-lg);padding:var(--s4)}
+.quick{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"size tech" "colors colors";gap:var(--s4) var(--s6);align-items:start;background:var(--surface);border-radius:var(--r-lg);padding:var(--s4)}
+.quick-size{grid-area:size}
+.quick-tech{grid-area:tech}
+.quick-colors{grid-area:colors}
 .quick-size label{justify-content:space-between}
 .quick-size output{font-weight:600;color:var(--ink)}
 .quick-title{display:block;font-size:var(--t-sm);font-weight:500;margin-bottom:var(--s2)}
@@ -91,6 +94,9 @@ body.making-open{overflow:hidden}
 #figure-canvas{display:block;width:100%;height:min(54vh,560px);min-height:0;cursor:grab;touch-action:none}
 #figure-canvas:active{cursor:grabbing}
 .viewer-hint{position:absolute;left:var(--s4);bottom:var(--s3);font-size:var(--t-xs);color:var(--ink-3)}
+.viewer-status{position:absolute;inset:0;display:grid;place-content:center;padding:var(--s6);text-align:center;color:var(--ink-2);font-size:var(--t-lg);max-width:none}
+.build-label{position:absolute;left:var(--s4);top:var(--s3);padding:var(--s1) var(--s3);border-radius:999px;background:rgba(247,244,238,.9);font-size:var(--t-sm);font-weight:500}
+.replay{position:absolute;right:var(--s3);top:var(--s3);min-height:36px;padding:0 var(--s3);border-color:var(--line);border-radius:999px;font-size:var(--t-sm);background:rgba(247,244,238,.9)}
 .stage-facts{font-size:var(--t-sm);color:var(--ink-2)}
 .figure-actions{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center}
 .verify-result{background:var(--surface);border-radius:var(--r-sm);padding:var(--s3) var(--s4);font-size:var(--t-sm);color:var(--ink-2);display:grid;gap:var(--s1)}
@@ -122,7 +128,7 @@ body.making-open{overflow:hidden}
   .tune{order:4}
   #figure-canvas{height:min(56vh,440px)}
   .rounds{columns:1}
-  .quick{grid-template-columns:minmax(0,1fr)}
+  .quick{grid-template-columns:minmax(0,1fr);grid-template-areas:"size" "colors" "tech"}
   .gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1 * var(--s4));padding:0 var(--s4) var(--s2)}
   .template-card{flex:0 0 120px;scroll-snap-align:start}
   .making-body{grid-template-columns:minmax(0,1fr)}
@@ -131,6 +137,7 @@ body.making-open{overflow:hidden}
 }
 @media (max-width:480px){
   .viewer-hint{display:none}
+  .build-label{top:auto;bottom:var(--s3)}
   .figure-actions>button{flex:1 1 auto}
   .rounds li{grid-template-columns:4px 3.75rem minmax(0,1fr) auto;column-gap:var(--s2)}
   .rounds li.note{grid-template-columns:4px 3.75rem minmax(0,1fr)}

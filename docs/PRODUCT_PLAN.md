@@ -21,8 +21,8 @@ rechnet der deterministische Solver, jede Anleitung ist bis zum echten Test
 | 6 | Physischer Abgleich | Testserie Kugel/Arm/Ohr/Mütze, Modellgewichte anpassen | offen – braucht echte Häkelstücke |
 | 7 | Konstruktions-Ausbau | ovaler Anfang (Lm-Kette), Farbflächen, Teile direkt anhäkeln, Ripp-/Bündchenmuster, halbe Stäbchen/Stäbchen | offen |
 | 8 | Kleidung mit Verzweigung | Handschuhe (Daumen), Socken (Ferse), Pullover (Raglan) nach Körpermaßen | offen, eigener Solver |
-| 9 | Bild als Vorlage | Foto/Skizze → Bauplan-Vorschlag (Claude Vision) | offen |
-| 10 | Für alle nutzbar | Hosting, Konten, Projektspeicher, Teilen, Mobile-App, Muster-Bibliothek | offen |
+| 9 | Hochladen als Vorlage | Foto/Umriss oder 3D-Modell hochladen → Bauplan, ohne KI, im Browser | offen |
+| 10 | Für alle nutzbar | kostenlose Web-Version auf GitHub Pages, Python im Browser (ADR 0028); später Teilen, Muster-Bibliothek | Web-Version erledigt |
 
 ## Was in diesem Stand umgesetzt ist
 
@@ -52,8 +52,13 @@ rechnet der deterministische Solver, jede Anleitung ist bis zum echten Test
    vorhandene `flat_solver` ist die Basis); für Stricken eine eigene,
    versionierte Semantik statt Häkel-IR.
 4. **Handschuhe/Socken** als erster verzweigter Kleidungs-Solver.
-5. **Bereitstellung**: Server mit Konten oder eine Desktop-/Mobil-App; dafür
-   Sicherheits- und Betriebsabnahme (B7/B8) abschließen.
+5. **Hochladen** (Phase 9): Foto oder Umriss eines rundlichen Objekts bzw. ein
+   3D-Modell (STL/OBJ) in ein Rundenprofil umrechnen und an den vorhandenen
+   Solver geben – vollständig im Browser, ohne KI-Dienst.
+
+Die Web-Version ist kostenlos und braucht keinen Server: GitHub Pages liefert
+nur Dateien aus, gerechnet wird mit Pyodide im Browser der Besucher
+(`tools/build_web.py`, Workflow `.github/workflows/pages.yml`).
 
 Physische Genauigkeit lässt sich nicht durch Software allein erreichen; jede
 Phase ab 6 braucht echte gehäkelte bzw. gestrickte Testteile.

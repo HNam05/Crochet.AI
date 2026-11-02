@@ -1,9 +1,12 @@
-// Figure editor: edits a FigureSpec, solves it live on the local server and
-// shows a schematic stitch-point preview. All results are NOT_VERIFIED/UNTESTED.
+// Figure editor: edits a FigureSpec, solves it live (local server or Python in
+// the browser, see backend.mjs) and shows a schematic stitch-point preview.
+// All results are NOT_VERIFIED/UNTESTED.
+
+import { backend } from "./backend.mjs";
 
 const $ = id => document.getElementById(id);
+const api = backend.api;
 const STORE_KEY = "crochet.figure.spec.v1";
-let csrf = "";
 let meta = { shapes: [], templates: [] };
 let spec = null;
 let result = null;
@@ -11,6 +14,9 @@ let selectedPart = null;
 let solveTimer = 0;
 let solveSeq = 0;
 let activeTemplate = null;
+let playNext = true;
+let firstSolved;
+const firstSolve = new Promise(resolve => { firstSolved = resolve; });
 
 const END_LABEL = { closed: "geschlossen", open: "offen zum Annähen", flat: "flach geschlossen" };
 const STUFF_LABEL = { "": "automatisch", full: "fest", light: "leicht", none: "keine" };
@@ -25,19 +31,6 @@ function el(tag, attrs = {}, ...children) {
   }
   for (const child of children) if (child !== null && child !== undefined) node.append(child);
   return node;
-}
-
-async function api(path, body, binary = false) {
-  const options = body === undefined ? {} : {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-    body: JSON.stringify(body),
-  };
-  const response = await fetch(path, { ...options, credentials: "same-origin", cache: "no-store" });
-  if (binary && response.ok) return response.blob();
-  const data = await response.json();
-  if (!data.ok) throw Object.assign(new Error(data.error.message_de || data.error.reason), data.error);
-  return data.data;
 }
 
 function saveLocal() {
@@ -114,6 +107,7 @@ function renderTemplates() {
 }
 
 async function drawThumbnails() {
+  await firstSolve; // the figure on stage comes first
   for (const t of meta.templates) {
     try { thumbs.get(t.id).setResult(await api("/api/figure/solve", { spec: t.spec })); }
     catch { /* a card without preview still works */ }
@@ -287,6 +281,20 @@ function renderResult() {
   viewer.setResult(result);
   renderSize();
   if (making) renderMaking();
+  if (playNext) { playNext = false; if (!matchMedia("(prefers-reduced-motion: reduce)").matches) playBuild(); }
+  firstSolved();
+}
+
+// Shows the figure growing stitch by stitch, with the part and round being worked.
+function playBuild() {
+  const label = $("build-label"); const points = result.preview.points.length;
+  label.hidden = false;
+  viewer.play(Math.min(7000, 2500 + points / 3), (point, count) => {
+    if (!point) { label.hidden = true; return; }
+    const part = point[4] >= 0 ? result.parts[point[4]] : null;
+    const unit = part?.construction === "rows" ? "Reihe" : "Runde";
+    label.textContent = part ? `${part.label} · ${unit} ${point[5]} · ${count.toLocaleString("de-DE")} Maschen` : "Augen und Details";
+  });
 }
 
 // ------------------------------------------------------------- compose & calibrate
@@ -300,7 +308,7 @@ async function composeFromText() {
     const data = await api("/api/figure/compose", { text, use_claude: $("use-claude").checked });
     spec = data.spec; if (!spec.features) spec.features = [];
     activeTemplate = null; renderTemplates();
-    renderForm(); saveLocal(); solve();
+    playNext = true; renderForm(); saveLocal(); solve();
     notes.textContent = `${data.source === "claude" ? "Entwurf von Claude" : "Erkannt"}: ${data.notes_de.join(" ")} Unter „Feinarbeit“ lässt sich alles anpassen.`;
   } catch (error) {
     notes.textContent = error.message || String(error);
@@ -500,8 +508,32 @@ class FigureViewer {
       if (step) { this.yaw += step[0]; this.pitch += step[1]; this.draw(); e.preventDefault(); }
     });
   }
-  setResult(result) { this.result = result; this.draw(); }
+  setResult(result) { this.stop(); this.result = result; this.rank = null; this.draw(); }
   highlight(index) { this.focus = index; this.draw(); }
+  stop() { cancelAnimationFrame(this.frame); this.revealed = null; }
+  // Builds the figure stitch by stitch in working order: part by part, round by
+  // round; eyes and embroidery come last. onFrame gets the newest stitch.
+  play(duration, onFrame) {
+    if (!this.result) return;
+    this.stop();
+    const points = this.result.preview.points;
+    if (!this.rank) {
+      const order = [...points.keys()].sort((a, b) => (points[a][4] === -1) - (points[b][4] === -1) || a - b);
+      this.rank = new Int32Array(points.length);
+      order.forEach((index, position) => { this.rank[index] = position; });
+      this.order = order;
+    }
+    const start = performance.now();
+    const step = now => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - t) * (1 - t);
+      this.revealed = Math.max(1, Math.round(points.length * eased));
+      this.draw();
+      onFrame?.(t < 1 ? points[this.order[this.revealed - 1]] : null, this.revealed);
+      if (t < 1) this.frame = requestAnimationFrame(step); else this.revealed = null;
+    };
+    this.frame = requestAnimationFrame(step);
+  }
   draw() {
     const { canvas, ctx } = this;
     const ratio = window.devicePixelRatio || 1;
@@ -524,7 +556,9 @@ class FigureViewer {
     ctx.save(); ctx.translate(shadowX, shadowY); ctx.scale(1, ry / rx); ctx.translate(-shadowX, -shadowY);
     ctx.fillStyle = shadow; ctx.beginPath(); ctx.arc(shadowX, shadowY, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     const palette = this.result.colors.map(c => [parseInt(c.hex.slice(1, 3), 16), parseInt(c.hex.slice(3, 5), 16), parseInt(c.hex.slice(5, 7), 16)]);
-    const projected = this.result.preview.points.map(p => {
+    const limit = this.revealed ?? Infinity;
+    const visible = limit === Infinity ? this.result.preview.points : this.result.preview.points.filter((_, i) => this.rank[i] < limit);
+    const projected = visible.map(p => {
       const x = p[0] - center[0], y = p[1] - center[1], z = p[2] - center[2];
       const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
       const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
@@ -559,7 +593,7 @@ async function download(path, filename, type) {
 async function verify() {
   const box = $("verify-result"); const button = $("verify");
   box.hidden = false; button.disabled = true;
-  box.textContent = "Jede Masche wird unabhängig nachgerechnet. Das dauert ein paar Sekunden …";
+  box.textContent = `Jede Masche wird unabhängig nachgerechnet. Das dauert ${backend.name === "browser" ? "im Browser etwa eine halbe Minute" : "ein paar Sekunden"} …`;
   try {
     const data = await api("/api/figure/verify", { spec });
     const passed = data.parts.filter(p => p.status === "PASS").length;
@@ -585,12 +619,15 @@ function loadTemplate(id) {
   spec = structuredClone(template.spec);
   if (!spec.features) spec.features = [];
   activeTemplate = id; renderTemplates();
-  renderForm(); saveLocal(); solve();
+  playNext = true; renderForm(); saveLocal(); solve();
 }
 
 async function start() {
-  const boot = await api("/api/bootstrap");
-  csrf = boot.csrf_token;
+  backend.onStatus?.(text => {
+    $("viewer-status").textContent = text ? `${text} Beim ersten Besuch dauert das einige Sekunden.` : "";
+    $("viewer-status").hidden = !text;
+  });
+  await backend.ready;
   meta = await api("/api/figure/templates");
   renderTemplates();
   $("name").addEventListener("input", e => { spec.name = e.target.value; changed(false); });
@@ -600,6 +637,7 @@ async function start() {
   $("size").addEventListener("input", e => { $("size-value").textContent = cm(Number(e.target.value)); });
   $("size").addEventListener("change", e => { sizeControl().apply(Number(e.target.value)); renderParts(); renderFeatures(); changed(false); });
   $("start-making").addEventListener("click", openMaking);
+  $("replay").addEventListener("click", () => { if (result) playBuild(); });
   $("making-close").addEventListener("click", closeMaking);
   $("making-prev").addEventListener("click", () => moveMaking(-1));
   $("making-next").addEventListener("click", () => moveMaking(1));
