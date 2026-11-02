@@ -19,9 +19,16 @@
       <p class="eyebrow">AMIGURUMI · TEILE + MONTAGE · EXPERIMENTELL</p>
       <h1>Figur entwerfen</h1>
       <p class="intro">Wähle eine Vorlage, passe Teile, Maße und Farben an. Muster und Vorschau rechnen sich sofort neu.</p>
-      <label>Vorlage<select id="template"></select></label>
+      <fieldset class="compose-box"><legend>Was möchtest du machen?</legend>
+        <textarea id="compose-text" rows="3" maxlength="2000" placeholder="z. B. „ein kleiner grauer Hase, 12 cm“, „Fuchs“, „Strickmütze Kopfumfang 54 cm in Petrol“, „Schal 180 cm blau“"></textarea>
+        <label class="inline-check" id="claude-row" hidden><input type="checkbox" id="use-claude"> mit Claude (KI) entwerfen</label>
+        <button type="button" class="primary" id="compose">Entwurf erstellen</button>
+        <p id="compose-notes" class="small-note" hidden></p>
+      </fieldset>
+      <label>oder Vorlage<select id="template"></select></label>
       <label>Name<input id="name" maxlength="80"></label>
-      <fieldset><legend>Maschenprobe <span>pro 10 cm, feste Maschen in Runden</span></legend>
+      <label>Technik<select id="technique"><option value="crochet">Häkeln (feste Maschen)</option><option value="knit">Stricken (glatt rechts in Runden)</option></select></label>
+      <fieldset><legend>Maschenprobe <span>pro 10 cm, so wie du arbeitest</span></legend>
         <div class="field-row"><label>Maschen<input id="g-stitches" type="number" min="5" max="60" step="0.5"></label><label>Runden<input id="g-rows" type="number" min="5" max="60" step="0.5"></label></div>
         <div class="field-row"><label>Nadel <span>(mm)</span><input id="g-hook" type="number" min="0.5" max="15" step="0.25"></label><label>Garn<input id="g-yarn" maxlength="120"></label></div>
       </fieldset>
@@ -38,7 +45,18 @@
       <div id="verify-result" class="small-note" hidden></div>
       <nav id="part-tabs" class="part-tabs" aria-label="Teile"></nav>
       <div id="part-detail"></div>
-      <section class="assembly"><h2>Montage</h2><p class="small-note">Positionen zählen ab Rundenanfang (Markierung = Rückseite) in Häkelrichtung, für Rechtshänder. Vor dem Annähen feststecken.</p><ol id="assembly"></ol></section>
+      <section class="calibrate"><h2>Nach dem Testteil: Maschenprobe nachjustieren</h2>
+        <p class="small-note">Ein Teil gearbeitet und nachgemessen? Trag die Maße ein. Daraus wird deine tatsächliche Maschenprobe berechnet und auf alle Teile übertragen.</p>
+        <div class="field-row calibrate-row">
+          <label>Teil<select id="cal-part"></select></label>
+          <label>Gemessen als<select id="cal-mode"><option value="diameter">Durchmesser (rund)</option><option value="flat_width">Breite flach gedrückt</option><option value="circumference">Umfang</option></select></label>
+          <label>Breite/Umfang (mm)<input id="cal-width" type="number" min="1" max="3000" step="0.5"></label>
+          <label>Höhe/Länge (mm) <span>optional</span><input id="cal-height" type="number" min="1" max="3000" step="0.5"></label>
+        </div>
+        <div class="figure-actions"><button type="button" id="calibrate">Berechnen</button><button type="button" id="cal-apply" hidden>Neue Maschenprobe übernehmen</button></div>
+        <p id="cal-result" class="small-note" hidden></p>
+      </section>
+      <section class="assembly"><h2>Montage</h2><p class="small-note">Positionen zählen ab Rundenanfang (Markierung = Rückseite) in Arbeitsrichtung, für Rechtshänder. Vor dem Annähen feststecken.</p><ol id="assembly"></ol></section>
     </section>
   </main>
 </body>

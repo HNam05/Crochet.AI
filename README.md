@@ -30,6 +30,8 @@ every part to CrochetIR and run the independent semantic validator. See
 [FIGURES_V1](docs/FIGURES_V1.md) and [ADR 0026](docs/adr/0026-multi-part-figures.md).
 Results remain **NOT_VERIFIED / UNTESTED** until crocheted.
 
+Since 2026-11-02 the editor also takes a German description ("kleiner grauer Hase, 12 cm", "Strickmütze Kopfumfang 54 cm", "Schal 180 cm"), supports knitting, flat projects (scarf, blanket, coaster) and gauge correction from a measured test piece. Optional Claude interpretation: `pip install anthropic` plus an Anthropic API key. Roadmap: [PRODUCT_PLAN](docs/PRODUCT_PLAN.md), [ADR 0027](docs/adr/0027-text-input-knitting-flat-calibration.md).
+
 ## Local crochet test
 
 Open `Start-CrochetPrototype.cmd` (prefers the existing `.venv`) or run

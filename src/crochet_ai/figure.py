@@ -21,14 +21,18 @@ from typing import Any
 
 from .figure_parts import (
     END_MODES,
+    FLAT_SHAPES,
     PART_SOLVER_VERSION,
     SHAPE_ENDS,
     STUFFING,
+    TECHNIQUES,
     Gauge,
     PartError,
     PartSchedule,
     part_summary,
+    round_body,
     round_line,
+    row_label,
     solve_part,
 )
 
@@ -213,17 +217,21 @@ class FigureSpec:
     colors: dict[str, tuple[str, str]]  # id -> (label, hex)
     parts: tuple[PartSpec, ...]
     features: tuple[FeatureSpec, ...]
+    technique: str = "crochet"
 
 
 def parse_figure(value: object) -> FigureSpec:
     """Strict, closed parsing with German error messages; never repairs input."""
     data = _fields(
         value,
-        {"name", "gauge", "colors", "parts", "features"},
+        {"name", "gauge", "colors", "parts", "features", "technique"},
         {"name", "gauge", "colors", "parts"},
         "Figur",
     )
     name = _text(data["name"], "Figur.name")
+    technique = data.get("technique", "crochet")
+    if technique not in TECHNIQUES:
+        raise FigureError("figure.technique", "Technik: crochet (häkeln) oder knit (stricken).")
     gauge_data = _fields(
         data["gauge"],
         {"stitches_per_100mm", "rows_per_100mm", "hook_mm", "yarn"},
@@ -273,16 +281,18 @@ def parse_figure(value: object) -> FigureSpec:
         shape = entry["shape"]
         if shape not in SHAPE_ENDS:
             raise FigureError("parts.shape", f"{where}: unbekannte Form „{shape}“.")
+        # Flat pieces (scarves, blankets) are much larger than amigurumi parts.
+        max_size = 2500.0 if shape in FLAT_SHAPES else 400.0
         if ("width_mm" in entry) == ("circumference_mm" in entry):
             raise FigureError(
                 "parts.width", f"{where}: genau eines von width_mm oder circumference_mm angeben."
             )
         width = (
-            _number(entry["width_mm"], 4, 300, f"{where}.width_mm")
+            _number(entry["width_mm"], 4, max_size, f"{where}.width_mm")
             if "width_mm" in entry
             else _number(entry["circumference_mm"], 12, 950, f"{where}.circumference_mm") / pi
         )
-        height = _number(entry["height_mm"], 3, 400, f"{where}.height_mm")
+        height = _number(entry["height_mm"], 1, max_size, f"{where}.height_mm")
         end = entry.get("end", SHAPE_ENDS[shape][0])
         if end not in END_MODES or end not in SHAPE_ENDS[shape]:
             raise FigureError(
@@ -312,6 +322,11 @@ def parse_figure(value: object) -> FigureSpec:
             )
         start_top = start == "top"
         attach = None
+        if shape in FLAT_SHAPES and "attach" in entry:
+            raise FigureError(
+                "parts.flat_attach",
+                f"{where}: flache Teile (Scheibe, Rechteck) können noch nicht angenäht werden.",
+            )
         if "attach" in entry:
             raw = _fields(entry["attach"], {"to", "at", "angles", "tilt"}, {"to", "at", "angles"},
                           f"{where}.attach")
@@ -320,6 +335,10 @@ def parse_figure(value: object) -> FigureSpec:
                 raise FigureError(
                     "parts.host",
                     f"{where}: „{host}“ muss ein vorher definiertes Teil sein.",
+                )
+            if seen[host].shape in FLAT_SHAPES:
+                raise FigureError(
+                    "parts.flat_host", f"{where}: an flache Teile kann nichts angenäht werden."
                 )
             if seen[host].attach is not None and len(seen[host].attach.angles) > 1:  # type: ignore[union-attr]
                 raise FigureError(
@@ -366,8 +385,8 @@ def parse_figure(value: object) -> FigureSpec:
                 "features.type", f"Detail: Typ eye oder nose, nicht „{entry['type']}“."
             )
         host = entry["on"]
-        if host not in seen:
-            raise FigureError("features.host", f"Detail: unbekanntes Teil „{host}“.")
+        if host not in seen or seen[host].shape in FLAT_SHAPES:
+            raise FigureError("features.host", f"Detail: unbekanntes oder flaches Teil „{host}“.")
         if seen[host].attach is not None and len(seen[host].attach.angles) > 1:  # type: ignore[union-attr]
             raise FigureError("features.host_instances",
                               "Detail: Teile mit mehreren Exemplaren werden nicht unterstützt.")
@@ -382,7 +401,9 @@ def parse_figure(value: object) -> FigureSpec:
                 _text(entry.get("label"), "Detail.label", 40, required=False),
             )
         )
-    return FigureSpec(name, gauge, hook, yarn, colors, tuple(parts), tuple(features))
+    return FigureSpec(
+        name, gauge, hook, yarn, colors, tuple(parts), tuple(features), technique
+    )
 
 
 # ------------------------------------------------------------------ geometry
@@ -435,29 +456,55 @@ def _end_radius(schedule: PartSchedule) -> float:
 # ------------------------------------------------------------------ solving
 
 _FINISH = {
-    "closed": (
+    ("crochet", "closed"): (
         "Faden abschneiden, durch die vorderen Maschenglieder der letzten {n} M fädeln, "
         "fest zusammenziehen und vernähen.",
         "Fasten off, weave the tail through the front loops of the last {n} sts, pull tight "
         "and weave in.",
     ),
-    "open": (
+    ("crochet", "open"): (
         "1 Km, Faden ca. 30 cm lang abschneiden (zum Annähen).",
         "Sl st, fasten off leaving a long tail (about 30 cm) for sewing.",
     ),
-    "open_final": (
+    ("crochet", "open_final"): (
         "1 Km, Faden abschneiden und vernähen.",
         "Sl st, fasten off and weave in the tail.",
     ),
-    "flat_even": (
+    ("crochet", "rows"): ("Faden abschneiden und vernähen.", "Fasten off and weave in ends."),
+    ("crochet", "flat_even"): (
         "Öffnung flach drücken und mit {half} fM durch beide Lagen schließen. "
         "Faden zum Annähen lang lassen.",
         "Flatten the opening and close it with {half} sc through both layers. "
         "Leave a long tail for sewing.",
     ),
-    "flat_odd": (
+    ("crochet", "flat_odd"): (
         "Öffnung flach drücken und zusammennähen. Faden zum Annähen lang lassen.",
         "Flatten the opening and sew it shut. Leave a long tail for sewing.",
+    ),
+    ("knit", "closed"): (
+        "Faden abschneiden, durch die restlichen {n} M ziehen, fest zusammenziehen und "
+        "vernähen.",
+        "Cut the yarn, thread it through the remaining {n} sts, pull tight and weave in.",
+    ),
+    ("knit", "open"): (
+        "Locker abketten, Faden ca. 30 cm lang lassen (zum Annähen).",
+        "Bind off loosely, leaving a long tail (about 30 cm) for sewing.",
+    ),
+    ("knit", "open_final"): (
+        "Locker abketten und Fäden vernähen.",
+        "Bind off loosely and weave in ends.",
+    ),
+    ("knit", "rows"): ("Alle M locker abketten, Fäden vernähen.",
+                       "Bind off all sts loosely, weave in ends."),
+    ("knit", "flat_even"): (
+        "Restliche M auf zwei Nadeln verteilen ({half} + {half}) und im Maschenstich "
+        "schließen. Faden zum Annähen lang lassen.",
+        "Divide the remaining sts over two needles ({half} + {half}) and graft them with "
+        "Kitchener stitch. Leave a long tail for sewing.",
+    ),
+    ("knit", "flat_odd"): (
+        "Abketten, flach drücken und zusammennähen. Faden zum Annähen lang lassen.",
+        "Bind off, flatten and sew shut. Leave a long tail for sewing.",
     ),
 }
 _STUFF = {
@@ -467,17 +514,19 @@ _STUFF = {
 }
 
 
-def _finish(schedule: PartSchedule, sewn_on: bool) -> tuple[str, str]:
+def _finish(schedule: PartSchedule, sewn_on: bool, technique: str) -> tuple[str, str]:
     n = schedule.rounds[-1].count
-    if schedule.end == "closed":
+    if schedule.construction == "rows":
+        key = "rows"
+    elif schedule.end == "closed":
         key = "closed"
     elif schedule.end == "open":
         key = "open" if sewn_on else "open_final"
     else:
         key = "flat_even" if n % 2 == 0 else "flat_odd"
-    de, en = _FINISH[key]
+    de, en = _FINISH[(technique, key)]
     stuff_de, stuff_en = _STUFF[schedule.stuffing]
-    if schedule.end == "closed" or (key == "open_final" and schedule.stuffing == "none"):
+    if key in {"closed", "rows"} or (key == "open_final" and schedule.stuffing == "none"):
         return de.format(n=n), en.format(n=n)
     return f"{stuff_de} {de.format(half=n // 2)}", f"{stuff_en} {en.format(half=n // 2)}"
 
@@ -545,7 +594,7 @@ def solve_figure(value: object) -> dict[str, Any]:
     parts_out = []
     for part in spec.parts:
         schedule = schedules[part.id]
-        summary = part_summary(schedule)
+        summary = part_summary(schedule, spec.technique)
         notes: dict[int, list[str]] = {}
         previous = part.color
         if schedule.rounds[0].color != part.color:
@@ -559,6 +608,9 @@ def solve_figure(value: object) -> dict[str, Any]:
                 notes.setdefault(r.number, []).append(
                     f"Farbwechsel zu {label}: die letzte Masche von R{r.number - 1} "
                     f"mit {label} abmaschen."
+                    if spec.technique == "crochet"
+                    else f"Farbwechsel zu {label}: ab hier mit {label} weiterstricken, "
+                    "Fadenenden später vernähen."
                 )
             previous = r.color
         if schedule.end == "closed" and schedule.stuffing != "none":
@@ -568,11 +620,12 @@ def solve_figure(value: object) -> dict[str, Any]:
                  if r.number > schedule.counts.index(peak) + 1 and r.count <= peak * 0.55),
                 len(schedule.rounds),
             )
-            text = "Jetzt füllen (vorher Augen/Details einsetzen) und beim Weiterhäkeln nachfüllen."
+            text = ("Jetzt füllen (vorher Augen/Details einsetzen) und beim Weiterarbeiten "
+                    "nachfüllen.")
             notes.setdefault(start, []).append(text)
         for number, text in round_notes.get(part.id, []):
             notes.setdefault(number, []).append(text)
-        finish_de, finish_en = _finish(schedule, part.attach is not None)
+        finish_de, finish_en = _finish(schedule, part.attach is not None, spec.technique)
         summary.update(
             {
                 "id": part.id,
@@ -581,7 +634,7 @@ def solve_figure(value: object) -> dict[str, Any]:
                 "instances": len(instances[part.id]),
                 "color": part.color,
                 "notes_by_round": {str(k): v for k, v in sorted(notes.items())},
-                "rows": _grouped_rows(schedule, notes),
+                "rows": _grouped_rows(schedule, notes, spec.technique),
                 "finish_de": finish_de,
                 "finish_en": finish_en,
                 "attach_to": part.attach.to if part.attach else None,
@@ -596,6 +649,7 @@ def solve_figure(value: object) -> dict[str, Any]:
         "figure_version": FIGURE_VERSION,
         "solver_version": PART_SOLVER_VERSION,
         "name": spec.name,
+        "technique": spec.technique,
         "verification_state": "NOT_VERIFIED",
         "physical_status": "UNTESTED",
         "gauge": {
@@ -624,9 +678,12 @@ def solve_figure(value: object) -> dict[str, Any]:
     }
 
 
-def _grouped_rows(schedule: PartSchedule, notes: dict[int, list[str]]) -> list[dict[str, Any]]:
+def _grouped_rows(
+    schedule: PartSchedule, notes: dict[int, list[str]], technique: str = "crochet"
+) -> list[dict[str, Any]]:
     """Merge runs of identical plain rounds ("R15-R41: 78 fM") for printing."""
     rows: list[dict[str, Any]] = []
+    construction = schedule.construction
     for r in schedule.rounds:
         plain = r.number > 1 and set(r.tokens) == {"sc"}
         last = rows[-1] if rows else None
@@ -643,15 +700,17 @@ def _grouped_rows(schedule: PartSchedule, notes: dict[int, list[str]]) -> list[d
         rows.append(
             {"from": r.number, "to": r.number, "count": r.count, "color": r.color,
              "plain": plain, "notes": notes.get(r.number, []),
-             "body_de": round_line(r, "de").split(": ", 1)[1],
-             "body_en": round_line(r, "en").split(": ", 1)[1]}
+             "body_de": f"{round_body(r, 'de', technique, construction)} ({r.count})",
+             "body_en": f"{round_body(r, 'en', technique, construction)} ({r.count})"}
         )
     for row in rows:
         span = row["to"] - row["from"] + 1
-        label_de = f"R{row['from']}" if span == 1 else f"R{row['from']}-R{row['to']}"
-        label_en = f"Rnd {row['from']}" if span == 1 else f"Rnds {row['from']}-{row['to']}"
-        extra_de = f" ({span} Runden)" if span > 1 else ""
-        extra_en = f" ({span} rounds)" if span > 1 else ""
+        last = None if span == 1 else row["to"]
+        label_de = row_label(row["from"], "de", construction, last)
+        label_en = row_label(row["from"], "en", construction, last)
+        unit_de, unit_en = ("Runden", "rounds") if construction == "rounds" else ("Reihen", "rows")
+        extra_de = f" ({span} {unit_de})" if span > 1 else ""
+        extra_en = f" ({span} {unit_en})" if span > 1 else ""
         row["text_de"] = f"{label_de}{extra_de}: {row.pop('body_de')}"
         row["text_en"] = f"{label_en}{extra_en}: {row.pop('body_en')}"
     return rows
@@ -778,6 +837,17 @@ def _layout(
         for instance in instances[part.id]:
             schedule = instance.schedule
             length = schedule.profile.length_mm
+            if schedule.construction == "rows":
+                # A flat sheet in the x/y plane, one point per stitch.
+                for r in schedule.rounds:
+                    for j in range(r.count):
+                        xyz = ((j + 0.5) * p_s - schedule.width_mm / 2, r.axial_mm, 0.0)
+                        for i in range(3):
+                            low[i], high[i] = min(low[i], xyz[i]), max(high[i], xyz[i])
+                        points.append([round(xyz[0], 2), round(xyz[1], 2), 0.0,
+                                       color_index[r.color], part_index, r.number,
+                                       round(p_s / 2, 2)])
+                continue
             for r in schedule.rounds:
                 radius = r.count * p_s / (2 * pi)
                 if schedule.end == "closed" and r.number == len(schedule.rounds):
@@ -798,17 +868,79 @@ def _layout(
     return points, {"min": [round(v, 1) for v in low], "max": [round(v, 1) for v in high]}
 
 
+MEASURE_MODES = ("diameter", "flat_width", "circumference")
+
+
+def calibrate_gauge(
+    gauge: dict[str, float],
+    *,
+    planned_width_mm: float,
+    planned_height_mm: float,
+    measured_mm: float,
+    measure_mode: str,
+    measured_height_mm: float | None,
+) -> dict[str, Any]:
+    """Correct the entered gauge from a crocheted test part.
+
+    A part that came out wider than planned has wider stitches, so fewer stitches
+    fit into 10 cm: new = old * planned / measured. Rows scale the same way
+    with the height. Results are rounded to 0.5 and clamped to 5..60.
+    HYPOTHESIS: one test part is representative; repeat with a second part.
+    """
+    if measure_mode not in MEASURE_MODES:
+        raise FigureError("calibrate.mode", "Messart: diameter, flat_width oder circumference.")
+    measured = _number(measured_mm, 1, 3000, "Messung.Breite")
+    if planned_width_mm <= 0 or planned_height_mm <= 0:
+        raise FigureError("calibrate.plan", "Für dieses Teil gibt es keine Planmaße.")
+    diameter = {
+        "diameter": measured,
+        "flat_width": 2 * measured / pi,
+        "circumference": measured / pi,
+    }[measure_mode]
+
+    def scaled(old: float, planned: float, actual: float) -> float:
+        return min(60.0, max(5.0, round(old * planned / actual * 2) / 2))
+
+    stitches = scaled(float(gauge["stitches_per_100mm"]), planned_width_mm, diameter)
+    rows = float(gauge["rows_per_100mm"])
+    if measured_height_mm is not None:
+        height = _number(measured_height_mm, 1, 3000, "Messung.Höhe")
+        rows = scaled(rows, planned_height_mm, height)
+    return {
+        "stitches_per_100mm": stitches,
+        "rows_per_100mm": rows,
+        "measured_diameter_mm": round(diameter, 1),
+        "width_ratio": round(diameter / planned_width_mm, 3),
+        "explanation_de": (
+            f"Geplant: Ø {planned_width_mm:.0f} mm, gemessen: Ø {diameter:.0f} mm. "
+            f"Neue Maschenprobe: {stitches:g} M und {rows:g} R auf 10 cm. "
+            "Teil mit der neuen Probe neu berechnen und zur Kontrolle ein zweites Teil arbeiten."
+        ),
+    }
+
+
 def figure_text(result: dict[str, Any], lang: str = "de") -> str:
     """Plain-text pattern of a solved figure (German by default)."""
     lines = [result["name"], "=" * len(result["name"]), ""]
     g = result["gauge"]
+    knit = result.get("technique") == "knit"
     lines.append(
-        f"Maschenprobe: {g['stitches_per_100mm']:g} fM x {g['rows_per_100mm']:g} Runden = 10 cm, "
-        f"Nadel {g['hook_mm']:g} mm" + (f", Garn: {g['yarn']}" if g["yarn"] else "")
+        f"Maschenprobe: {g['stitches_per_100mm']:g} {'M' if knit else 'fM'} x "
+        f"{g['rows_per_100mm']:g} Runden/Reihen = 10 cm, "
+        f"{'Nadeln' if knit else 'Nadel'} {g['hook_mm']:g} mm"
+        + (f", Garn: {g['yarn']}" if g["yarn"] else "")
+    )
+    lines.append(
+        "Abkürzungen: "
+        + ("re = rechte Masche, zun = aus 1 M 2 M herausstricken, 2 re zus = 2 M rechts "
+           "zusammenstricken."
+           if knit
+           else "MR = Magic Ring, fM = feste Masche, zun = 2 fM in eine Masche, "
+           "abn = 2 M zusammen abmaschen.")
     )
     lines.append("Farben: " + ", ".join(f"{c['label']} ({c['hex']})" for c in result["colors"]))
     lines.append(
-        "Status: NOT_VERIFIED / UNTESTED - berechneter Vorschlag, noch nicht nachgehäkelt."
+        "Status: NOT_VERIFIED / UNTESTED - berechneter Vorschlag, noch nicht nachgearbeitet."
     )
     lines.append("")
     colors = {c["id"]: c["label"] for c in result["colors"]}
@@ -825,7 +957,7 @@ def figure_text(result: dict[str, Any], lang: str = "de") -> str:
         lines.append("")
     if result["features"] or result["assembly"]:
         lines.append("Montage")
-        lines.append("  Positionen: ab Rundenanfang (Markierung = Rückseite), in Häkelrichtung "
+        lines.append("  Positionen: ab Rundenanfang (Markierung = Rückseite), in Arbeitsrichtung "
                      "(Rechtshänder) gezählt.")
         for step in result["features"]:
             lines.append(f"  - {step['text_de']}")
@@ -837,6 +969,7 @@ def figure_text(result: dict[str, Any], lang: str = "de") -> str:
 __all__ = [
     "FIGURE_VERSION",
     "FigureError",
+    "calibrate_gauge",
     "figure_text",
     "parse_figure",
     "round_line",

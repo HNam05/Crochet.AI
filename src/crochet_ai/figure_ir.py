@@ -466,6 +466,15 @@ def verify_figure(value: object, *, software_commit: str) -> list[dict[str, Any]
         )
         record: dict[str, Any] = {"part": part.id, "label": part.label,
                                   "stitches": schedule.total_stitches}
+        if spec.technique != "crochet" or schedule.construction != "rounds":
+            # CrochetIR has no knit stitches, and row work is not emitted here yet;
+            # the round/row stitch balance was still replayed by check_schedule.
+            record.update(
+                status="NOT_APPLICABLE",
+                reason="Stricken" if spec.technique != "crochet" else "Reihenarbeit",
+            )
+            records.append(record)
+            continue
         try:
             design, material = part_artifacts(
                 schedule, part.id, spec.colors, software_commit=software_commit,

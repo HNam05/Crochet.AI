@@ -27,4 +27,13 @@
 .part-meta{font-size:.85rem;color:var(--muted)}
 .assembly ol{padding-left:1.2rem;display:grid;gap:.35rem;font-size:.92rem}
 .assembly h2{margin-bottom:.3rem}
+[hidden]{display:none!important}
+.compose-box{display:grid;gap:.55rem;border:1px solid var(--rust);background:#f7ede4;padding:.8rem}
+.compose-box legend{padding:0 .3rem;color:var(--rust-dark)}
+.compose-box textarea{min-height:76px;resize:vertical}
+.inline-check{display:flex;align-items:center;gap:.5rem;font-weight:500}
+.inline-check input{width:auto;min-height:0}
+.calibrate{border-top:1px solid var(--rule);padding-top:.6rem}
+.calibrate h2{margin-bottom:.3rem}
+.calibrate-row{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 @media (max-width:900px){.figure-bench{grid-template-columns:1fr}.rounds{columns:1}}

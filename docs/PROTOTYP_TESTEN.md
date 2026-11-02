@@ -39,6 +39,8 @@ Montage („Arm entlang R21 von Masche 4 bis 9 annähen“).
 - Eigene Entwürfe bleiben im Browser gespeichert; „Als JSON bearbeiten“ zeigt
   das vollständige Format.
 
+Neu: Oben im Feld „Was möchtest du machen?“ einfach beschreiben, z. B. „ein kleiner grauer Hase, 12 cm“, „Fuchs“, „Strickmütze Kopfumfang 54 cm in Petrol“, „Schal 180 cm blau“ oder „Babydecke 80 x 90 cm“. Unter „Technik“ lässt sich Stricken wählen. Nach dem ersten Testteil unter „Maschenprobe nachjustieren“ die gemessenen Maße eintragen und die neue Maschenprobe übernehmen.
+
 Auch Figuren sind NOT_VERIFIED / UNTESTED, bis sie gehäkelt und gemessen sind.
 Ein erster sinnvoller Test: ein Arm und ein Ohr des Teddys häkeln und Breite
 sowie Rundenzahl mit der Anleitung vergleichen.

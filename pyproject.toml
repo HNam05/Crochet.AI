@@ -18,6 +18,9 @@ crochet-ai = "crochet_ai.cli:main"
 crochet-ai-prototype = "crochet_ai.prototype_server:main"
 
 [project.optional-dependencies]
+# Optional: free-text figure design with Claude (figure_compose.py). Without it
+# the offline German interpreter is used.
+llm = ["anthropic>=1,<2"]
 test = [
   "hypothesis>=6.112,<7",
   "mypy>=1.11,<2",

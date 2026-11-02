@@ -125,6 +125,70 @@ TEMPLATES: dict[str, dict[str, Any]] = {
              "stripes": [{"from": 0.86, "to": 1, "color": "rim"}]},
         ],
     },
+    "beanie_knit": {
+        "name": "Strickmütze (Kopfumfang 56 cm)",
+        "technique": "knit",
+        "gauge": {"stitches_per_100mm": 20, "rows_per_100mm": 28, "hook_mm": 4,
+                  "yarn": "Merino, mittel"},
+        "colors": [
+            {"id": "main", "label": "Senfgelb", "hex": "#C9A227"},
+            {"id": "rim", "label": "Dunkelgrau", "hex": "#4A4A4A"},
+        ],
+        "parts": [
+            {"id": "hat", "label": "Mütze", "shape": "cylinder", "circumference_mm": 500,
+             "start": "top", "height_mm": 210, "end": "open", "color": "main",
+             "stuffing": "none",
+             "note": "Von oben nach unten auf dem Nadelspiel, ab ca. 60 Maschen auf die "
+                     "Rundstricknadel wechseln. Umfang 50 cm = Kopfumfang 56 cm minus ca. 10 %.",
+             "stripes": [{"from": 0.85, "to": 1, "color": "rim"}]},
+        ],
+    },
+    "scarf": {
+        "name": "Schal mit Streifen",
+        "gauge": {"stitches_per_100mm": 16, "rows_per_100mm": 18, "hook_mm": 5.5,
+                  "yarn": "Wolle, mittel"},
+        "colors": [
+            {"id": "main", "label": "Rost", "hex": "#A4552F"},
+            {"id": "stripe", "label": "Creme", "hex": "#EFE6D2"},
+        ],
+        "parts": [
+            {"id": "scarf", "label": "Schal", "shape": "rectangle", "width_mm": 200,
+             "height_mm": 1600, "color": "main",
+             "stripes": [{"from": 0.06, "to": 0.09, "color": "stripe"},
+                         {"from": 0.12, "to": 0.15, "color": "stripe"},
+                         {"from": 0.85, "to": 0.88, "color": "stripe"},
+                         {"from": 0.91, "to": 0.94, "color": "stripe"}]},
+        ],
+    },
+    "blanket": {
+        "name": "Babydecke",
+        "gauge": {"stitches_per_100mm": 16, "rows_per_100mm": 18, "hook_mm": 5,
+                  "yarn": "Baumwolle, weich"},
+        "colors": [
+            {"id": "a", "label": "Salbei", "hex": "#9DB39A"},
+            {"id": "b", "label": "Creme", "hex": "#EFE6D2"},
+        ],
+        "parts": [
+            {"id": "blanket", "label": "Decke", "shape": "rectangle", "width_mm": 700,
+             "height_mm": 800, "color": "a",
+             "stripes": [{"from": i / 10, "to": i / 10 + 0.05, "color": "b"}
+                         for i in range(10)]},
+        ],
+    },
+    "coaster": {
+        "name": "Untersetzer",
+        "gauge": {"stitches_per_100mm": 22, "rows_per_100mm": 25, "hook_mm": 3.5,
+                  "yarn": "Baumwolle"},
+        "colors": [
+            {"id": "a", "label": "Ocker", "hex": "#C99A3B"},
+            {"id": "b", "label": "Weiß", "hex": "#F4F1EA"},
+        ],
+        "parts": [
+            {"id": "coaster", "label": "Untersetzer", "shape": "disc", "width_mm": 100,
+             "height_mm": 3, "color": "a",
+             "stripes": [{"from": 0.5, "to": 0.7, "color": "b"}]},
+        ],
+    },
 }
 
 

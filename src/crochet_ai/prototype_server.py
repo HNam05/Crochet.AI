@@ -18,7 +18,8 @@ import rfc8785
 
 from .backend_api import MAX_REQUEST_BYTES, BackendAPI, bounded_json
 from .calibration_pdf import render_calibration_packet
-from .figure import FigureError, figure_text, solve_figure
+from .figure import FigureError, calibrate_gauge, figure_text, solve_figure
+from .figure_compose import claude_available, compose
 from .figure_ir import verify_figure
 from .figure_parts import SHAPE_ENDS
 from .figure_pdf import render_figure_pdf
@@ -53,7 +54,32 @@ FIGURE_SHAPE_LABELS = {
     "dome": "Halbkugel/Kuppel",
     "cone": "Kegel",
     "cylinder": "Zylinder/Becher",
+    "disc": "Scheibe (flach)",
+    "rectangle": "Rechteck in Reihen (flach)",
 }
+
+
+def _figure_tool(path: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Text-to-figure proposals and gauge correction; FigureError on bad input."""
+    if path == "/api/figure/compose":
+        if set(body) != {"text", "use_claude"} or not isinstance(body["use_claude"], bool):
+            raise FigureError("compose.fields", "Felder text und use_claude erwartet.")
+        return compose(body["text"], use_claude=body["use_claude"])
+    fields = {"spec", "part", "measured_mm", "measure_mode", "measured_height_mm"}
+    if set(body) != fields or not isinstance(body["part"], str):
+        raise FigureError("calibrate.fields", "Unvollständige Messangaben.")
+    figure = solve_figure(body["spec"])
+    part = next((p for p in figure["parts"] if p["id"] == body["part"]), None)
+    if part is None:
+        raise FigureError("calibrate.part", "Unbekanntes Teil.")
+    return calibrate_gauge(
+        figure["gauge"],
+        planned_width_mm=part["predicted_width_mm"],
+        planned_height_mm=part["predicted_height_mm"],
+        measured_mm=body["measured_mm"],
+        measure_mode=body["measure_mode"],
+        measured_height_mm=body["measured_height_mm"],
+    )
 
 
 class PrototypeHTTPServer(ThreadingHTTPServer):
@@ -116,6 +142,19 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
 
         def _error(self, status: int, code: str, reason: str) -> None:
             self._send(status, {"ok": False, "error": {"code": code, "reason": reason}})
+
+        def _figure_error(self, error: FigureError) -> None:
+            self._send(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "code": "E_INPUT",
+                        "reason": error.code,
+                        "message_de": error.message_de,
+                    },
+                },
+            )
 
         def _host_valid(self) -> bool:
             hosts = self.headers.get_all("Host", [])
@@ -217,6 +256,7 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                                  "ends": list(ends)}
                                 for key, ends in SHAPE_ENDS.items()
                             ],
+                            "claude_available": claude_available(),
                         },
                     },
                 )
@@ -318,7 +358,12 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
             try:
                 body = self._body()
                 path = urlsplit(self.path).path
-                if path in {
+                if path in {"/api/figure/compose", "/api/figure/calibrate"}:
+                    try:
+                        self._send(200, {"ok": True, "data": _figure_tool(path, body)})
+                    except FigureError as error:
+                        self._figure_error(error)
+                elif path in {
                     "/api/figure/solve", "/api/figure/pdf", "/api/figure/text",
                     "/api/figure/verify",
                 }:
@@ -327,17 +372,7 @@ def make_server(port: int, data_dir: Path, software_commit: str) -> PrototypeHTT
                     try:
                         figure = solve_figure(body["spec"])
                     except FigureError as error:
-                        self._send(
-                            400,
-                            {
-                                "ok": False,
-                                "error": {
-                                    "code": "E_INPUT",
-                                    "reason": error.code,
-                                    "message_de": error.message_de,
-                                },
-                            },
-                        )
+                        self._figure_error(error)
                         return
                     if path == "/api/figure/solve":
                         self._send(200, {"ok": True, "data": figure})

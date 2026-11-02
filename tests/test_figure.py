@@ -96,7 +96,13 @@ def test_templates_solve_and_render(name: str) -> None:
         len(p["attach"]["angles"]) for p in TEMPLATES[name]["parts"] if "attach" in p
     )
     text = figure_text(result)
-    assert "R1: MR, 6 fM (6)" in text or "R1: MR, 4 fM (4)" in text
+    root = result["parts"][0]
+    if root["construction"] == "rows":
+        assert "R1: " in text and "Lm anschlagen" in text
+    elif result["technique"] == "knit":
+        assert "R1: Magic Ring, 6 M aufnehmen" in text
+    else:
+        assert "R1: MR, 6 fM (6)" in text or "R1: MR, 4 fM (4)" in text
     assert render_figure_pdf(result).startswith(b"%PDF")
 
 

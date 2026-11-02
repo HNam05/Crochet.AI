@@ -3,7 +3,15 @@
 Latest checkpoint: 2026-10-19. Read this file before continuing backend work.
 This is a working implementation checkpoint, not full backend acceptance.
 
-## Current implementation, 2026-10-28: multi-part figures
+## Current implementation, 2026-11-02: text input, knitting, flat projects
+
+Builds on the figure checkpoint below (branch `feature/multi-part-figures`).
+
+- `figure_compose.py`: German text → FigureSpec proposal (offline keyword interpreter with original builders for cat, fox, mouse, pig, frog, snowman, mushroom plus existing templates; optional Claude via the `anthropic` SDK, extra `llm`). Routes: `POST /api/figure/compose`, `POST /api/figure/calibrate`; `GET /api/figure/templates` reports `claude_available`.
+- Knitting (`technique: knit`), flat `disc` / `rectangle` (rows), gauge calibration, templates `beanie_knit`, `scarf`, `blanket`, `coaster`.
+- Knit and row parts are `NOT_APPLICABLE` for CrochetIR verification; their stitch balance is replayed. Contract additions in FIGURES_V1, decision ADR 0027, roadmap in [PRODUCT_PLAN](PRODUCT_PLAN.md). Tests: `tests/test_figure_compose.py`.
+
+## Previous implementation, 2026-10-28: multi-part figures
 
 Product-direction change requested by the user: make visible progress towards
 "describe a figure, get a pattern". New modules `figure_parts.py`, `figure.py`,

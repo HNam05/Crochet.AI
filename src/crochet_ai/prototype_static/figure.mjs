@@ -78,6 +78,7 @@ function uniqueId(base, taken) {
 
 function renderForm() {
   $("name").value = spec.name;
+  $("technique").value = spec.technique ?? "crochet";
   $("g-stitches").value = spec.gauge.stitches_per_100mm;
   $("g-rows").value = spec.gauge.rows_per_100mm;
   $("g-hook").value = spec.gauge.hook_mm ?? 3;
@@ -238,7 +239,54 @@ function renderResult() {
     list].filter(Boolean));
   const steps = $("assembly"); steps.replaceChildren();
   for (const step of [...result.features, ...result.assembly]) steps.append(el("li", { text: step.text_de }));
+  const calPart = $("cal-part"); const previous = calPart.value;
+  calPart.replaceChildren(...result.parts.map(p => el("option", { value: p.id, text: `${p.label} (geplant Ø ${p.predicted_width_mm} mm, Höhe ${p.predicted_height_mm} mm)` })));
+  if (result.parts.some(p => p.id === previous)) calPart.value = previous;
   viewer.setResult(result);
+}
+
+// ------------------------------------------------------------- compose & calibrate
+
+async function composeFromText() {
+  const text = $("compose-text").value.trim();
+  const notes = $("compose-notes"); const button = $("compose");
+  if (!text) { notes.hidden = false; notes.textContent = "Bitte zuerst beschreiben, was du machen möchtest."; return; }
+  button.disabled = true; notes.hidden = false; notes.textContent = "Entwurf wird erstellt …";
+  try {
+    const data = await api("/api/figure/compose", { text, use_claude: $("use-claude").checked });
+    spec = data.spec; if (!spec.features) spec.features = [];
+    $("template").value = "";
+    renderForm(); saveLocal(); solve();
+    notes.textContent = `${data.source === "claude" ? "Claude-Entwurf" : "Erkannt"}: ${data.notes_de.join(" ")} Alles bleibt unten bearbeitbar.`;
+  } catch (error) {
+    notes.textContent = error.message || String(error);
+  } finally { button.disabled = false; }
+}
+
+let pendingGauge = null;
+
+async function calibrate() {
+  const box = $("cal-result"); box.hidden = false; $("cal-apply").hidden = true;
+  const width = parseFloat($("cal-width").value); const height = parseFloat($("cal-height").value);
+  if (!Number.isFinite(width)) { box.textContent = "Bitte die gemessene Breite eintragen."; return; }
+  try {
+    const data = await api("/api/figure/calibrate", {
+      spec, part: $("cal-part").value, measured_mm: width, measure_mode: $("cal-mode").value,
+      measured_height_mm: Number.isFinite(height) ? height : null,
+    });
+    pendingGauge = data;
+    box.textContent = `${data.explanation_de} (Bisher: ${spec.gauge.stitches_per_100mm} M x ${spec.gauge.rows_per_100mm} R.)`;
+    $("cal-apply").hidden = false;
+  } catch (error) { box.textContent = error.message || String(error); }
+}
+
+function applyCalibration() {
+  if (!pendingGauge) return;
+  spec.gauge.stitches_per_100mm = pendingGauge.stitches_per_100mm;
+  spec.gauge.rows_per_100mm = pendingGauge.rows_per_100mm;
+  pendingGauge = null; $("cal-apply").hidden = true;
+  $("cal-result").textContent += " Übernommen - alle Teile wurden neu berechnet.";
+  renderForm(); changed(false);
 }
 
 // ------------------------------------------------------------- viewer
@@ -317,10 +365,13 @@ async function verify() {
   try {
     const data = await api("/api/figure/verify", { spec });
     const passed = data.parts.filter(p => p.status === "PASS").length;
+    const skipped = data.parts.filter(p => p.status === "NOT_APPLICABLE");
+    const checked = data.parts.length - skipped.length;
     box.replaceChildren(
-      el("strong", { text: `Strukturprüfung: ${passed} von ${data.parts.length} Teilen bestanden. ` }),
-      "Jede Masche, Einstichstelle, jeder Farbwechsel und jede Öffnung wurde unabhängig nachgerechnet. Form und Größe sind damit noch nicht bestätigt.",
-      ...data.parts.filter(p => p.status !== "PASS").map(p => el("div", { text: `✗ ${p.label}: ${p.reason}` })));
+      el("strong", { text: `Strukturprüfung: ${passed} von ${checked} Teilen bestanden. ` }),
+      checked ? "Jede Masche, Einstichstelle, jeder Farbwechsel und jede Öffnung wurde unabhängig nachgerechnet. Form und Größe sind damit noch nicht bestätigt. " : "",
+      skipped.length ? `${skipped.length} Teil(e) (${skipped[0].reason}) haben nur die Maschenbilanz geprüft – dafür gibt es noch kein CrochetIR.` : "",
+      ...data.parts.filter(p => p.status === "FAIL").map(p => el("div", { text: `✗ ${p.label}: ${p.reason}` })));
   } catch (error) {
     box.textContent = `Prüfung fehlgeschlagen: ${error.message}`;
   } finally { button.disabled = false; }
@@ -346,6 +397,15 @@ async function start() {
   picker.append(el("option", { value: "", text: "— eigene (gespeichert) —" }));
   picker.addEventListener("change", e => { if (e.target.value) loadTemplate(e.target.value); });
   $("name").addEventListener("input", e => { spec.name = e.target.value; changed(false); });
+  $("technique").addEventListener("change", e => {
+    if (e.target.value === "crochet") delete spec.technique; else spec.technique = e.target.value;
+    changed(false);
+  });
+  if (meta.claude_available) $("claude-row").hidden = false;
+  $("compose").addEventListener("click", composeFromText);
+  $("compose-text").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) composeFromText(); });
+  $("calibrate").addEventListener("click", calibrate);
+  $("cal-apply").addEventListener("click", applyCalibration);
   const gauge = (id, key) => $(id).addEventListener("input", e => {
     const v = parseFloat(e.target.value); if (Number.isFinite(v)) { spec.gauge[key] = v; changed(false); }
   });

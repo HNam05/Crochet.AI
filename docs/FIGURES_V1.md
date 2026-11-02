@@ -17,12 +17,38 @@ surface of revolution (a beanie from head circumference).
 | `figure.py` | Strict `FigureSpec` parsing, instance placement, assembly and feature instructions, schematic 3D points, text export |
 | `figure_ir.py` | Per-part DesignSpec + CrochetIR emission, validated by the unchanged `SemanticValidator` |
 | `figure_pdf.py` | Printable German pattern with front sketch and structure-check summary |
-| `figure_templates.py` | Original starter figures: teddy, bunny, chick, beanie |
-| `prototype_static/figure.*` | Browser editor with live recompute and orbit preview |
+| `figure_templates.py` | Original starters: teddy, bunny, chick, beanie, knit beanie, scarf, blanket, coaster |
+| `figure_compose.py` | Free text → FigureSpec proposal (offline German interpreter; optional Claude) |
+| `prototype_static/figure.*` | Browser editor with text input, live recompute, orbit preview, calibration |
 
 Not covered: crocheting parts together while working (join-as-you-go),
 oval/chain starts, colour regions other than horizontal stripes, branching
-garments (gloves, sweaters), lace, knitting.
+garments (gloves, sweaters), lace, ribbing, stitches other than sc /
+stockinette.
+
+## Additions 2026-11-02 (ADR 0027)
+
+- **Technique** (`"technique": "crochet" | "knit"`, figure-wide): the round
+  schedule is technique-neutral (plain / one-to-two / two-to-one). Knit
+  notation: DE `re`, `zun`, `2 re zus`; EN `k`, `kfb`, `k2tog`; ring start with
+  double-pointed needles; finishes bind off or graft. Knit parts are not
+  emitted as CrochetIR (`verify_figure` → `NOT_APPLICABLE`); `check_schedule`
+  still replays every round.
+- **Flat shapes** (root only, no attachments): `disc` is a flat circle in
+  rounds; `rectangle` is worked in turned rows (`construction: "rows"`): ch
+  n+1 then n sc per row, or cast on n and knit garter. Size limit 2500 mm.
+  Rows are not yet emitted as CrochetIR.
+- **Calibration** (`calibrate_gauge`, `POST /api/figure/calibrate`): measured
+  diameter / flattened width / circumference and optional height of one part
+  give `new = old · planned / measured`, rounded to 0.5, clamped 5..60.
+  HYPOTHESIS: one part is representative; confirm with a second part.
+- **Text input** (`POST /api/figure/compose {text, use_claude}`): the offline
+  interpreter maps subjects, colours, sizes, head circumference, area
+  ("80 x 90 cm"), knitting and yarn weight to a builder and scales it; unknown
+  subjects fall back to a ball with an explanation. With `use_claude`, the
+  official `anthropic` SDK (optional extra `llm`) calls `claude-opus-5-5` with
+  server-side refusal fallbacks; the reply must pass `parse_figure`, gets one
+  repair round, then fails closed. No stitch counts ever come from the model.
 
 ## Part model
 

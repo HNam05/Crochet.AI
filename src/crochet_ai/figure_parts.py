@@ -41,7 +41,13 @@ SHAPE_ENDS: dict[str, tuple[str, ...]] = {
     "tube": ("open", "flat", "closed"),
     "cone": ("closed", "open"),
     "cylinder": ("closed", "open"),
+    "disc": ("open",),
+    "rectangle": ("open",),
 }
+# Flat shapes are worked flat (disc in rounds, rectangle in turned rows); they
+# cannot host or be sewn onto other parts in V1.
+FLAT_SHAPES = frozenset({"disc", "rectangle"})
+TECHNIQUES = ("crochet", "knit")
 END_MODES = ("closed", "open", "flat")
 STUFFING = ("full", "light", "none")
 _ARC_STEPS = 48
@@ -157,6 +163,12 @@ def build_profile(shape: str, width_mm: float, height_mm: float, end: str) -> Pr
         points[0], points[-1] = (0.0, 0.0), (h, 0.0)
     elif shape == "dome":
         points = _arc(h, h, r, 0, pi / 2)
+    elif shape == "disc":
+        # A flat circle: the meridian runs radially in the plane of the ring.
+        points = [(0.0, 0.0), (0.0, r / 2), (0.0, r)]
+    elif shape == "rectangle":
+        # Rows advance along the height; radius is unused for row work.
+        points = [(0.0, 0.0), (h / 2, 0.0), (h, 0.0)]
     elif shape == "cone":
         # The midpoint keeps the open profile at the 3-sample minimum of the target schema.
         points = [(0.0, 0.0), (h / 2, r / 2), (h, r)] + ([(h, 0.0)] if end == "closed" else [])
@@ -200,6 +212,7 @@ class PartSchedule:
     max_residual_mm: float
     reference_bottleneck_mm: float | None
     round_spacing_mm: float
+    construction: str = "rounds"  # "rounds" (spiral from a ring) or "rows" (turned rows)
 
     @property
     def counts(self) -> tuple[int, ...]:
@@ -329,6 +342,8 @@ def solve_part(
     """Compute a complete round schedule; raises :class:`PartError` on failure."""
     profile = build_profile(shape, width_mm, height_mm, end)
     p_s, p_c = gauge.stitch_pitch_mm, gauge.course_pitch_mm
+    if shape == "rectangle":
+        return _solve_rows(profile, width_mm, height_mm, gauge, color, stripes)
     # HYPOTHESIS: a round's stitch count matches the circumference at its upper
     # edge (the loops the next round works into). This reproduces the empirical
     # 6/12/18 single-crochet disc when course/stitch pitch is ~0.9. A closed end
@@ -377,11 +392,7 @@ def solve_part(
             )
             shaping_rounds += shaped
         s = tops[i]
-        fraction = (s - spacing / 2) / profile.length_mm
-        round_color = color
-        for start, stop, stripe_color in stripes:
-            if start <= fraction < stop or (stop >= 1 and fraction >= start):
-                round_color = stripe_color
+        round_color = _stripe_color((s - spacing / 2) / profile.length_mm, color, stripes)
         axial, radius = samples[i]
         rounds.append(Round(i + 1, count, tokens, round_color, s, axial, radius))
     schedule = PartSchedule(
@@ -389,13 +400,50 @@ def solve_part(
         end,
         width_mm,
         height_mm,
-        stuffing or ("light" if end == "flat" else "full"),
+        stuffing or ("none" if shape in FLAT_SHAPES else "light" if end == "flat" else "full"),
         gauge,
         profile,
         tuple(rounds),
         max(abs(n - t) for n, t in zip(counts, targets, strict=True)) * p_s,
         bottleneck,
         spacing,
+    )
+    check_schedule(schedule)
+    return schedule
+
+
+def _stripe_color(
+    fraction: float, color: str, stripes: tuple[tuple[float, float, str], ...]
+) -> str:
+    for start, stop, stripe_color in stripes:
+        if start <= fraction < stop or (stop >= 1 and fraction >= start):
+            color = stripe_color
+    return color
+
+
+def _solve_rows(
+    profile: Profile,
+    width_mm: float,
+    height_mm: float,
+    gauge: Gauge,
+    color: str,
+    stripes: tuple[tuple[float, float, str], ...],
+) -> PartSchedule:
+    """Rectangle in turned rows: constant stitch count, rows by row pitch."""
+    n = max(1, round(width_mm / gauge.stitch_pitch_mm))
+    m = max(1, round(height_mm / gauge.course_pitch_mm))
+    if n > 600 or m > 600:
+        raise PartError("part.too_large", "Fläche ist zu groß für diese Maschenprobe (>600).")
+    spacing = height_mm / m
+    rows = tuple(
+        Round(i + 1, n, ("sc",) * n,
+              _stripe_color((i + 0.5) / m, color, stripes), (i + 1) * spacing,
+              (i + 1) * spacing, width_mm / 2)
+        for i in range(m)
+    )
+    schedule = PartSchedule(
+        "rectangle", "open", width_mm, height_mm, "none", gauge, profile, rows,
+        abs(n * gauge.stitch_pitch_mm - width_mm), None, spacing, "rows",
     )
     check_schedule(schedule)
     return schedule
@@ -418,14 +466,28 @@ def check_schedule(schedule: PartSchedule) -> None:
 
 # ---------------------------------------------------------------- notation
 
-_WORDS = {
-    "de": {"sc": "fM", "inc": "zun", "dec": "abn", "ring": "MR", "round": "R"},
-    "en": {"sc": "sc", "inc": "inc", "dec": "dec", "ring": "MR", "round": "Rnd "},
+def _plain(n: int, technique: str, lang: str) -> str:
+    if technique == "knit":
+        return f"{n} re" if lang == "de" else f"k{n}"
+    return f"{n} fM" if lang == "de" else f"{n} sc"
+
+
+_SHAPED = {
+    ("crochet", "de"): {"inc": "zun", "dec": "abn"},
+    ("crochet", "en"): {"inc": "inc", "dec": "dec"},
+    ("knit", "de"): {"inc": "zun", "dec": "2 re zus"},
+    ("knit", "en"): {"inc": "kfb", "dec": "k2tog"},
 }
 
 
-def _runs(tokens: list[str], lang: str) -> str:
-    words = _WORDS[lang]
+def _shaped(token: str, n: int, technique: str, lang: str) -> str:
+    word = _SHAPED[(technique, lang)][token]
+    if n == 1:
+        return word
+    return f"{n} {word}" if technique == "crochet" else f"{n}x {word}"
+
+
+def _runs(tokens: list[str], lang: str, technique: str = "crochet") -> str:
     parts: list[str] = []
     i = 0
     while i < len(tokens):
@@ -433,16 +495,21 @@ def _runs(tokens: list[str], lang: str) -> str:
         while j < len(tokens) and tokens[j] == tokens[i]:
             j += 1
         n = j - i
-        word = words[tokens[i]]
-        parts.append(f"{n} {word}" if tokens[i] == "sc" or n > 1 else word)
+        parts.append(
+            _plain(n, technique, lang)
+            if tokens[i] == "sc"
+            else _shaped(tokens[i], n, technique, lang)
+        )
         i = j
     return ", ".join(parts)
 
 
-def round_notation(tokens: tuple[str, ...], lang: str = "de") -> str:
+def round_notation(
+    tokens: tuple[str, ...], lang: str = "de", technique: str = "crochet"
+) -> str:
     """Shortest ``head, (motif) x n, tail`` form that literally expands to ``tokens``."""
     seq = list(tokens)
-    best = _runs(seq, lang)
+    best = _runs(seq, lang, technique)
     if len(set(seq)) == 1:
         return best
     for size in range(2, len(seq) // 2 + 1):
@@ -457,7 +524,9 @@ def round_notation(tokens: tuple[str, ...], lang: str = "de") -> str:
             text = ", ".join(
                 item
                 for item in (
-                    _runs(head, lang), f"({_runs(motif, lang)}) x {reps}", _runs(tail, lang)
+                    _runs(head, lang, technique),
+                    f"({_runs(motif, lang, technique)}) x {reps}",
+                    _runs(tail, lang, technique),
                 )
                 if item
             )
@@ -466,16 +535,51 @@ def round_notation(tokens: tuple[str, ...], lang: str = "de") -> str:
     return best
 
 
-def round_line(r: Round, lang: str = "de") -> str:
-    words = _WORDS[lang]
+def row_label(number: int, lang: str, construction: str, last: int | None = None) -> str:
+    """'R3' / 'R3-R9' style label; English distinguishes rounds and rows."""
+    if lang == "de":
+        return f"R{number}" if last is None else f"R{number}-R{last}"
+    word = "Rnd" if construction == "rounds" else "Row"
+    return f"{word} {number}" if last is None else f"{word}s {number}-{last}"
+
+
+def round_body(
+    r: Round, lang: str = "de", technique: str = "crochet", construction: str = "rounds"
+) -> str:
+    """Instruction text of one round or row, without its label."""
+    n = r.count
+    de = lang == "de"
+    if construction == "rows":
+        if technique == "knit":
+            if r.number == 1:
+                return f"{n} M anschlagen, alle M re" if de else f"cast on {n} sts, knit across"
+            return "alle M re (kraus rechts)" if de else "knit across (garter stitch)"
+        if r.number == 1:
+            return (
+                f"{n + 1} Lm anschlagen, ab der 2. Lm von der Nadel {n} fM"
+                if de
+                else f"ch {n + 1}, sc in 2nd ch from hook and across"
+            )
+        return f"1 Wende-Lm, {n} fM" if de else "ch 1, turn, sc across"
     if r.number == 1:
-        body = f"{words['ring']}, {r.count} {words['sc']}"
-    else:
-        body = round_notation(r.tokens, lang)
-    return f"{words['round']}{r.number}: {body} ({r.count})"
+        if technique == "knit":
+            return (
+                f"Magic Ring, {n} M aufnehmen und auf das Nadelspiel verteilen"
+                if de
+                else f"MR, pick up {n} sts and divide over DPNs"
+            )
+        return f"MR, {n} fM" if de else f"MR, {n} sc"
+    return round_notation(r.tokens, lang, technique)
 
 
-def part_summary(schedule: PartSchedule) -> dict[str, Any]:
+def round_line(
+    r: Round, lang: str = "de", technique: str = "crochet", construction: str = "rounds"
+) -> str:
+    label = row_label(r.number, lang, construction)
+    return f"{label}: {round_body(r, lang, technique, construction)} ({r.count})"
+
+
+def part_summary(schedule: PartSchedule, technique: str = "crochet") -> dict[str, Any]:
     """Serializable round table with both notations."""
     p_s = schedule.gauge.stitch_pitch_mm
     return {
@@ -485,9 +589,16 @@ def part_summary(schedule: PartSchedule) -> dict[str, Any]:
         "width_mm": schedule.width_mm,
         "height_mm": schedule.height_mm,
         "round_count": len(schedule.rounds),
+        "construction": schedule.construction,
+        "technique": technique,
         "total_stitches": schedule.total_stitches,
         "max_stitches": max(schedule.counts),
-        "predicted_width_mm": round(max(schedule.counts) * p_s / pi, 1),
+        "predicted_width_mm": round(
+            max(schedule.counts) * p_s / (1 if schedule.construction == "rows" else pi), 1
+        ),
+        "predicted_height_mm": round(schedule.profile.height_mm, 1)
+        if schedule.construction == "rounds"
+        else round(len(schedule.rounds) * schedule.gauge.course_pitch_mm, 1),
         "max_circumference_residual_mm": round(schedule.max_residual_mm, 2),
         "reference_bottleneck_mm": None
         if schedule.reference_bottleneck_mm is None
@@ -499,8 +610,8 @@ def part_summary(schedule: PartSchedule) -> dict[str, Any]:
                 "color": r.color,
                 "increases": r.increases,
                 "decreases": r.decreases,
-                "text_de": round_line(r, "de"),
-                "text_en": round_line(r, "en"),
+                "text_de": round_line(r, "de", technique, schedule.construction),
+                "text_en": round_line(r, "en", technique, schedule.construction),
             }
             for r in schedule.rounds
         ],

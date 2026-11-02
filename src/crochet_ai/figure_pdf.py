@@ -84,13 +84,20 @@ def render_figure_pdf(
     )
     story.append(Spacer(1, 4))
     facts = [
-        f"<b>Maschenprobe:</b> {g['stitches_per_100mm']:g} fM x {g['rows_per_100mm']:g} Runden "
+        f"<b>Maschenprobe:</b> {g['stitches_per_100mm']:g} M x {g['rows_per_100mm']:g} R "
         f"= 10 cm &nbsp; <b>Nadel:</b> {g['hook_mm']:g} mm"
         + (f" &nbsp; <b>Garn:</b> {escape(g['yarn'])}" if g["yarn"] else ""),
         "<b>Farben:</b> " + ", ".join(escape(c["label"]) for c in result["colors"]),
-        "<b>Abkürzungen:</b> MR = Magic Ring (Fadenring), fM = feste Masche, zun = 2 fM in "
-        "eine Masche, abn = 2 Maschen zusammen abmaschen. In Spiralrunden häkeln, "
-        "Rundenanfang markieren. Die Zahl in Klammern ist die Maschenzahl nach der Runde.",
+        (
+            "<b>Abkürzungen:</b> re = rechte Masche, zun = aus 1 M 2 M herausstricken (kfb), "
+            "2 re zus = 2 M rechts zusammenstricken. Runden auf dem Nadelspiel stricken, "
+            "Rundenanfang markieren. Die Zahl in Klammern ist die Maschenzahl danach."
+            if result.get("technique") == "knit"
+            else "<b>Abkürzungen:</b> MR = Magic Ring (Fadenring), fM = feste Masche, Lm = "
+            "Luftmasche, zun = 2 fM in eine Masche, abn = 2 Maschen zusammen abmaschen. "
+            "Runden in Spiralen häkeln, Rundenanfang markieren. Die Zahl in Klammern ist die "
+            "Maschenzahl danach."
+        ),
         f"<b>Gesamt:</b> {result['total_stitches']} Maschen, Figur ca. "
         f"{result['bounds_mm']['max'][1] - result['bounds_mm']['min'][1]:.0f} mm hoch "
         "(Schemaschätzung).",
@@ -154,7 +161,7 @@ def render_figure_pdf(
         story.append(
             Paragraph(
                 "Positionen zählen ab dem Rundenanfang (Markierung = Rückseite des Teils) in "
-                "Häkelrichtung, für Rechtshänder. Linkshänder tauschen links und rechts. "
+                "Arbeitsrichtung, für Rechtshänder. Linkshänder tauschen links und rechts. "
                 "Vor dem Annähen mit Nadeln feststecken und die Wirkung prüfen.",
                 style["note"],
             )
