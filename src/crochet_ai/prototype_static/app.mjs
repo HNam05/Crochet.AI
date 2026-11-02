@@ -75,7 +75,8 @@ function renderProject() {
   if (!project) { viewer.setProject(null, 0); return; }
   $("project-title").textContent = `${shapeLabel(project.request.shape)} · ${project.request.diameter_mm} × ${project.request.height_mm} mm`;
   const inputsMatch=projectMatchesForm(project);
-  $("verification-state").textContent = inputsMatch ? `${project.verification_state} · ${project.physical_status}` : `${project.verification_state} · Eingaben geändert`;
+  const tested = project.physical_status === "UNTESTED" ? "Berechnet, noch nicht nachgehäkelt" : `${project.verification_state} · ${project.physical_status}`;
+  $("verification-state").textContent = inputsMatch ? tested : "Eingaben geändert, bitte neu berechnen";
   $("project-description").textContent = inputsMatch ? `${project.steps.length} Arbeitsschritte. Versuchsmuster, nicht kalibriert oder physisch geprüft.` : "Eingaben wurden geändert. Die Arbeitsfläche zeigt weiterhin das zuvor erzeugte Muster; berechne neu, um passende Ergebnisse zu erhalten.";
   const current = project.steps[state.cursor];
   $("instruction-progress").textContent = `${state.cursor} von ${project.steps.length} Schritten erledigt`;

@@ -4,60 +4,148 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Crochet.AI · Figur</title>
+  <title>Figur entwerfen · Crochet.AI</title>
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/figure.css">
   <script type="module" src="/figure.mjs"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="wordmark" href="/figure.html">Crochet.AI <span>Figuren</span></a>
-    <nav aria-label="Bereiche"><a href="/">Einzelform-Test</a><a href="/figure.html" aria-current="page">Figur</a></nav>
+    <a class="wordmark" href="/figure.html">Crochet.AI</a>
+    <nav aria-label="Bereiche"><a href="/figure.html" aria-current="page">Figur entwerfen</a><a href="/">Einzelform-Test</a></nav>
   </header>
   <main class="figure-bench">
-    <aside class="figure-rail" aria-label="Figur bearbeiten">
-      <p class="eyebrow">AMIGURUMI · TEILE + MONTAGE · EXPERIMENTELL</p>
-      <h1>Figur entwerfen</h1>
-      <p class="intro">Wähle eine Vorlage, passe Teile, Maße und Farben an. Muster und Vorschau rechnen sich sofort neu.</p>
-      <fieldset class="compose-box"><legend>Was möchtest du machen?</legend>
-        <textarea id="compose-text" rows="3" maxlength="2000" placeholder="z. B. „ein kleiner grauer Hase, 12 cm“, „Fuchs“, „Strickmütze Kopfumfang 54 cm in Petrol“, „Schal 180 cm blau“"></textarea>
-        <label class="inline-check" id="claude-row" hidden><input type="checkbox" id="use-claude"> mit Claude (KI) entwerfen</label>
+    <div class="figure-rail">
+      <section class="compose" aria-labelledby="compose-title">
+        <h1 id="compose-title">Was möchtest du machen?</h1>
+        <p class="intro">Beschreib es in einem Satz. Daraus werden Teile, Runden und Maschenzahlen berechnet.</p>
+        <textarea id="compose-text" rows="3" maxlength="2000" aria-labelledby="compose-title" placeholder="z. B. ein kleiner grauer Hase, 12 cm"></textarea>
+        <label class="inline-check" id="claude-row" hidden><input type="checkbox" id="use-claude"> Mit Claude entwerfen (sendet den Text an Anthropic)</label>
         <button type="button" class="primary" id="compose">Entwurf erstellen</button>
-        <p id="compose-notes" class="small-note" hidden></p>
-      </fieldset>
-      <label>oder Vorlage<select id="template"></select></label>
-      <label>Name<input id="name" maxlength="80"></label>
-      <label>Technik<select id="technique"><option value="crochet">Häkeln (feste Maschen)</option><option value="knit">Stricken (glatt rechts in Runden)</option></select></label>
-      <fieldset><legend>Maschenprobe <span>pro 10 cm, so wie du arbeitest</span></legend>
-        <div class="field-row"><label>Maschen<input id="g-stitches" type="number" min="5" max="60" step="0.5"></label><label>Runden<input id="g-rows" type="number" min="5" max="60" step="0.5"></label></div>
-        <div class="field-row"><label>Nadel <span>(mm)</span><input id="g-hook" type="number" min="0.5" max="15" step="0.25"></label><label>Garn<input id="g-yarn" maxlength="120"></label></div>
-      </fieldset>
-      <fieldset><legend>Farben</legend><div id="colors" class="stack"></div><button type="button" id="add-color" class="ghost">+ Farbe</button></fieldset>
-      <fieldset><legend>Teile <span>das erste Teil ist der Grundkörper</span></legend><div id="parts" class="stack"></div><button type="button" id="add-part" class="ghost">+ Teil</button></fieldset>
-      <fieldset><legend>Details <span>Augen, Nase</span></legend><div id="features" class="stack"></div><button type="button" id="add-feature" class="ghost">+ Detail</button></fieldset>
-      <details class="json-box"><summary>Als JSON bearbeiten</summary><textarea id="json" rows="14" spellcheck="false"></textarea><button type="button" id="apply-json">JSON übernehmen</button></details>
-    </aside>
-    <section class="figure-main" aria-live="polite">
-      <div class="object-heading"><div><p class="eyebrow">SCHEMATISCHE VORSCHAU</p><h2 id="figure-title">Figur</h2></div><span class="status" id="figure-status">NOT_VERIFIED · UNTESTED</span></div>
-      <div id="error" class="error-box" hidden></div>
-      <div class="viewer-wrap"><canvas id="figure-canvas" tabindex="0" aria-label="3D-Vorschau der Figur, mit der Maus drehen"></canvas><div class="viewer-hint">Ziehen = drehen · Mausrad = zoomen · Doppelklick = zurücksetzen</div></div>
-      <div class="figure-actions"><button type="button" class="primary" id="download-pdf">Anleitung als PDF</button><button type="button" id="download-text">Als Text</button><button type="button" id="verify">Struktur prüfen</button><span id="summary" class="small-note"></span></div>
-      <div id="verify-result" class="small-note" hidden></div>
-      <nav id="part-tabs" class="part-tabs" aria-label="Teile"></nav>
-      <div id="part-detail"></div>
-      <section class="calibrate"><h2>Nach dem Testteil: Maschenprobe nachjustieren</h2>
-        <p class="small-note">Ein Teil gearbeitet und nachgemessen? Trag die Maße ein. Daraus wird deine tatsächliche Maschenprobe berechnet und auf alle Teile übertragen.</p>
-        <div class="field-row calibrate-row">
-          <label>Teil<select id="cal-part"></select></label>
-          <label>Gemessen als<select id="cal-mode"><option value="diameter">Durchmesser (rund)</option><option value="flat_width">Breite flach gedrückt</option><option value="circumference">Umfang</option></select></label>
-          <label>Breite/Umfang (mm)<input id="cal-width" type="number" min="1" max="3000" step="0.5"></label>
-          <label>Höhe/Länge (mm) <span>optional</span><input id="cal-height" type="number" min="1" max="3000" step="0.5"></label>
+        <p id="compose-notes" class="small-note" role="status" hidden></p>
+        <div class="templates">
+          <h2 class="minor" id="templates-title">Oder mit einer Vorlage beginnen</h2>
+          <div id="templates" class="gallery" role="group" aria-labelledby="templates-title"></div>
         </div>
-        <div class="figure-actions"><button type="button" id="calibrate">Berechnen</button><button type="button" id="cal-apply" hidden>Neue Maschenprobe übernehmen</button></div>
-        <p id="cal-result" class="small-note" hidden></p>
       </section>
-      <section class="assembly"><h2>Montage</h2><p class="small-note">Positionen zählen ab Rundenanfang (Markierung = Rückseite) in Arbeitsrichtung, für Rechtshänder. Vor dem Annähen feststecken.</p><ol id="assembly"></ol></section>
+
+      <section class="tune" aria-labelledby="tune-title">
+        <h2 id="tune-title">Feinarbeit</h2>
+        <details class="tune-group">
+          <summary><span>Grunddaten</span><span class="tune-value" id="sum-basics"></span></summary>
+          <div class="tune-body">
+            <label>Name<input id="name" maxlength="80"></label>
+            <label>Technik<select id="technique"><option value="crochet">Häkeln, feste Maschen</option><option value="knit">Stricken, glatt rechts in Runden</option></select></label>
+            <fieldset><legend>Maschenprobe <span>pro 10 cm, so wie du arbeitest</span></legend>
+              <div class="field-row"><label>Maschen<input id="g-stitches" type="number" min="5" max="60" step="0.5"></label><label>Runden<input id="g-rows" type="number" min="5" max="60" step="0.5"></label></div>
+            </fieldset>
+            <div class="field-row"><label>Nadel <span>mm</span><input id="g-hook" type="number" min="0.5" max="15" step="0.25"></label><label>Garn<input id="g-yarn" maxlength="120"></label></div>
+          </div>
+        </details>
+        <details class="tune-group">
+          <summary><span>Farben</span><span class="tune-value" id="sum-colors"></span></summary>
+          <div class="tune-body"><div id="colors" class="stack"></div><button type="button" id="add-color" class="quiet add">Farbe hinzufügen</button></div>
+        </details>
+        <details class="tune-group">
+          <summary><span>Teile</span><span class="tune-value" id="sum-parts"></span></summary>
+          <div class="tune-body"><p class="small-note">Das erste Teil ist der Grundkörper, alle anderen werden daran angenäht. Höhe 0 % ist der Fadenring, 100 % die letzte Runde. Winkel: 0 vorne, 90 rechts, 180 hinten, 270 links. Mehrere Winkel ergeben mehrere Exemplare, z. B. 80, 280 für zwei Arme.</p><div id="parts" class="stack"></div><button type="button" id="add-part" class="quiet add">Teil hinzufügen</button></div>
+        </details>
+        <details class="tune-group">
+          <summary><span>Augen und Nase</span><span class="tune-value" id="sum-features"></span></summary>
+          <div class="tune-body"><div id="features" class="stack"></div><button type="button" id="add-feature" class="quiet add">Detail hinzufügen</button></div>
+        </details>
+        <details class="tune-group">
+          <summary><span>Als JSON bearbeiten</span><span class="tune-value">für Fortgeschrittene</span></summary>
+          <div class="tune-body json-box"><textarea id="json" rows="14" spellcheck="false" aria-label="Figur als JSON"></textarea><button type="button" id="apply-json">JSON übernehmen</button></div>
+        </details>
+      </section>
+    </div>
+
+    <div class="stage-area"><section class="stage" aria-labelledby="figure-title">
+      <div class="stage-head">
+        <h2 id="figure-title">Figur</h2>
+        <span class="status" id="figure-status">Berechnet, noch nicht nachgehäkelt</span>
+      </div>
+      <div id="error" class="error-box" role="alert" hidden></div>
+      <div class="viewer-wrap">
+        <canvas id="figure-canvas" tabindex="0" aria-label="Vorschau der Figur. Ziehen oder Pfeiltasten zum Drehen."></canvas>
+        <p class="viewer-hint">Ziehen zum Drehen · Mausrad zum Zoomen · Doppelklick setzt zurück</p>
+      </div>
+      <p id="summary" class="stage-facts num" aria-live="polite"></p>
+      <div class="quick" aria-label="Schnell anpassen" role="group">
+        <div class="quick-size">
+          <label for="size"><span id="size-label">Höhe</span> <output id="size-value" class="num"></output></label>
+          <input id="size" type="range">
+        </div>
+        <div class="quick-colors">
+          <span class="quick-title">Garne</span>
+          <div id="quick-colors" class="yarns"></div>
+        </div>
+        <div class="quick-tech">
+          <span class="quick-title">Technik</span>
+          <div class="segmented" role="group" aria-label="Technik"><button type="button" id="tech-crochet" aria-pressed="true">Häkeln</button><button type="button" id="tech-knit" aria-pressed="false">Stricken</button></div>
+        </div>
+      </div>
+      <div class="figure-actions">
+        <button type="button" class="primary" id="start-making">Jetzt loslegen</button>
+        <button type="button" id="download-pdf">Anleitung als PDF</button>
+        <button type="button" class="quiet" id="download-text">Als Text</button>
+        <button type="button" class="quiet" id="verify">Maschen nachrechnen</button>
+      </div>
+      <div id="verify-result" class="verify-result" role="status" hidden></div>
+    </section></div>
+
+    <section class="guide" aria-labelledby="guide-title">
+      <div class="guide-main">
+        <h2 id="guide-title">Anleitung</h2>
+        <nav id="part-tabs" class="chips part-tabs" aria-label="Teile"></nav>
+        <div id="part-detail"></div>
+      </div>
+      <aside class="guide-side">
+        <section class="assembly" aria-labelledby="assembly-title">
+          <h3 id="assembly-title">Zusammennähen</h3>
+          <p class="small-note">Positionen zählen ab Rundenanfang (Markierung hinten) in Arbeitsrichtung, für Rechtshänder. Vor dem Annähen feststecken.</p>
+          <ol id="assembly"></ol>
+        </section>
+        <section class="calibrate" aria-labelledby="cal-title">
+          <h3 id="cal-title">Nach dem Testteil</h3>
+          <p class="small-note">Ein Teil gearbeitet? Miss es nach. Daraus wird deine tatsächliche Maschenprobe, und alle Teile werden neu berechnet.</p>
+          <label>Teil<select id="cal-part"></select></label>
+          <label>Gemessen als<select id="cal-mode"><option value="diameter">Durchmesser, rund</option><option value="flat_width">Breite, flach gedrückt</option><option value="circumference">Umfang</option></select></label>
+          <div class="field-row">
+            <label>Maß <span>mm</span><input id="cal-width" type="number" min="1" max="3000" step="0.5"></label>
+            <label>Höhe <span>mm, optional</span><input id="cal-height" type="number" min="1" max="3000" step="0.5"></label>
+          </div>
+          <div class="figure-actions"><button type="button" id="calibrate">Berechnen</button><button type="button" class="primary" id="cal-apply" hidden>Übernehmen</button></div>
+          <p id="cal-result" class="small-note" role="status" hidden></p>
+        </section>
+      </aside>
     </section>
   </main>
+  <section id="making" class="maker" role="dialog" aria-modal="true" aria-labelledby="making-title" hidden>
+    <header class="maker-head">
+      <h2 id="making-title">Figur</h2>
+      <button type="button" class="quiet" id="making-close">Zurück zum Entwurf</button>
+    </header>
+    <nav id="making-parts" class="chips" aria-label="Teile"></nav>
+    <div class="making-body">
+      <div class="making-figure"><canvas id="making-canvas" tabindex="0" aria-label="Vorschau, das aktuelle Teil ist hervorgehoben"></canvas></div>
+      <div class="making-card">
+        <progress id="making-progress" value="0" max="1"></progress>
+        <p id="making-step" class="making-step num"></p>
+        <div id="making-notes" class="making-notes" hidden></div>
+        <p id="making-color" class="making-color" hidden></p>
+        <p id="making-text" class="making-text" aria-live="polite"></p>
+        <p id="making-count" class="making-count num"></p>
+        <p id="making-group" class="small-note"></p>
+        <div class="making-controls">
+          <button type="button" id="making-prev">Zurück</button>
+          <button type="button" class="primary" id="making-next">Runde fertig</button>
+        </div>
+        <p class="small-note">Leertaste oder Pfeil rechts: weiter. Dein Fortschritt bleibt in diesem Browser gespeichert.</p>
+      </div>
+    </div>
+  </section>
+  <footer><span>Crochet.AI läuft nur auf deinem Rechner. Alle Muster sind berechnet, aber noch nicht nachgehäkelt.</span><span><a href="/privacy.html">Datenschutz</a> · <a href="/terms.html">Nutzungsinfo</a></span></footer>
 </body>
 </html>
